@@ -61,33 +61,38 @@ export const faqs = [
   {
     question: "Can I book different types of seats in one reservation?",
     answer:
-      "Yes, you can mix and match seat types in a single reservation. During the booking process, select the desired quantity for each seat type.",
+      "No, you make book more than one seat at a table in one reservation(i.e seat 3 and 5 in table 6 Regular section).But to book a seat maybe one in table 3 VIP section and one in table 10 Regular section, you have to do them seprately.",
   },
   {
     question: "Is there a special discount for engineering students?",
     answer:
-      "Yes, engineering students enjoy a special discount of 4500 NGN for regular. Use your NUESA DUES Invoice # as a coupon code during the booking process to apply the discount.",
+      "Yes, engineering students enjoy a special discount of 2000 NGN for regular. An OTP would be sent the email linked to your Matric No to confirm your an engineering student.",
   },
   {
-    question: "Can I use a coupon for any type of seat?",
+    question: "Can I use the engineering discount for any type of seat?",
     answer:
-      "No, coupons are generally valid for regular seats. However, if you have both regular and VIP seats in your reservation, the coupon can be applied to the regular seat.",
+      "No, discounts are generally valid for regular seats and can only be used once",
   },
   {
     question: "How can I avail the engineering student discount?",
     answer:
-      "Enter your 6 digit NUESA DUES Invoice # as a coupon code during the booking process to enjoy the 4500 NGN discount.",
+      "An OTP would be sent to the email registered to your Matric No to confirm your an engineering student, if the verification is successful the discount would be automatically applied to your payment(Discount only applies for Regular Tables).",
+  },
+  {
+    question: "What if i dont have access to the email linked to my engineering matric no?",
+    answer:
+      "You would have to make the payment of the full amount, then in school you can visit the nuesa office for a validation and the discount would be refunded to you.",
   },
   {
     question: "How many types of seats are available?",
     answer:
-      "We offer VVIP, VIP, and Regular seats. Each type has different pricing.",
+      "We offer VVIP, VIP, Silver and Regular seats. Each type has different pricing.",
   },
-  {
-    question: "What happens if I reserve a seat but don't make a payment?",
-    answer:
-      "Seat reservations without payment will be automatically cleared out after 7 minutes. Complete the payment process within this timeframe to confirm your seats.",
-  },
+  // {
+  //   question: "What happens if I reserve a seat but don't make a payment?",
+  //   answer:
+  //     "Seat reservations without payment will be automatically cleared out after 7 minutes. Complete the payment process within this timeframe to confirm your seats.",
+  // },
   {
     question: "Can I modify or cancel my reservation?",
     answer:
