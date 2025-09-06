@@ -211,7 +211,7 @@ const generateEmailTemplate = (booking, seats) => {
         }
 
         .color-white {
-            background: #ffffff;
+            background: white;
         }
 
         .color-red {
