@@ -6,9 +6,9 @@ dotenv.config();
 
 const testBooking = {
   _id: "test123",
-  name: "Okoye Mcpaul",
-  matricNo: "21/ENG05/049",
-  email: "okoyemcpaul86@gmail.com", // Send to yourself for testing
+  name: "Asira Donzel",
+  matricNo: "21/ENG02/029",
+  email: "asiradonzel@gmail.com", // Send to yourself for testing
   phone: "+2348123456789",
   amount: 32000,
   createdAt: new Date(),

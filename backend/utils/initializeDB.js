@@ -3,6 +3,9 @@ import { Seat } from "../models/seatModel.js";
 
 const initializeDatabase = async () => {
     try {
+
+      console.log("starting population");
+      
         const tableCount = await Table.countDocuments()
         if(tableCount > 0) {
             console.log("Database already initialized");
@@ -14,33 +17,30 @@ const initializeDatabase = async () => {
              {
                type: "VVIP",
                shape: "ROUND",
-               tableCount: 8,
+               tableCount: 2,
                seatsPerTable: 4,
-               pricePerSeat: 40000,
+               pricePerSeat: 100,
              },
              {
                type: "VIP",
-               shape: "MIXED",
-               tableCount: 6,
-               seatsPerTable: {
-                 LONG: 8,
-                 ROUND: 4,
-               },
-               pricePerSeat: 25000,
+               shape: "ROUND",
+               tableCount: 2,
+               seatsPerTable: 4,
+               pricePerSeat: 100,
              },
              {
                type: "SILVER",
                shape: "ROUND",
-               tableCount: 6,
+               tableCount: 2,
                seatsPerTable: 5,
-               pricePerSeat: 18000,
+               pricePerSeat: 100,
              },
              {
                type: "REGULAR",
                shape: "ROUND",
-               tableCount: 84,
+               tableCount: 2,
                seatsPerTable: 6,
-               pricePerSeat: 8000,
+               pricePerSeat: 100,
              },
            ];
 
@@ -68,6 +68,8 @@ const initializeDatabase = async () => {
               });
 
               const savedTable = await table.save()
+              console.log(`table ${config.type}-${i} saved`);
+              
 
               //Make seats for the tables
               const seats = []
@@ -78,6 +80,8 @@ const initializeDatabase = async () => {
                 });
 
                 const savedSeat = await seat.save();
+                console.log(`seat ${savedTable.tableNumber}-S${j} saved `);
+                
                 seats.push(savedSeat._id)
               }
 

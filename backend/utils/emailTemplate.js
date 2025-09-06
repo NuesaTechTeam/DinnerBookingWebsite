@@ -459,7 +459,7 @@ const generateEmailTemplate = (booking, seats) => {
         <div class="footer">
             <p><strong>What happens at Casablanca, stays at Casablanca</strong></p>
             <p>Privacy and exclusivity guaranteed for all members of the famiglia</p>
-            <p>If you have any questions, please contact us at nuesatechteam2025@gmail.com</p>
+            <p>If you have any questions, please contact us at nuesadinner@gmail.com</p>
             <div class="copyright">
                 ©2025 NUESA ABUAD, REFORMATION ADMINISTRATION. All rights reserved.
             </div>

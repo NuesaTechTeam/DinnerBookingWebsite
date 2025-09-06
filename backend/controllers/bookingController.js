@@ -9,7 +9,7 @@ export const createBooking = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { email, name, matricNo, phone, seatIds } = req.body;
+    const { email, name, matricNo, phone, seatIds, totalAmount, amount, isEngineering } = req.body;
 
     //Check if seats are available and lock them
     const seats = await Seat.find({ _id: { $in: seatIds } }).session(session);
@@ -42,10 +42,10 @@ export const createBooking = async (req, res) => {
       .populate("table")
       .session(session);
 
-    const amount = seatPrices.reduce(
-      (total, seat) => total + seat.table.pricePerSeat,
-      0
-    );
+    // const amount = seatPrices.reduce(
+    //   (total, seat) => total + seat.table.pricePerSeat,
+    //   0
+    // );
 
     // Create booking
     const booking = new Booking({
@@ -54,7 +54,15 @@ export const createBooking = async (req, res) => {
       matricNo,
       phone,
       amount,
+      totalAmount,
+      isEngineering,
       seats: seatIds,
+      trxref: `pending_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
+      paystackRef: `pending_${Date.now()}_${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
       status: "pending",
     });
 

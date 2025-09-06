@@ -61,7 +61,7 @@ export const faqs = [
   {
     question: "Can I book different types of seats in one reservation?",
     answer:
-      "No, you make book more than one seat at a table in one reservation(i.e seat 3 and 5 in table 6 Regular section).But to book a seat maybe one in table 3 VIP section and one in table 10 Regular section, you have to do them seprately.",
+      "No, you may book more than one seat at a table in one reservation(i.e seat 3 and 5 in table 6 Regular section).But to book a seat maybe one in table 3 VIP section and one in table 10 Regular section, you have to do them seprately.",
   },
   {
     question: "Is there a special discount for engineering students?",

@@ -2,33 +2,38 @@ import { Crown, Shield, Star, User, Users } from 'lucide-react';
 import React from 'react'
 
 const TableComponent = ({ table, onTableClick, isSelected }) => {
-        const availableSeats = table.totalSeats - table.bookedSeats.length;
+        const availableSeats = table.capacity - table.bookedSeats.length;
     const isFullyBooked = availableSeats === 0;
     
-      const getSectionColor = (section) => {
-        switch (section) {
-          case "vvip":
+      const getSectionColor = (type) => {
+        switch (type) {
+          case "VVIP":
             return "from-yellow-600 to-yellow-800";
-          case "vip":
+          case "VIP":
             return "from-red-600 to-red-800";
-          case "silver":
+          case "SILVER":
             return "from-gray-400 to-gray-600";
           default:
             return "from-amber-700 to-amber-900";
         }
     };
     
-      const getSectionIcon = (section) => {
-        switch (section) {
-          case "vvip":
+      const getSectionIcon = (type) => {
+        switch (type) {
+          case "VVIP":
             return <Crown className='w-3 h-3 md:w-5 md:h-5'  size = {12} />;
-          case "vip":
+          case "VIP":
             return <Star className='w-3 h-3 md:w-5 md:h-5' size={12} />;
-          case "silver":
+          case "SILVER":
             return <Shield className='w-3 h-3 md:w-5 md:h-5' size={12} />;
           default:
             return <User className='w-3 h-3 md:w-5 md:h-5' size={12} />;
         }
+      };
+
+       const extractTableNumber = (tableNumber) => {
+        const parts = tableNumber.split("-");
+        return parts[parts.length - 1];
       };
   return (
     <div
@@ -44,14 +49,14 @@ const TableComponent = ({ table, onTableClick, isSelected }) => {
             ? "bg-gray-800 border-gray-600 cursor-not-allowed opacity-50"
             : isSelected
             ? `bg-gradient-to-br ${getSectionColor(
-                table.section
+                table.type
               )} border-white shadow-lg shadow-red-500/30`
             : `bg-gradient-to-br ${getSectionColor(
-                table.section
+                table.type
               )} border-gray-300 hover:border-white hover:shadow-lg`
         }`}
       >
-        {table.number}
+        {extractTableNumber(table.tableNumber)}
       </div>
 
       {/* Table Info Tooltip */}
@@ -63,11 +68,11 @@ const TableComponent = ({ table, onTableClick, isSelected }) => {
         }`}
       >
         <div className='flex items-center space-x-1'>
-          {getSectionIcon(table.section)}
-          <span>Table {table.number}</span>
+          {getSectionIcon(table.type)}
+          <span>Table {table.tableNumber}</span>
         </div>
         <div className='text-green-400'>
-          {availableSeats}/{table.totalSeats} available
+          {availableSeats}/{table.capacity} available
         </div>
         <div className='absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black/90'></div>
       </div>
@@ -75,10 +80,10 @@ const TableComponent = ({ table, onTableClick, isSelected }) => {
       {/* Section Badge */}
       <div
         className={`absolute -top-4.5 md:-top-6 -right-2 md:right-12 w-5 h-5 md:w-8 md:h-8 rounded-full bg-gradient-to-br z-2 ${getSectionColor(
-          table.section
+          table.type
         )} border-1 md:border-2 border-white flex items-center justify-center`}
       >
-        {getSectionIcon(table.section)}
+        {getSectionIcon(table.type)}
       </div>
     </div>
   );

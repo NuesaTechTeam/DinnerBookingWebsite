@@ -12,6 +12,7 @@ import seatRoute from "./routes/seatRoute.js"
 import tableRoute from "./routes/tableRoute.js"
 import { cleanupExpiredLocks } from "./controllers/bookingController.js";
 import initializeDatabase from "./utils/initializeDB.js";
+import syncExistingTables from "./utils/syncExistingTables.js";
 
 
 //Load env vars
@@ -37,9 +38,10 @@ app.get("/", (req, res) => {
 });
 
 
-connectDB();
+connectDB(); 
 
 // initializeDatabase()
+// await syncExistingTables()
 
 //routes
 app.use("/booking", bookingRoute)
