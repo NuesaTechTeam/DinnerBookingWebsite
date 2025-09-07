@@ -26,10 +26,31 @@ const port = process.env.PORT || 5000;
 //   process.exit(1);
 // }
 
+const allowedOrigins = [
+  "https://dinner.nuesaabuad.ng",
+  "https://nuesadinner.onrender.com",
+  "http://localhost:5173",
+];
+
 //middleware
 app.use(apiLimiter);
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl requests)
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.indexOf(origin) === -1) {
+        const msg =
+          "The CORS policy for this site does not allow access from the specified Origin.";
+        return callback(new Error(msg), false);
+      }
+      return callback(null, true);
+    },
+    // credentials: true,
+  })
+);
 app.use(logger);
 
 //api creation

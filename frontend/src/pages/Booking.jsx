@@ -26,7 +26,7 @@ const Booking = () => {
   const { bookedSeats = [], lockedSeats = [] } = seatStatus || {};
 
   // const [tablesData] = useState(tables);
-  // console.log(tablesData);
+ 
   
 
   useEffect(() => {

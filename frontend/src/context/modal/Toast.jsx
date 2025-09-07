@@ -19,7 +19,7 @@ const ToastComponent = ({ children }) => {
   const [currentToast, setCurrentToast] = useState(null);
 
 
-  const showToast = (message, type = TOAST_TYPES.SUCCESS, duration = 2000) => {
+  const showToast = (message, type = TOAST_TYPES.SUCCESS, duration = 4000) => {
     const id = Date.now();
     const newToast = { id, message, type, duration };
 

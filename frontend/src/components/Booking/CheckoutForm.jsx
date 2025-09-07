@@ -142,7 +142,7 @@ queryClient.invalidateQueries(["tables"]);
   };
 
   const onPaymentClose = () => {
-    console.log("Payment window closed");
+    // console.log("Payment window closed");
     window.location.reload()
   }
 

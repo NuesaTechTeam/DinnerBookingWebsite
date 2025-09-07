@@ -356,7 +356,7 @@ const generateEmailTemplate = (booking, seats) => {
             <div class="welcome-message">
                 <h2>Welcome to La Famiglia</h2>
                 <p class="welcome-text">
-                    Congratulations, <strong style="color: #ef4444;">${
+                    Congratulations, <strong style="color: #ef4444; text-transform: capitalize;">${
                       booking.name
                     }</strong>. Your position in the famiglia
                     has been secured.
@@ -371,7 +371,9 @@ const generateEmailTemplate = (booking, seats) => {
 
                 <div class="detail-row">
                     <span class="detail-label">Guest Name</span>
-                    <span class="detail-value">${booking.name}</span>
+                    <span class="detail-value" style= "text-transform: capitalize;">${
+                      booking.name
+                    }</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Guest Email</span>
@@ -409,7 +411,9 @@ const generateEmailTemplate = (booking, seats) => {
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Booking Date</span>
-                    <span class="detail-value">${new Date(booking.createdAt).toLocaleDateString()}</span>
+                    <span class="detail-value">${new Date(
+                      booking.createdAt
+                    ).toLocaleDateString()}</span>
                 </div>
             </div>
 
@@ -419,7 +423,7 @@ const generateEmailTemplate = (booking, seats) => {
                 <p>Present yourself with the dignity befitting a member of our famiglia</p>
                 <div class="dress-colors">
                     <div class="color-swatch color-black" title="Black"></div>
-                    <div class="color-swatch color-white" title="White"></div>
+                    <div class="color-swatch color-white" title="White" style="background-color: #ffffff;"></div>
                     <div class="color-swatch color-red" title="Red"></div>
                 </div>
                 <p style="margin-top: 15px; font-size: 16px;"><strong>Black • White • Red</strong></p>
