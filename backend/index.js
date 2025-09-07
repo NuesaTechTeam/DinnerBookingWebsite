@@ -35,24 +35,19 @@ const allowedOrigins = [
 //middleware
 app.use(apiLimiter);
 app.use(express.json());
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps, Postman)
-    if (!origin) return callback(null, true);
-    
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+const corsOptions = {
+  origin: [
+    "https://dinner.nuesaabuad.ng",
+    "https://nuesadinner.onrender.com",
+    "http://localhost:5173",
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept"],
   credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
-}));
+  optionsSuccessStatus: 200, // For legacy browser support
+};
 
-// Handle preflight requests
-app.options('*', cors()); // Enable preflight for all routes
+app.use(cors(corsOptions));
 app.use(logger);
 
 //api creation
