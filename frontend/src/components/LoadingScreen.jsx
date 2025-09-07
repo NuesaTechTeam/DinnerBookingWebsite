@@ -11,7 +11,7 @@ const LoadingScreen = () => {
 
   return (
     <div
-      className={`font-crimson scrollbar-hidden bg-gradient-to-br from-black via-[#2d1616]  to-black text-white h-full relative ${
+      className={`font-crimson scrollbar-hidden bg-gradient-to-br from-black via-[#2d1616]  to-black text-white h-screen relative ${
         isLoading ? "" : "opacity-0 transition-opacity duration-1000"
       }`}
     >

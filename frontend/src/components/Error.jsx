@@ -22,7 +22,7 @@ const Error = ({ error, resetErrorBoundary, queryKey }) => {
 
 
   return (
-    <div className="font-crimson bg-gradient-to-br from-black via-[#1a0d0d] to-black text-white h-full relative flex items-center justify-center p-4">
+    <div className="font-crimson bg-gradient-to-br from-black via-[#1a0d0d] to-black text-white h-screen relative flex items-center justify-center p-4">
       {/* Background particles */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden z-10">
         {[...Array(30)].map((_, i) => (
