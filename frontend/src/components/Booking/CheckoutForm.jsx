@@ -65,13 +65,13 @@ const CheckoutForm = ({
     createBookingMutation.isPending || verifyPaymentMutation.isPending;
 
   //payment calculation
-  const paystackFeePercentage = 3.5;
+  const paystackFeePercentage = 5;
   const paystackFixedFee = 100;
 
   const calculateTotalAmount = (baseAmount) => {
     const calculatedFee =
       (paystackFeePercentage / 100) * baseAmount + paystackFixedFee;
-    const totalFee = Math.min(calculatedFee, 2000); //cap at 2000
+    const totalFee = Math.min(calculatedFee, 3000); //cap at 3000
     return Math.round(baseAmount + totalFee);
   };
 
