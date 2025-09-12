@@ -450,7 +450,7 @@ const generateEmailTemplate = (booking, seats) => {
                 <p>
                     Prepare yourself for an unforgettable night where the ambiance whispers secrets of honor, legacy,
                     and ambition.
-                    Your seat at our table is not just reserved – it is earned.
+                    Your seat at our table is not just reserved, it is earned.
                 </p>
                 <div class="signature">
                     — The Social Directors<br>
@@ -465,7 +465,7 @@ const generateEmailTemplate = (booking, seats) => {
             <p>Privacy and exclusivity guaranteed for all members of the famiglia</p>
             <p>If you have any questions, please contact us at nuesadinner@gmail.com</p>
             <div class="copyright">
-                ©2025 NUESA ABUAD, REFORMATION ADMINISTRATION. All rights reserved.
+                ©2025/2026 NUESA ABUAD, REFORMATION ADMINISTRATION. All rights reserved.
             </div>
         </div>
     </div>

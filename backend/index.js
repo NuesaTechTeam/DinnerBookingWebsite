@@ -33,6 +33,7 @@ const allowedOrigins = [
 ];
 
 //middleware
+app.set("trust proxy", true);
 app.use(apiLimiter);
 app.use(express.json());
 const corsOptions = {
