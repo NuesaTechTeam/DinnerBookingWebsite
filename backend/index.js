@@ -33,7 +33,7 @@ const allowedOrigins = [
 ];
 
 //middleware
-app.set("trust proxy", true);
+app.set("trust proxy", ["loopback", "linklocal", "uniquelocal"]);
 app.use(apiLimiter);
 app.use(express.json());
 const corsOptions = {
