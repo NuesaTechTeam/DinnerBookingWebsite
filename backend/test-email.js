@@ -1,7 +1,7 @@
 import dotenv from "dotenv"
-import { sendConfirmationEmail } from "./utils/emailService.js";
+import { sendConfirmationEmail, testing } from "./utils/emailService.js";
 
-dotenv.config();
+dotenv.config(); 
 
 
 const testBooking = {
@@ -15,7 +15,7 @@ const testBooking = {
   seats: [
     {
       seatNumber: "VVIP-1-S1",
-      table: { tableNumber: "VVIP-1" },
+      table: { tableNumber: "VVIP-5" },
     },
   ],
 };
@@ -23,7 +23,7 @@ const testBooking = {
 // Mock populate function
 testBooking.populate = async () => {};
 
-sendConfirmationEmail(testBooking)
+testing(testBooking)
   .then((success) => {
     console.log("Test email sent:", success);
     process.exit(0);

@@ -8,12 +8,14 @@ import {
   CreditCard,
   Shield,
   CheckCircle,
+  Receipt,
 } from "lucide-react";
 import { usePaystackPayment } from "react-paystack";
 import { useCreateBooking } from "../../hooks/bookingHooks";
 import { useVerifyPayment } from "../../hooks/paymentHooks";
 import { useToast } from "../../context/modal/useToast";
 import { useQueryClient } from "@tanstack/react-query";
+import { useVerifyEngineeringStudent } from "../../hooks/discountHooks";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 50 },
@@ -44,8 +46,9 @@ const CheckoutForm = ({
 }) => {
   const createBookingMutation = useCreateBooking();
   const verifyPaymentMutation = useVerifyPayment();
+  const verifyEngineeringStudent = useVerifyEngineeringStudent();
   const { showToast, TOAST_TYPES } = useToast();
-  const queryClient = useQueryClient()
+  const queryClient = useQueryClient();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -53,13 +56,62 @@ const CheckoutForm = ({
     email: "",
     phone: "",
     isEngineering: false,
+    invoiceNumber: "",
   });
-  // const [otpData, setOtpData] = useState({
-  //   otp: "",
-  //   isOtpSent: false,
-  //   isOtpVerified: false,
-  //   isLoading: false,
-  // });
+
+  const [discountApplied, setDiscountApplied] = useState(false);
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [verifyingDiscount, setVerifyingDiscount] = useState(false);
+
+  // Calculate Amount
+  const isRegularTable = selectedTable?.type === "REGULAR";
+  const finalAmount = Math.max(
+    0,
+    baseAmount - (discountApplied ? discountAmount : 0)
+  );
+
+  const applyDiscount = async () => {
+    if (!formData.invoiceNumber.trim()) {
+      showToast("Please enter an invoice number", TOAST_TYPES.INFO);
+      return;
+    }
+    if (!isRegularTable) {
+      showToast("Discounts apply only to REGULAR tables", TOAST_TYPES.INFO);
+      return;
+    }
+    setVerifyingDiscount(true);
+
+    try {
+      const result = await verifyEngineeringStudent.mutateAsync(
+        formData.invoiceNumber.trim()
+      );
+
+      if (result.success) {
+        setDiscountApplied(true);
+        setDiscountAmount(2000);
+        showToast("Engineering Discount Applied", TOAST_TYPES.SUCCESS);
+      } else {
+        showToast(
+          result.message || "Failed to verify discount",
+          TOAST_TYPES.ERROR
+        );
+      }
+    } catch (error) {
+      showToast(
+        error.response?.data?.message || "Failed to verify discount",
+        TOAST_TYPES.ERROR
+      );
+    } finally {
+      setVerifyingDiscount(false);
+    }
+  };
+
+  const removeDiscount = () => {
+    setDiscountApplied(false);
+    setDiscountAmount(0);
+    setFormData((prev) => ({ ...prev, invoiceNumber: "" }));
+  };
+
   // const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const isProcessing =
     createBookingMutation.isPending || verifyPaymentMutation.isPending;
@@ -75,7 +127,7 @@ const CheckoutForm = ({
     return Math.round(baseAmount + totalFee);
   };
 
-  const totalAmount = calculateTotalAmount(baseAmount);
+  const totalAmount = calculateTotalAmount(finalAmount);
   // const feeAmount = totalAmount - baseAmount;
 
   // const discount = otpData.isOtpVerified ? 2000 : 0;
@@ -85,6 +137,7 @@ const CheckoutForm = ({
     publicKey: import.meta.env.VITE_PUBLIC_KEY_PAYSTACK,
     email: formData.email,
     amount: totalAmount * 100,
+    // split_code: import.meta.env.VITE_PAYSTACK_SPLIT_CODE,
     metadata: {
       custom_fields: [
         {
@@ -109,7 +162,6 @@ const CheckoutForm = ({
   const initializePayment = usePaystackPayment(paystackConfig);
 
   const onPaymentSuccess = (response, bookingId) => {
-    
     verifyPaymentMutation.mutate(
       {
         reference: response.reference,
@@ -122,7 +174,7 @@ const CheckoutForm = ({
               "Payment successful! Confirmation email sent.",
               TOAST_TYPES.SUCCESS
             );
-queryClient.invalidateQueries(["tables"]);
+            queryClient.invalidateQueries(["tables"]);
             onClose();
           } else {
             showToast(
@@ -136,15 +188,15 @@ queryClient.invalidateQueries(["tables"]);
             `Payment verification error: ${error.message}`,
             TOAST_TYPES.ERROR
           );
-        }
+        },
       }
     );
   };
 
   const onPaymentClose = () => {
     // console.log("Payment window closed");
-    window.location.reload()
-  }
+    window.location.reload();
+  };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -186,27 +238,21 @@ queryClient.invalidateQueries(["tables"]);
   // };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
     if (
       !formData.name ||
       !formData.matricNo ||
       !formData.email ||
       !formData.phone
     ) {
-       showToast(
-         "Please fill in all required fields",
-         TOAST_TYPES.INFO
-       );
+      showToast("Please fill in all required fields", TOAST_TYPES.INFO);
       return;
     }
 
-     if (selectedSeats.length === 0) {
-       showToast(
-         "Please select at least one seat",
-         TOAST_TYPES.INFO
-       );
-       return;
-     }
+    if (selectedSeats.length === 0) {
+      showToast("Please select at least one seat", TOAST_TYPES.INFO);
+      return;
+    }
 
     // if (formData.isEngineering && !otpData.isOtpVerified) {
     //   showToast("Please verify your engineering student status", TOAST_TYPES.INFO);
@@ -217,17 +263,18 @@ queryClient.invalidateQueries(["tables"]);
     const bookingData = {
       ...formData,
       seatIds: selectedSeats,
-      amount: baseAmount, //without fees
+      baseAmount: baseAmount, //without fees
       totalAmount: totalAmount, // with fees
       tableId: selectedTable?._id,
       tableType: selectedTable?.type,
+      invoiceNumber: discountApplied ? formData.invoiceNumber : undefined,
     };
 
     //create booking first, then initialize payment after success
     createBookingMutation.mutate(bookingData, {
       onSuccess: (bookingResponse) => {
-        if(bookingResponse.success) {
-          const bookingId = bookingResponse.booking._id
+        if (bookingResponse.success) {
+          const bookingId = bookingResponse.booking._id;
           //initialize payment
           initializePayment({
             ...paystackConfig,
@@ -239,12 +286,14 @@ queryClient.invalidateQueries(["tables"]);
             onClose: onPaymentClose,
           });
         } else {
-           showToast("Failed to create booking: " + bookingResponse.message, TOAST_TYPES.ERROR);
+          showToast(
+            "Failed to create booking: " + bookingResponse.message,
+            TOAST_TYPES.ERROR
+          );
         }
-      } 
-    })
+      },
+    });
   };
-
 
   return (
     <AnimatePresence>
@@ -313,24 +362,25 @@ queryClient.invalidateQueries(["tables"]);
                 </p>
                 <p>
                   <span className="text-red-300">Amount:</span> ₦
-                  {baseAmount.toLocaleString()}
+                  {finalAmount.toLocaleString()}
                 </p>
                 <p>
                   <span className="text-xs my-2 text-red-300">
                     Charges or discount may apply
                   </span>
                 </p>
-                {/* {discount > 0 && (
-                <Motion.p
-                  className="text-green-400"
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ duration: 0.4 }}
-                >
-                  <span className="text-red-300">Engineering Discount:</span> -₦
-                  {discount.toLocaleString()}
-                </Motion.p>
-              )} */}
+                {discountApplied && (
+                  <Motion.p
+                    className="text-green-400"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <span className="text-red-300">Engineering Discount:</span>{" "}
+                    -₦
+                    {discountAmount.toLocaleString()}
+                  </Motion.p>
+                )}
                 <p className="text-xl font-bold mt-2 text-white border-t border-red-800 pt-2">
                   Total: ₦{totalAmount.toLocaleString()}
                 </p>
@@ -452,69 +502,52 @@ queryClient.invalidateQueries(["tables"]);
                 </span>
               </label>
 
-              {/* OTP Section */}
-              {/* {formData.isEngineering && (
-              <Motion.div
-                className="space-y-3 mt-4 pt-3 border-t border-red-800"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                {!otpData.isOtpSent ? (
-                  <Motion.button
-                    // onClick={handleSendOtp}
-                    disabled={!formData.email || otpData.isLoading}
-                    className="w-full bg-red-700 hover:bg-red-600 disabled:bg-gray-700 disabled:cursor-not-allowed text-white py-2 px-4 rounded-lg transition-colors text-sm flex items-center justify-center gap-2"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    {otpData.isLoading ? (
-                      <Motion.div
-                        className="rounded-full h-4 w-4 border-b-2 border-white"
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                      />
-                    ) : (
-                      <>
-                        <Mail size={16} />
-                        Send Verification OTP
-                      </>
-                    )}
-                  </Motion.button>
-                ) : !otpData.isOtpVerified ? (
-                  <Motion.div
-                    className="space-y-2"
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <div className="flex gap-2">
+              {/* Discount Section */}
+              {formData.isEngineering && isRegularTable && (
+                <Motion.div
+                  className="space-y-3 mt-4 pt-3 border-t border-red-800"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  {!discountApplied ? (
+                    <Motion.div
+                      className="space-y-2"
+                      {...fadeInUp}
+                      transition={{ duration: 0.5, delay: 0.7 }}
+                    >
+                      <label className="text-red-300 text-sm font-medium flex items-center gap-2">
+                        <Receipt size={16} />
+                        Engineering Discount
+                      </label>
                       <Motion.input
                         type="text"
-                        value={otpData.otp}
-                        onChange={(e) =>
-                          setOtpData((prev) => ({
-                            ...prev,
-                            otp: e.target.value,
-                          }))
+                        name="invoiceNumber"
+                        value={formData.invoiceNumber}
+                        onChange={handleInputChange}
+                        disabled={
+                          verifyingDiscount ||
+                          isProcessing ||
+                          !formData.invoiceNumber.trim()
                         }
-                        placeholder="Enter OTP"
-                        className="flex-1 bg-black bg-opacity-50 border border-red-800 rounded-lg px-3 py-2 text-white text-sm placeholder-gray-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
-                        whileFocus={{ scale: 1.02 }}
+                        inputMode="numeric"
+                        placeholder="Enter your invoice number"
+                        className="w-full bg-black bg-opacity-50 border border-red-800 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
+                        whileFocus={{ scale: 1.02, borderColor: "#ef4444" }}
                       />
                       <Motion.button
-                        onClick={handleVerifyOtp}
-                        disabled={!otpData.otp || otpData.isLoading}
+                        onClick={applyDiscount}
+                        disabled={
+                          verifyingDiscount ||
+                          isProcessing ||
+                          !formData.invoiceNumber.trim()
+                        }
                         className="bg-green-700 hover:bg-green-600 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                       >
-                        {otpData.isLoading ? (
+                        {verifyingDiscount ? (
                           <Motion.div
                             className="rounded-full h-4 w-4 border-b-2 border-white"
                             animate={{ rotate: 360 }}
@@ -525,28 +558,32 @@ queryClient.invalidateQueries(["tables"]);
                             }}
                           />
                         ) : (
-                          "Verify"
+                          "Apply Discount"
                         )}
                       </Motion.button>
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      OTP sent to {formData.email}
-                    </p>
-                  </Motion.div>
-                ) : (
-                  <Motion.div
-                    className="flex items-center gap-2 text-green-400 text-sm"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5, type: "spring" }}
-                  >
-                    <CheckCircle size={16} />
-                    Engineering student status verified! ₦2,000 discount
-                    applied.
-                  </Motion.div>
-                )}
-              </Motion.div>
-            )} */}
+                    </Motion.div>
+                  ) : (
+                    <Motion.div
+                      className="flex items-center gap-2 text-green-400 text-sm"
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.5, type: "spring" }}
+                    >
+                      <CheckCircle size={16} />
+                      Engineering student status verified! ₦2,000 discount
+                      applied.
+                      <Motion.button
+                        onClick={removeDiscount}
+                        className="bg-green-700 hover:bg-green-600 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Remove Discount
+                      </Motion.button>
+                    </Motion.div>
+                  )}
+                </Motion.div>
+              )}
             </Motion.div>
 
             {/* Payment Button */}

@@ -61,38 +61,23 @@ export const faqs = [
   {
     question: "Can I book different types of seats in one reservation?",
     answer:
-      "No, you may book more than one seat at a table in one reservation(i.e seat 3 and 5 in table 6 Regular section).But to book a seat maybe one in table 3 VIP section and one in table 10 Regular section, you have to do them seprately.",
+      "No, you may not book different types of seats (i.e regular and VIP) in one resevation. You have to book them separately. However, you may book several seats at the same table in one reservation (i.e seat 4 and 5 at regular table 4).",
   },
   {
     question: "Is there a special discount for engineering students?",
     answer:
-      "Yes, engineering students enjoy a special discount of 2000 NGN for regular. An OTP would be sent the email linked to your Matric No to confirm your an engineering student.",
-  },
-  {
-    question: "Can I use the engineering discount for any type of seat?",
-    answer:
-      "No, discounts are generally valid for regular seats and can only be used once",
+      "Yes, engineering students enjoy a special discount of 2000 NGN for regular. Use the invoice number on your nuesa receipt as the coupon code when making reservations for your seats (Note: This discount only applies for regular table bookings).",
   },
   {
     question: "How can I avail the engineering student discount?",
     answer:
-      "An OTP would be sent to the email registered to your Matric No to confirm your an engineering student, if the verification is successful the discount would be automatically applied to your payment(Discount only applies for Regular Tables).",
-  },
-  {
-    question: "What if i dont have access to the email linked to my engineering matric no?",
-    answer:
-      "You would have to make the payment of the full amount, then in school you can visit the nuesa office for a validation and the discount would be refunded to you.",
+      "To get the ₦2,000 engineering student discount, you must have: 1) Paid your NUESA fees and received a receipt, 2) Submitted your invoice number and details through the official Google Form sent by NUESA. Once submitted and verified, enter your invoice number during checkout for automatic discount application. This discount is only available for Regular table bookings.",
   },
   {
     question: "How many types of seats are available?",
     answer:
       "We offer VVIP, VIP, Silver and Regular seats. Each type has different pricing.",
   },
-  // {
-  //   question: "What happens if I reserve a seat but don't make a payment?",
-  //   answer:
-  //     "Seat reservations without payment will be automatically cleared out after 7 minutes. Complete the payment process within this timeframe to confirm your seats.",
-  // },
   {
     question: "Can I modify or cancel my reservation?",
     answer:
@@ -104,8 +89,40 @@ export const faqs = [
       "For any assistance or inquiries, please reach out to our customer support team through the provided contact channels on our website.",
   },
   {
-    question: "How does it work?",
-    answer: "Only God knows 😊",
+    question: "What if I'm paying for multiple seats?",
+    answer:
+      "If you're paying for multiple seats, please ensure that you and all additional guests arrive together at the event. Only one verification email and QR code will be sent to the payer's email address. The entire group must be present with the payer for entry verification.",
+  },
+  {
+    question: "Where can I find my NUESA receipt invoice number?",
+    answer:
+      "Your invoice number can be found on your official NUESA payment receipt. It's typically a unique alphanumeric code printed on the receipt you received after paying your engineering fees. Remember: You must also submit this invoice number through the Google Form for it to work in our system.",
+  },
+  {
+    question: "Can I use my invoice number more than once?",
+    answer:
+      "No, each invoice number can only be used once for the engineering student discount. Once applied to a booking, the invoice number cannot be reused for additional discounts.",
+  },
+  {
+    question: "What if my invoice number doesn't work?",
+    answer:
+      "Ensure you: 1) Entered the invoice number correctly, 2) Submitted it via the official NUESA Google Form, 3) Haven't used it before. If you didn't submit the Google Form, your invoice number won't work. Contact NUESA support with proof of both payment and form submission.",
+  },
+  {
+    question: "Can I get the discount for VIP or other premium tables?",
+    answer:
+      "No, the engineering student discount is exclusively available for Regular table bookings only. Premium tables (VVIP, VIP, Silver) are not eligible for this discount.",
+  },
+  {
+    question:
+      "What happens if I'm paying for friends but they arrive separately?",
+    answer:
+      "All guests must arrive together with the person who made the booking. The verification QR code is only sent to the booker's email, and security will only allow entry to the entire group at once. We cannot accommodate separate entries for group bookings.",
+  },
+  {
+    question: "Can I transfer my discount to someone else?",
+    answer:
+      "No, the engineering student discount is non-transferable and can only be used by the student whose invoice number is being verified. The booking must match the student's details for the discount to be valid.",
   },
 ];
 
@@ -214,9 +231,11 @@ export const tables = {
     },
     {
       id: "V2",
+      no_of_fruits: 4,
       number: 2,
       totalSeats: 4,
       bookedSeats: [2, 4],
+      hii: ["yhe", 4, 8,],
       section: "vvip",
     },
     { id: "V3", number: 3, totalSeats: 4, bookedSeats: [], section: "vvip" },

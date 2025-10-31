@@ -8,8 +8,12 @@ const TableVisualization = ({
   bookedSeats,
   lockedSeats,
 }) => {
-  const isRoundTable = table.shape === "ROUND";
-  const tableWidth = isRoundTable ? "w-22 h-22" : "w-20 h-38";
+  const isRoundTable = table.type === "VVIP" ? false : table.shape === "ROUND";
+  const tableWidth = isRoundTable
+    ? "w-22 h-22"
+    : table.type === "VVIP"
+    ? "w-52 h-20"
+    : "w-20 h-38";
   const tableClass = isRoundTable ? "rounded-full" : "rounded-lg";
 
   const getSeatPosition = (index, capacity, isRound) => {
@@ -24,6 +28,14 @@ const TableVisualization = ({
     } else {
       // Rectangular table seating arrangements
       switch (capacity) {
+        case 4:
+          // 4 bottom
+          return [
+            { x: -62, y: 80 }, 
+            { x: -10, y: 80 },
+            { x: 40, y: 80 },
+            { x: 94, y: 80 }, 
+          ][index];
         case 5:
           // 2 top, 1 right, 2 bottom
           return [
@@ -57,14 +69,14 @@ const TableVisualization = ({
         case 8:
           // 3 top, 1 left, 1 right, 3 bottom
           return [
-            { x: -45, y: -40 },//left
+            { x: -45, y: -40 }, //left
             { x: -45, y: 10 },
-            { x: -45, y: 62 }, 
+            { x: -45, y: 62 },
             { x: 14, y: -78 }, // top
             { x: 14, y: 110 }, // bottom
-            { x: 78, y: -40 },// right
+            { x: 78, y: -40 }, // right
             { x: 78, y: 10 },
-            { x: 78, y: 64 }, 
+            { x: 78, y: 64 },
           ][index];
         case 10:
           // 4 top, 1 left, 1 right, 4 bottom
@@ -105,7 +117,7 @@ const TableVisualization = ({
     <div className="relative mb-12 flex justify-center">
       {/* Table */}
       <div
-        className={`${tableWidth} ${tableClass} border-4 border-gray-500 bg-gray-700/50 flex items-center justify-center relative`}
+        className={`${tableWidth} ${tableClass} border-4 ${table.type === "VVIP" ? "border-x-0" : ""} border-gray-500 bg-gray-700/50 flex items-center justify-center relative`}
       >
         <span className="text-white font-bold">
           Table {extractTableNumber(table.tableNumber)}
@@ -145,7 +157,7 @@ const TableVisualization = ({
                   : "translate(-50%, -50%)",
               }}
               onClick={() =>
-                (!isBooked && !isBookedNow && !isLocked) && onSeatClick(seat)
+                !isBooked && !isBookedNow && !isLocked && onSeatClick(seat)
               }
             >
               {extractSeatNumber(seat.seatNumber)}

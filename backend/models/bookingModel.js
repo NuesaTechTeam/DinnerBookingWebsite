@@ -27,6 +27,23 @@ const bookingSchema = new mongoose.Schema(
       type: Number,
       required: true, // Total amount with fees
     },
+    discountApplied: {
+      type: Boolean,
+      default: false,
+    },
+    discountAmount: {
+      type: Number,
+      default: 0,
+    },
+    couponCode: {
+      type: String,
+      trim: true,
+      uppercase: true,
+    },
+    engineeringStudentRef: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "EngineeringStudent",
+    },
     isEngineering: {
       type: Boolean,
       default: false,
@@ -45,6 +62,13 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       enum: ["pending", "confirmed", "cancelled"],
       default: "pending",
+    },
+    attendanceVerified: {
+      type: Boolean,
+      default: false,
+    },
+    attendanceVerifiedAt: {
+      type: Date,
     },
     seats: [
       {

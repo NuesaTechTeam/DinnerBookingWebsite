@@ -1,11 +1,28 @@
 const generateEmailTemplate = (booking, seats) => {
-      const tableNumbers = [
-        ...new Set(seats.map((seat) => seat.table.tableNumber)),
-      ];
-      const seatNumbers = seats.map((seat) => seat.seatNumber).join(", ");
-      const totalAmount = booking.amount.toLocaleString();
+  const tableNumbers = [
+    ...new Set(seats.map((seat) => seat.table.tableNumber)),
+  ];
+  const seatNumbers = seats.map((seat) => seat.seatNumber).join(", ");
+  const totalAmount = booking.amount.toLocaleString();
 
-      return `
+  // Generate QR code data - include booking ID and seat info for verification
+  const qrData = JSON.stringify({
+    bookingId: booking._id.toString(),
+    name: booking.name,
+    matricNo: booking.matricNo,
+    seats: seatNumbers,
+    tables: tableNumbers.join(", "),
+    amount: booking.amount,
+    timestamp: booking.createdAt,
+  });
+
+  // URL encode the QR data for the QR code generator
+  const encodedQRData = encodeURIComponent(qrData);
+
+  // Create verification URL with booking data
+  const verificationUrl = `https://dinner.nuesaabuad.ng/verify/${booking._id}`;
+
+  return `
       <!DOCTYPE html>
 <html lang="en">
 
@@ -282,6 +299,24 @@ const generateEmailTemplate = (booking, seats) => {
             margin-top: 20px;
         }
 
+            .qr-section {
+      text-align: center;
+      margin: 30px 0;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+    }
+    .qr-code {
+      margin: 15px 0;
+    }
+    .qr-instructions {
+      background-color: #1a1a1a;
+      color: #e0e0e0;
+      padding: 25px;
+      border-radius: 6px;
+      margin: 30px 0;
+    }
+
         .footer {
             background: #991b1b;
             color: white;
@@ -402,7 +437,7 @@ const generateEmailTemplate = (booking, seats) => {
 
                 <div class="detail-row">
                     <span class="detail-label">Event Date & Time</span>
-                    <span class="detail-value" style="color: #ef4444; font-style: italic;">Coming Soon</span>
+                    <span class="detail-value" style="color: #ef4444; font-style: italic;">23RD NOVEMBER, 2025</span>
                 </div>
 
                 <div class="detail-row">
@@ -459,10 +494,43 @@ const generateEmailTemplate = (booking, seats) => {
             </div>
         </div>
 
+              <!-- QR Code Section -->
+      <div class="qr-section">
+        <h3 style="color: #d32f2f; margin-bottom: 10px;">Your Entry Pass</h3>
+        <p style="margin-bottom: 15px; color: #e0e0e0;">
+          Present this QR code at the entrance for quick verification
+        </p>
+        
+        <div class="qr-code">
+          <img 
+            src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${verificationUrl}" 
+            alt="Booking QR Code"
+            style="border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px; background: red;"
+          />
+        </div>
+        
+        <p style="font-size: 12px; color: #e0e0e0; margin-top: 10px;">
+          Scan this code to verify your booking
+        </p>
+      </div>
+
+            <div class="qr-instructions">
+        <strong>📋 Important Entry Instructions:</strong>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+          <li>Save this email and present it at the entrance of the event</li>
+          <li>Have your QR code ready when approaching the entrance</li>
+          <li>Ensure your phone brightness is at maximum for easy scanning</li>
+          <li>If you booked multiple seats, all guests must arrive together</li>
+          <li>Keep a valid ID card ready for additional verification</li>
+        </ul>
+      </div>
+      
+
         <!-- Footer -->
         <div class="footer">
             <p><strong>What happens at Casablanca, stays at Casablanca</strong></p>
             <p>Privacy and exclusivity guaranteed for all members of the famiglia</p>
+            <p>We look forward to seeing you at the event! If you have any questions or need to make changes to your booking, please contact us at least 24 hours before the event.</p>
             <p>If you have any questions, please contact us at nuesadinner@gmail.com</p>
             <div class="copyright">
                 ©2025/2026 NUESA ABUAD, REFORMATION ADMINISTRATION. All rights reserved.
@@ -473,7 +541,6 @@ const generateEmailTemplate = (booking, seats) => {
 
 </html>
       `;
-}
+};
 
-
-export default generateEmailTemplate
+export default generateEmailTemplate;

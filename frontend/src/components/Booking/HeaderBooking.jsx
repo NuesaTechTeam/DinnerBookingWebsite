@@ -29,11 +29,11 @@ const HeaderBooking = () => {
           <div className="hidden md:flex items-center space-x-6 text-sm">
             <div className="flex items-center space-x-2">
               <Calendar className="text-red-400" size={14} />
-              <span>🛡️🛡️🛡️🛡️ 🛡️🛡️, 2025</span>
+              <span>23RD NOVEMBER, 2025</span>
             </div>
             <div className="flex items-center space-x-2">
               <Clock className=" text-red-400" size={14} />
-              <span>🛡️:🛡️🛡️ PM</span>
+              <span>5:00 PM</span>
             </div>
             <div className="flex items-center space-x-2">
               <MapPin className=" text-red-400" size={14} />

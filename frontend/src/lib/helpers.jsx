@@ -9,7 +9,7 @@ export const getSectionPrice = (type) => {
     case "SILVER":
       return "₦18,000";
     case "REGULAR":
-      return "₦8,000";
+      return "₦1,000";
     default:
       return "₦8,000";
   }

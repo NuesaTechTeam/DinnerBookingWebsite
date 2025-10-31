@@ -7,7 +7,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "import-students": "node utils/initializeStudents.js ./utils/Nuesa_Receipt_Details.xlsx",
+    "import-students:dev": "nodemon utils/initializeStudents.js"
   },
   "author": "",
   "license": "ISC",
@@ -27,6 +29,7 @@
     "nodemailer": "^7.0.6",
     "paystack-node": "^0.3.0",
     "socket.io": "^4.8.1",
-    "validator": "^13.15.15"
+    "validator": "^13.15.15",
+    "xlsx": "^0.18.5"
   }
 }

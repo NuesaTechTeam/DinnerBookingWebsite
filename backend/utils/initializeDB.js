@@ -14,27 +14,27 @@ const initializeDatabase = async () => {
 
         //Table configurations
            const tableConfigs = [
-             {
-               type: "VVIP",
-               shape: "ROUND",
-               tableCount: 2,
-               seatsPerTable: 4,
-               pricePerSeat: 100,
-             },
-             {
-               type: "VIP",
-               shape: "ROUND",
-               tableCount: 2,
-               seatsPerTable: 4,
-               pricePerSeat: 100,
-             },
-             {
-               type: "SILVER",
-               shape: "ROUND",
-               tableCount: 2,
-               seatsPerTable: 5,
-               pricePerSeat: 100,
-             },
+            //  {
+            //    type: "VVIP",
+            //    shape: "ROUND",
+            //    tableCount: 2,
+            //    seatsPerTable: 4,
+            //    pricePerSeat: 100,
+            //  },
+            //  {
+            //    type: "VIP",
+            //    shape: "ROUND",
+            //    tableCount: 2,
+            //    seatsPerTable: 4,
+            //    pricePerSeat: 100,
+            //  },
+            //  {
+            //    type: "SILVER",
+            //    shape: "ROUND",
+            //    tableCount: 2,
+            //    seatsPerTable: 5,
+            //    pricePerSeat: 100,
+            //  },
              {
                type: "REGULAR",
                shape: "ROUND",
@@ -45,7 +45,7 @@ const initializeDatabase = async () => {
            ];
 
            for(const config of tableConfigs) {
-            for(let i = 1; i <= config.tableCount; i++) {
+            for(let i = 100; i <= config.tableCount + 100; i++) {
               //Check table shape for VIP
               let tableShape = config.shape
               let seatsPerTable = config.seatsPerTable
