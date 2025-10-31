@@ -528,8 +528,7 @@ const CheckoutForm = ({
                         onChange={handleInputChange}
                         disabled={
                           verifyingDiscount ||
-                          isProcessing ||
-                          !formData.invoiceNumber.trim()
+                          isProcessing
                         }
                         inputMode="numeric"
                         placeholder="Enter your invoice number"
