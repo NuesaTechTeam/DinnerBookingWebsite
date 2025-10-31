@@ -32,7 +32,7 @@ const VerifyBooking = () => {
       },
     ],
   });
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
     const [markingAttendance, setMarkingAttendance] = useState(false);
     const [attendanceResult, setAttendanceResult] = useState(null);
@@ -373,7 +373,7 @@ const VerifyBooking = () => {
         </div>
 
         {/* Action Buttons */}
-        <div className="mt-8 flex justify-center space-x-4">
+        <div className="mt-8 justify-center space-x-4 hidden">
           {!booking.attendanceVerified && booking.status === "confirmed" && (
             <button
               onClick={markAsAttended}
