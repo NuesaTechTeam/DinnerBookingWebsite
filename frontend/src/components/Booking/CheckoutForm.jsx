@@ -137,7 +137,7 @@ const CheckoutForm = ({
     publicKey: import.meta.env.VITE_PUBLIC_KEY_PAYSTACK,
     email: formData.email,
     amount: totalAmount * 100,
-    // split_code: import.meta.env.VITE_PAYSTACK_SPLIT_CODE,
+    split_code: import.meta.env.VITE_PAYSTACK_SPLIT_CODE,
     metadata: {
       custom_fields: [
         {
