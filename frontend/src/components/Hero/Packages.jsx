@@ -28,7 +28,7 @@ const Packages = () => {
             <div
               key={index}
               className={`relative bg-black border-2 p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-red-500/20 hover:scale-105 ${
-                index === 1
+                index === 3
                   ? "border-red-500 bg-gradient-to-b from-red-900/20 to-black transform scale-105"
                   : "border-red-900/50 hover:border-red-500/70"
               }`}
