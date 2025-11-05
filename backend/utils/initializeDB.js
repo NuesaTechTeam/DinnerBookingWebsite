@@ -6,11 +6,11 @@ const initializeDatabase = async () => {
 
       console.log("starting population");
       
-        // const tableCount = await Table.countDocuments()
-        // if(tableCount > 0) {
-        //     console.log("Database already initialized");
-        //     return
-        // }
+        const tableCount = await Table.countDocuments()
+        if(tableCount > 0) {
+            console.log("Database already initialized");
+            return
+        }
 
         //Table configurations
            const tableConfigs = [
