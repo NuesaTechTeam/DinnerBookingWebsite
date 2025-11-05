@@ -33,7 +33,7 @@ const Packages = () => {
                   : "border-red-900/50 hover:border-red-500/70"
               }`}
             >
-              {index === 1 && (
+              {index === 3 && (
                 <div className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
                   <span className='bg-gradient-to-r from-red-600 to-red-800 text-white px-4 max-sm:px-1 py-2 text-sm font-bold tracking-wide border border-red-400/50'>
                     MOST RESPECTED
