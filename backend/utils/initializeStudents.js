@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import xlsx from "xlsx"
+import xlsx from "xlsx";
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
@@ -23,10 +23,9 @@ if (!filePath) {
   process.exit(1);
 }
 
-
 const importEngineeringStudents = async (filePath) => {
-    console.log("starting");
-    
+  console.log("starting");
+
   try {
     // Connect to MongoDB
     await mongoose.connect(process.env.MONGO_URI, {
@@ -141,6 +140,117 @@ const importEngineeringStudents = async (filePath) => {
       }
     }
 
+    // const analyzeAndImportStudents = async (studentsToImport) => {
+    //   try {
+    //     console.log("🔍 Analyzing Excel data against database...");
+
+    //     // Get all existing records
+    //     const existingStudents = await Student.find(
+    //       {},
+    //       "matricNo invoiceNumber fullName"
+    //     );
+
+    //     const existingMatricNos = new Set(
+    //       existingStudents.map((s) => s.matricNo)
+    //     );
+    //     const existingInvoiceNumbers = new Set(
+    //       existingStudents.map((s) => s.invoiceNumber)
+    //     );
+
+    //     // Categorize students
+    //     const results = {
+    //       missing: [], // Not in database at all
+    //       duplicateMatric: [], // Matric number exists
+    //       duplicateInvoice: [], // Invoice number exists
+    //       toImport: [], // Ready for import
+    //     };
+
+    //     for (const studentData of studentsToImport) {
+    //       const hasMatricNo = existingMatricNos.has(studentData.matricNo);
+    //       const hasInvoiceNumber = existingInvoiceNumbers.has(
+    //         studentData.invoiceNumber
+    //       );
+
+    //       if (hasMatricNo && hasInvoiceNumber) {
+    //         results.duplicateMatric.push({
+    //           ...studentData,
+    //           reason: "Both matric and invoice exist",
+    //         });
+    //       } else if (hasMatricNo) {
+    //         results.duplicateMatric.push({
+    //           ...studentData,
+    //           reason: "Matric number exists",
+    //         });
+    //       } else if (hasInvoiceNumber) {
+    //         results.duplicateInvoice.push({
+    //           ...studentData,
+    //           reason: "Invoice number exists",
+    //         });
+    //       } else {
+    //         results.missing.push(studentData);
+    //         results.toImport.push(studentData);
+    //       }
+    //     }
+
+    //     // Generate detailed report
+    //     console.log("\n📈 ANALYSIS REPORT:");
+    //     console.log(`📊 Total in Excel: ${studentsToImport.length}`);
+    //     console.log(`📊 Existing in DB: ${existingStudents.length}`);
+    //     console.log(`✅ Ready to import: ${results.toImport.length}`);
+    //     console.log(`❌ Missing from DB: ${results.missing.length}`);
+    //     console.log(`⚠️  Duplicate matric: ${results.duplicateMatric.length}`);
+    //     console.log(
+    //       `⚠️  Duplicate invoice: ${results.duplicateInvoice.length}`
+    //     );
+
+    //     // Show sample of missing students
+    //     if (results.missing.length > 0) {
+    //       console.log("\n👥 Sample of missing students:");
+    //       results.missing.forEach((student, index) => {
+    //         console.log(
+    //           `  ${index + 1}. ${student.fullName} (${student.matricNo}) - ${
+    //             student.invoiceNumber
+    //           }`
+    //         );
+    //       });
+    //       if (results.missing.length > 5) {
+    //         console.log(`  ... and ${results.missing.length - 5} more`);
+    //       }
+    //     }
+
+    //     // Show sample of duplicates
+    //     if (results.duplicateMatric.length > 0) {
+    //       console.log("\n🚫 Sample of duplicate matric numbers:");
+    //       results.duplicateMatric.forEach((student, index) => {
+    //         console.log(
+    //           `  ${index + 1}. ${student.fullName} (${student.matricNo})`
+    //         );
+    //       });
+    //     }
+
+    //     if (results.duplicateInvoice.length > 0) {
+    //       console.log("\n🚫 Sample of duplicate invoice numbers:");
+    //       results.duplicateInvoice.forEach((student, index) => {
+    //         console.log(
+    //           `  ${index + 1}. ${student.fullName} - ${student.invoiceNumber}`
+    //         );
+    //       });
+    //     }
+
+    //     return results;
+    //   } catch (error) {
+    //     console.error("Error analyzing students:", error);
+    //     return {
+    //       missing: [],
+    //       duplicateMatric: [],
+    //       duplicateInvoice: [],
+    //       toImport: [],
+    //     };
+    //   }
+    // };
+
+    // await analyzeAndImportStudents(studentsToImport);
+
     // Summary
     console.log("\n📈 Import Summary:");
     console.log(`✅ Successfully imported: ${importedCount}`);
@@ -202,7 +312,7 @@ function parsePaymentDate(timestamp) {
 // // Run the import if this file is executed directly
 // if (isMainModule) {
 //   const filePath = process.argv[2];
-  
+
 //   if (!filePath) {
 //     console.log('❌ Please provide the path to the Excel file:');
 //     console.log('   npm run import-students path/to/your/file.xlsx');
@@ -212,6 +322,6 @@ function parsePaymentDate(timestamp) {
 //   importEngineeringStudents(filePath);
 // }
 
-importEngineeringStudents(filePath)
+importEngineeringStudents(filePath);
 
 export default importEngineeringStudents;

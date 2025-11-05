@@ -60,7 +60,7 @@ app.get("/", (req, res) => {
 
 await connectDB(); 
 
-// initializeDatabase()
+await initializeDatabase()
 // await syncExistingTables()
 
 //routes

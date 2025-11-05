@@ -6,11 +6,11 @@ const initializeDatabase = async () => {
 
       console.log("starting population");
       
-        const tableCount = await Table.countDocuments()
-        if(tableCount > 0) {
-            console.log("Database already initialized");
-            return
-        }
+        // const tableCount = await Table.countDocuments()
+        // if(tableCount > 0) {
+        //     console.log("Database already initialized");
+        //     return
+        // }
 
         //Table configurations
            const tableConfigs = [
@@ -38,7 +38,7 @@ const initializeDatabase = async () => {
              {
                type: "REGULAR",
                shape: "ROUND",
-               tableCount: 2,
+               tableCount: 1,
                seatsPerTable: 6,
                pricePerSeat: 100,
              },

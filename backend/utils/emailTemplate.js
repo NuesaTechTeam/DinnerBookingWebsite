@@ -437,7 +437,7 @@ const generateEmailTemplate = (booking, seats) => {
 
                 <div class="detail-row">
                     <span class="detail-label">Event Date & Time</span>
-                    <span class="detail-value" style="color: #ef4444; font-style: italic;">23RD NOVEMBER, 2025</span>
+                    <span class="detail-value" style="color: #ef4444; font-style: italic;">29TH NOVEMBER, 2025</span>
                 </div>
 
                 <div class="detail-row">
