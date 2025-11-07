@@ -114,7 +114,7 @@ const Hero = () => {
         <div className="inline-block">
           <div className="bg-red-600/20 border border-red-500/50 px-8 py-3 backdrop-blur-sm">
             <div className="text-red-400 font-bold tracking-[0.2em] text-lg">
-              29TH NOVEMBER, 2025
+              22ND NOVEMBER, 2025
             </div>
           </div>
         </div>

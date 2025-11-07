@@ -167,9 +167,10 @@ const generateEmailTemplate = (booking, seats) => {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            gap: 4px;
             padding: 12px 0;
             border-bottom: 1px solid #333;
-            font-size: 16px;
+            font-size: 15px;
         }
 
         .detail-row:last-child {
@@ -437,7 +438,7 @@ const generateEmailTemplate = (booking, seats) => {
 
                 <div class="detail-row">
                     <span class="detail-label">Event Date & Time</span>
-                    <span class="detail-value" style="color: #ef4444; font-style: italic;">29TH NOVEMBER, 2025</span>
+                    <span class="detail-value" style="color: #ef4444; font-style: italic;">22ND NOVEMBER, 2025</span>
                 </div>
 
                 <div class="detail-row">
