@@ -304,7 +304,7 @@ const generateEmailTemplate = (booking, seats) => {
       text-align: center;
       margin: 30px 0;
       padding: 20px;
-      background-color: #f8f9fa;
+      background-color: #292929;
       border-radius: 8px;
     }
     .qr-code {
