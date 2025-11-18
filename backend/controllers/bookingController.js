@@ -95,9 +95,9 @@ export const createBooking = async (req, res) => {
 
     await booking.save({ session });
 
-    if(discountApplied && invoiceNumber) {
-      await markDiscountUsed(invoiceNumber, booking._id)
-    }
+    // if(discountApplied && invoiceNumber) {
+    //   await markDiscountUsed(invoiceNumber, booking._id)
+    // }
 
     await session.commitTransaction();
     session.endSession();

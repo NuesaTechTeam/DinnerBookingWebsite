@@ -4,6 +4,7 @@ import { Seat } from "../models/seatModel.js";
 import { sendConfirmationEmail, sendFeedbackNotification } from "../utils/emailService.js";
 import mongoose from "mongoose";
 import { Table } from "../models/tableModel.js";
+import { markDiscountUsed } from "./discountController.js";
 
 //vVerify Paystack payment
 export const verifyPayment = async (req, res) => {
@@ -90,6 +91,12 @@ export const verifyPayment = async (req, res) => {
               { session }
             );
           }
+
+          //If discount applied, mark it as used
+          const {discountApplied, couponCode: invoiceNumber} = booking;
+             if(discountApplied && invoiceNumber) {
+                await markDiscountUsed(invoiceNumber, booking._id)
+              }
 
           await session.commitTransaction();
           session.endSession();
