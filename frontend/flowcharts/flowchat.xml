@@ -1,0 +1,111 @@
+
+<mxfile host="app.diagrams.net" modified="2024-01-01T00:00:00.000Z" agent="Claude" version="22.0.0" etag="xxx">
+  <diagram name="Gesture Recognition System" id="gesture-recognition">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        
+        <!-- Gesture Recognition Subsystem Box -->
+        <mxCell id="subsystem-box" value="GESTURE RECOGNITION SUBSYSTEM&#xa;(Wearable Glove)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;verticalAlign=top;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="50" width="500" height="200" as="geometry" />
+        </mxCell>
+        
+        <!-- MPU-6050 IMU -->
+        <mxCell id="mpu6050" value="MPU-6050 IMU&#xa;(Hand Sensor)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="1">
+          <mxGeometry x="130" y="120" width="140" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- ESP32 Module #1 -->
+        <mxCell id="esp32-1" value="ESP32 Module #1&#xa;(Transmitter)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="380" y="120" width="140" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- I2C Connection -->
+        <mxCell id="i2c-conn" value="[I2C]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="mpu6050" target="esp32-1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Bluetooth Connection -->
+        <mxCell id="bluetooth-conn" value="[Bluetooth]&#xa;Wireless" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;strokeColor=#0066CC;" edge="1" parent="1" source="esp32-1" target="wheelchair-box">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="450" y="300" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        
+        <!-- Wheelchair Control System Box -->
+        <mxCell id="wheelchair-box" value="WHEELCHAIR CONTROL SYSTEM" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;verticalAlign=top;fontSize=14;fontStyle=1;align=center;" vertex="1" parent="1">
+          <mxGeometry x="100" y="320" width="500" height="450" as="geometry" />
+        </mxCell>
+        
+        <!-- ESP32 Module #2 -->
+        <mxCell id="esp32-2" value="ESP32 Module #2&#xa;(Receiver &amp; Controller)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="250" y="370" width="200" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Ultrasonic Sensors -->
+        <mxCell id="ultrasonic" value="Ultrasonic&#xa;Sensors (×4)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="130" y="500" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Additional Sensors -->
+        <mxCell id="add-sensors" value="Additional&#xa;Sensors" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="290" y="500" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- Motor Drivers -->
+        <mxCell id="motor-drivers" value="Motor&#xa;Drivers" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="450" y="500" width="120" height="60" as="geometry" />
+        </mxCell>
+        
+        <!-- GPIO Connection -->
+        <mxCell id="gpio-conn" value="[GPIO]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="esp32-2" target="ultrasonic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- I2C Connection to Additional Sensors -->
+        <mxCell id="i2c-conn-2" value="[I2C]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="esp32-2" target="add-sensors">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- PWM Connection -->
+        <mxCell id="pwm-conn" value="[PWM]" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="esp32-2" target="motor-drivers">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Safety Logic -->
+        <mxCell id="safety-logic" value="Safety Logic" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="275" y="620" width="150" height="40" as="geometry" />
+        </mxCell>
+        
+        <!-- Connections to Safety Logic -->
+        <mxCell id="ultra-to-safety" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ultrasonic" target="safety-logic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="motor-to-safety" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="motor-drivers" target="safety-logic">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- Emergency Stop -->
+        <mxCell id="emergency-stop" value="Emergency Stop" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontColor=#CC0000;" vertex="1" parent="1">
+          <mxGeometry x="275" y="690" width="150" height="40" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="safety-to-estop" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="safety-logic" target="emergency-stop">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+        <!-- DC Motors -->
+        <mxCell id="dc-motors" value="DC Motors&#xa;(Left &amp; Right)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffcccc;strokeColor=#CC0000;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="275" y="740" width="150" height="50" as="geometry" />
+        </mxCell>
+        
+        <mxCell id="estop-to-motors" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;strokeWidth=2;" edge="1" parent="1" source="emergency-stop" target="dc-motors">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

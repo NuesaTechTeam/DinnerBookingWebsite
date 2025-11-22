@@ -4,6 +4,8 @@ import React from 'react'
 const TableComponent = ({ table, onTableClick, isSelected }) => {
         const availableSeats = table.capacity - table.bookedSeats.length;
     const isFullyBooked = availableSeats === 0;
+
+    
     
       const getSectionColor = (type) => {
         switch (type) {
@@ -35,11 +37,21 @@ const TableComponent = ({ table, onTableClick, isSelected }) => {
         const parts = tableNumber.split("-");
         return parts[parts.length - 1];
       };
+
+      const tableNum = extractTableNumber(table.tableNumber);
+
+          const hideSeat =
+            table.type === "REGULAR" &&
+            (
+            ( tableNum > 28 && tableNum < 43) ||
+            (tableNum > 70 && tableNum < 85)
+            );
+         
   return (
     <div
       className={`relative cursor-pointer transition-all duration-300 transform hover:scale-110 ${
         isSelected ? "scale-110 z-10" : ""
-      }`}
+      } ${hideSeat ? "hidden" : ""}`}
       onClick={() => !isFullyBooked && onTableClick(table)}
     >
       {/* Table */}
@@ -67,14 +79,14 @@ const TableComponent = ({ table, onTableClick, isSelected }) => {
             : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"
         }`}
       >
-        <div className='flex items-center space-x-1'>
+        <div className="flex items-center space-x-1">
           {getSectionIcon(table.type)}
           <span>Table {table.tableNumber}</span>
         </div>
-        <div className='text-green-400'>
+        <div className="text-green-400">
           {availableSeats}/{table.capacity} available
         </div>
-        <div className='absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black/90'></div>
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black/90"></div>
       </div>
 
       {/* Section Badge */}
