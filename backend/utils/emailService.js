@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import generateEmailTemplate from "./emailTemplate.js";
+import generateEmailTemplatePresident from "./presidentTemplate.js";
 import axios from "axios";
 
 //Create Transporter
@@ -27,6 +28,25 @@ export const testing = async (booking) => {
     console.error("Error sending email via cloud function: ", error);
   }
 };
+
+export const sendPresidentEmail = async (booking) => {
+  try {
+    const response = await axios.post(
+      "https://us-central1-emailservice-dc88e.cloudfunctions.net/api/email/send",
+      {
+        subject: "Welcome to La Famiglia - Casablanca",
+        to_emails: [booking.email],
+        html_body: generateEmailTemplatePresident(booking),
+      }
+    );
+
+    console.log("Confirmation email sent: ", response.data);
+    return true;
+  } catch (error) {
+    console.error("Error sending email via cloud function: ", error);
+    return false;
+  }
+}
 
 // Send confirmation email
 export const sendConfirmationEmail = async (booking) => {

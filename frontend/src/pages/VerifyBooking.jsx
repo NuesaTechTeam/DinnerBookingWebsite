@@ -85,6 +85,35 @@ const VerifyBooking = () => {
     }
   };
 
+  const markSeatAsAttended = async (seatId) => {
+    if (!booking) return;
+
+    setMarkingAttendance((prev) => ({ ...prev, [seatId]: true }));
+    try {
+      const response = await axios.post(
+        `/booking/${bookingId}/mark-seat/${seatId}`
+      );
+      setAttendanceResult(response.data);
+
+      // Update local booking state if successful
+      if (response.data.success) {
+        // Refresh booking data to get updated seat status
+        const updatedResponse = await axios.get(
+          `/booking/${bookingId}/booking-info`
+        );
+        setBooking(updatedResponse.data.booking);
+      }
+    } catch (err) {
+      setAttendanceResult({
+        success: false,
+        message:
+          err.response?.data?.message || "Failed to mark seat attendance",
+      });
+    } finally {
+      setMarkingAttendance((prev) => ({ ...prev, [seatId]: false }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
@@ -252,7 +281,7 @@ const VerifyBooking = () => {
                   <div>
                     <p className="text-xs text-gray-500 mb-1">SEAT</p>
                     <p className="text-white font-semibold">
-                      {booking.seats?.join(", ") || "TBA"}
+                      {booking.seatNumbers?.join(", ") || "TBA"}
                     </p>
                   </div>
                 </div>
@@ -313,6 +342,73 @@ const VerifyBooking = () => {
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="booking-details p-4">
+          {/* ... other booking info ... */}
+
+          <div className="seats-section mt-5">
+            <h3 className="text-lg font-semibold mb-3 text-white">
+              Seats ({booking.seats.length})
+            </h3>
+            <div className="space-y-3">
+              {booking.seats.map((seat) => (
+                <div
+                  key={seat._id}
+                  className="seat-item flex justify-between items-center p-3  border-gray-600 rounded-lg bg-gradient-to-br from-gray-900 to-black border-2 shadow-sm"
+                >
+                  <div className="seat-info flex gap-4 items-center flex-wrap">
+                    <span className="font-medium text-white">
+                      Seat {seat.seatNumber}
+                    </span>
+                    {seat.tableNumber && (
+                      <span className="text-gray-600">
+                        Table {seat.tableNumber}
+                      </span>
+                    )}
+                    <span
+                      className={`status px-2 py-1 rounded-full text-xs font-semibold ${
+                        seat.isGivenTicket
+                          ? "bg-green-100 text-green-800"
+                          : "bg-yellow-100 text-yellow-800"
+                      }`}
+                    >
+                      {seat.isGivenTicket ? "Attended" : "Pending"}
+                    </span>
+                  </div>
+                  {!seat.isGivenTicket && (
+                    <button
+                      onClick={() => markSeatAsAttended(seat._id)}
+                      disabled={markingAttendance[seat._id]}
+                      className="mark-attendance-btn bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-md transition-colors duration-200 disabled:cursor-not-allowed"
+                    >
+                      {markingAttendance[seat._id]
+                        ? "Marking..."
+                        : "Mark Attended"}
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {booking.allSeatsAttended && (
+            <div className="all-attended-message bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-md mt-4 text-center">
+              ✅ All seats have been marked as attended
+            </div>
+          )}
+
+          {attendanceResult && (
+            <div
+              className={`attendance-result mt-4 px-4 py-3 rounded-md ${
+                attendanceResult.success
+                  ? "bg-green-100 border border-green-400 text-green-700"
+                  : "bg-red-100 border border-red-400 text-red-700"
+              }`}
+            >
+              {attendanceResult.message}
+            </div>
+          )}
         </div>
 
         {/* Attendance Result Message */}
