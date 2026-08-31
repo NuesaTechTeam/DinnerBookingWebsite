@@ -14,7 +14,7 @@ const TableVisualization = ({
     : table.type === "VVIP"
     ? "w-52 h-20"
     : "w-20 h-38";
-  const tableClass = isRoundTable ? "rounded-full" : "rounded-lg";
+  const tableClass = isRoundTable ? "rounded-full" : "rounded-xl";
 
   const getSeatPosition = (index, capacity, isRound) => {
     if (isRound) {
@@ -69,7 +69,7 @@ const TableVisualization = ({
         case 8:
           // 3 top, 1 left, 1 right, 3 bottom
           return [
-            { x: -45, y: -40 }, //left
+            { x: -45, y: -40 }, // left
             { x: -45, y: 10 },
             { x: -45, y: 62 },
             { x: 14, y: -78 }, // top
@@ -113,13 +113,16 @@ const TableVisualization = ({
     const match = seatNumber.match(/S(\d+)$/);
     return match ? parseInt(match[1]) : null;
   };
+
   return (
-    <div className="relative mb-12 flex justify-center">
-      {/* Table */}
+    <div className="relative mb-12 flex justify-center py-6">
+      {/* Table Structure */}
       <div
-        className={`${tableWidth} ${tableClass} border-4 ${table.type === "VVIP" ? "border-x-0" : ""} border-gray-500 bg-gray-700/50 flex items-center justify-center relative`}
+        className={`${tableWidth} ${tableClass} border-2 ${
+          table.type === "VVIP" ? "border-x-1" : ""
+        } border-[#d4af37]/60 bg-[#121212] flex items-center justify-center relative shadow-[0_0_30px_rgba(212,175,55,0.1)]`}
       >
-        <span className="text-white font-bold">
+        <span className="text-[#d4af37] font-serif font-bold text-xs md:text-sm tracking-wider uppercase text-center px-2">
           Table {extractTableNumber(table.tableNumber)}
         </span>
 
@@ -130,30 +133,24 @@ const TableVisualization = ({
           const isLocked = lockedSeats.includes(seat._id);
           const isBookedNow = bookedSeats.includes(seat._id);
           const { x, y } = getSeatPosition(index, table.capacity, isRoundTable);
-          // const angle = (index * 360) / table.capacity;
-          // const radius = isRoundTable ? 64 : index % 2 === 0 ? 70 : 50; // Alternate for rectangular tables
-
-          // // Position calculation
-          // const x = Math.cos((angle * Math.PI) / 180) * radius;
-          // const y = Math.sin((angle * Math.PI) / 180) * radius;
 
           return (
             <div
               key={seat._id}
-              className={`absolute w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold cursor-pointer transition-all duration-200 ${
+              className={`absolute w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all duration-200 select-none ${
                 isBooked || isBookedNow
-                  ? "bg-red-800 border-red-600 text-red-300 cursor-not-allowed"
+                  ? "bg-red-950/80 border-red-800/60 text-red-400/50 cursor-not-allowed"
                   : isLocked
-                  ? "bg-yellow-800 border-yellow-600 text-yellow-300 cursor-not-allowed"
+                  ? "bg-amber-950/80 border-amber-700/60 text-amber-500 cursor-not-allowed"
                   : isSelected
-                  ? "bg-green-600 border-green-400 text-white transform scale-110"
-                  : "bg-gray-700 border-gray-500 text-gray-300 hover:bg-gray-600 hover:border-gray-400"
+                  ? "bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] border-[#fcf6ba] text-black font-extrabold shadow-[0_0_12px_rgba(212,175,55,0.6)] cursor-pointer"
+                  : "bg-black/80 border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 hover:border-[#d4af37] cursor-pointer"
               }`}
               style={{
                 left: `calc(${isRoundTable ? "68%" : "50%"} + ${x}px - 1rem)`,
                 top: `calc(${isRoundTable ? "68%" : "50%"} + ${y}px - 1rem)`,
                 transform: isSelected
-                  ? "translate(-50%, -50%) scale(1.1)"
+                  ? "translate(-50%, -50%) scale(1.15)"
                   : "translate(-50%, -50%)",
               }}
               onClick={() =>

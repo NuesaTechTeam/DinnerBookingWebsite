@@ -1,71 +1,66 @@
-import { Crown, Shield, Star, User, Users } from 'lucide-react';
-import React from 'react'
+import { Crown, Shield, Star, User } from 'lucide-react';
+import React from 'react';
 
 const TableComponent = ({ table, onTableClick, isSelected }) => {
-        const availableSeats = table.capacity - table.bookedSeats.length;
-    const isFullyBooked = availableSeats === 0;
+  const availableSeats = table.capacity - table.bookedSeats.length;
+  const isFullyBooked = availableSeats === 0;
 
-    
-    
-      const getSectionColor = (type) => {
-        switch (type) {
-          case "VVIP":
-            return "from-yellow-600 to-yellow-800";
-          case "VIP":
-            return "from-red-600 to-red-800";
-          case "SILVER":
-            return "from-gray-400 to-gray-600";
-          default:
-            return "from-amber-700 to-amber-900";
-        }
-    };
-    
-      const getSectionIcon = (type) => {
-        switch (type) {
-          case "VVIP":
-            return <Crown className='w-3 h-3 md:w-5 md:h-5'  size = {12} />;
-          case "VIP":
-            return <Star className='w-3 h-3 md:w-5 md:h-5' size={12} />;
-          case "SILVER":
-            return <Shield className='w-3 h-3 md:w-5 md:h-5' size={12} />;
-          default:
-            return <User className='w-3 h-3 md:w-5 md:h-5' size={12} />;
-        }
-      };
+  const getSectionColor = (type) => {
+    switch (type) {
+      case "VVIP":
+        return "from-[#bf953f] via-[#fcf6ba] to-[#aa7c11]";
+      case "VIP":
+        return "from-[#b38728] to-[#fbf5b7]";
+      case "SILVER":
+        return "from-slate-300 via-slate-100 to-slate-400";
+      default:
+        return "from-[#4a3b10] to-[#1f1807]";
+    }
+  };
 
-       const extractTableNumber = (tableNumber) => {
-        const parts = tableNumber.split("-");
-        return parts[parts.length - 1];
-      };
+  const getSectionIcon = (type) => {
+    switch (type) {
+      case "VVIP":
+        return <Crown className="w-3 h-3 md:w-5 md:h-5 text-black" size={12} />;
+      case "VIP":
+        return <Star className="w-3 h-3 md:w-5 md:h-5 text-black" size={12} />;
+      case "SILVER":
+        return <Shield className="w-3 h-3 md:w-5 md:h-5 text-slate-900" size={12} />;
+      default:
+        return <User className="w-3 h-3 md:w-5 md:h-5 text-[#d4af37]" size={12} />;
+    }
+  };
 
-      const tableNum = extractTableNumber(table.tableNumber);
+  const extractTableNumber = (tableNumber) => {
+    const parts = tableNumber.split("-");
+    return parts[parts.length - 1];
+  };
 
-          const hideSeat =
-            table.type === "REGULAR" &&
-            (
-            ( tableNum > 28 && tableNum < 43) ||
-            (tableNum > 70 && tableNum < 85)
-            );
-         
+  const tableNum = extractTableNumber(table.tableNumber);
+
+  const hideSeat =
+    table.type === "REGULAR" &&
+    ((tableNum > 28 && tableNum < 43) || (tableNum > 70 && tableNum < 85));
+
   return (
     <div
-      className={`relative cursor-pointer transition-all duration-300 transform hover:scale-110 ${
+      className={`relative cursor-pointer transition-all duration-300 transform hover:scale-110 group ${
         isSelected ? "scale-110 z-10" : ""
       } ${hideSeat ? "hidden" : ""}`}
       onClick={() => !isFullyBooked && onTableClick(table)}
     >
-      {/* Table */}
+      {/* Table Main Circle */}
       <div
-        className={`w-8 h-8 md:w-16 md:h-16 rounded-full border-1 md:border-4 flex items-center justify-center text-white font-bold text-sm transition-all duration-300 ${
+        className={`w-8 h-8 md:w-16 md:h-16 rounded-full border-1 md:border-2 flex items-center justify-center font-serif font-bold text-xs md:text-sm transition-all duration-300 ${
           isFullyBooked
-            ? "bg-gray-800 border-gray-600 cursor-not-allowed opacity-50"
+            ? "bg-[#121212] border-gray-800 text-gray-600 cursor-not-allowed opacity-40"
             : isSelected
             ? `bg-gradient-to-br ${getSectionColor(
                 table.type
-              )} border-white shadow-lg shadow-red-500/30`
+              )} text-black border-[#fcf6ba] shadow-[0_0_20px_rgba(212,175,55,0.7)]`
             : `bg-gradient-to-br ${getSectionColor(
                 table.type
-              )} border-gray-300 hover:border-white hover:shadow-lg`
+              )} text-black border-[#d4af37]/60 hover:border-[#fcf6ba] hover:shadow-[0_0_15px_rgba(212,175,55,0.4)]`
         }`}
       >
         {extractTableNumber(table.tableNumber)}
@@ -73,27 +68,27 @@ const TableComponent = ({ table, onTableClick, isSelected }) => {
 
       {/* Table Info Tooltip */}
       <div
-        className={`absolute -top-12 left-1/2 transform -translate-x-1/2 bg-black/90 text-white px-3 py-1 rounded text-xs whitespace-nowrap transition-all duration-300 z-10 ${
+        className={`absolute -top-12 left-1/2 transform -translate-x-1/2 bg-[#09090b] border border-[#d4af37]/40 text-white px-3 py-1.5 rounded-lg text-xs whitespace-nowrap transition-all duration-300 z-20 shadow-xl ${
           isSelected
             ? "opacity-100 visible"
             : "opacity-0 invisible group-hover:opacity-100 group-hover:visible"
         }`}
       >
-        <div className="flex items-center space-x-1">
+        <div className="flex items-center space-x-1 font-semibold">
           {getSectionIcon(table.type)}
-          <span>Table {table.tableNumber}</span>
+          <span className="text-[#d4af37]">Table {table.tableNumber}</span>
         </div>
-        <div className="text-green-400">
+        <div className="text-emerald-400 text-[11px]">
           {availableSeats}/{table.capacity} available
         </div>
-        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-black/90"></div>
+        <div className="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-[#09090b]"></div>
       </div>
 
       {/* Section Badge */}
       <div
-        className={`absolute -top-4.5 md:-top-6 -right-2 md:right-12 w-5 h-5 md:w-8 md:h-8 rounded-full bg-gradient-to-br z-2 ${getSectionColor(
+        className={`absolute -top-1.5 md:-top-2 -right-1.5 md:-right-2 w-5 h-5 md:w-7 md:h-7 rounded-full bg-gradient-to-br z-10 ${getSectionColor(
           table.type
-        )} border-1 md:border-2 border-white flex items-center justify-center`}
+        )} border border-[#d4af37] flex items-center justify-center shadow-md`}
       >
         {getSectionIcon(table.type)}
       </div>
@@ -101,4 +96,4 @@ const TableComponent = ({ table, onTableClick, isSelected }) => {
   );
 };
 
-export default TableComponent
+export default TableComponent;

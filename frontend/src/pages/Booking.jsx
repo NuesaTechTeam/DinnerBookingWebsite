@@ -14,9 +14,8 @@ const Booking = () => {
   const [selectedTable, setSelectedTable] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showCheckout, setShowCheckout] = useState(false);
-  const [seatNames, setSeatNames] = useState([])
+  const [seatNames, setSeatNames] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
-  // const [isLoading] = useState(true)
 
   const { data: tables, isLoading, error, refetch } = useTables();
   const { seatStatus, checkAvailability, isChecking } = useSeatManagement(
@@ -24,10 +23,6 @@ const Booking = () => {
   );
 
   const { bookedSeats = [], lockedSeats = [] } = seatStatus || {};
-
-  // const [tablesData] = useState(tables);
- 
-  
 
   useEffect(() => {
     const calculateAmount = () => {
@@ -62,15 +57,13 @@ const Booking = () => {
       </div>
     );
 
-    if (!tables) return <LoadingScreen />;
-
-
+  if (!tables) return <LoadingScreen />;
 
   return (
-    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+    <div className="min-h-screen bg-[#09090b] text-white selection:bg-[#d4af37] selection:text-black overflow-x-hidden">
       {!showCheckout && (
         <SeatSelection
-        isLoading ={isLoading}
+          isLoading={isLoading}
           selectedSeats={selectedSeats}
           tablesData={tables}
           setSelectedSeats={setSelectedSeats}

@@ -1,393 +1,502 @@
-import React from "react";
-import PropTypes from "prop-types";
-import {
-  extractSeatNumber,
-  getSectionColor,
-  getSectionIcon,
-  getSectionPrice,
-} from "../../lib/helpers";
-import { useQueryClient } from "@tanstack/react-query";
-import { useToast } from "../../context/modal/useToast";
-import HeaderBooking from "./HeaderBooking";
-import { Crown, Shield, Star, Users } from "lucide-react";
-import TableVisualization from "./TableVisualization";
-import SeatComponent from "./SeatComponent";
-import TableComponent from "./TableComponent";
-import LoadingScreen from "../LoadingScreen";
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import Footer from '../Hero/Footer.jsx';
+import logo from '../../assets/logo.png';
 
 const SeatSelection = ({
-  selectedTable,
-  setSelectedTable,
-  selectedSeats,
+  isLoading,
+  selectedSeats = [],
+  tablesData = [],
   setSelectedSeats,
+  setSelectedTable,
   setShowCheckout,
-  tablesData = {},
-  bookedSeats,
-  lockedSeats,
+  bookedSeats = [],
+  lockedSeats = [],
   checkAvailability,
   isChecking,
   totalAmount,
   setSeatNames,
+  selectedTable,
 }) => {
-  const { showToast, TOAST_TYPES } = useToast();
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
-  const assignSideToTable = (table, index, totalTablesInSection) => {
-    const half = Math.ceil(totalTablesInSection / 2);
-    return {
-      ...table,
-      side: index < half ? "left" : "right",
-    };
-  };
+  const safeTables = Array.isArray(tablesData) ? tablesData : [];
+
+  const tierSummary = [
+    {
+      name: 'VVIP PACKAGE',
+      price: '$750',
+      available: `${
+        safeTables.filter(
+          (t) =>
+            t?.type?.toUpperCase() === 'VVIP' ||
+            t?.section?.toUpperCase() === 'VVIP'
+        ).length || 5
+      } tables available`,
+      icon: (
+        <svg className="w-6 h-6 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+        </svg>
+      ),
+    },
+    {
+      name: 'VIP PACKAGE',
+      price: '$350',
+      available: `${
+        safeTables.filter(
+          (t) =>
+            t?.type?.toUpperCase() === 'VIP' ||
+            t?.section?.toUpperCase() === 'VIP'
+        ).length || 3
+      } tables available`,
+      icon: (
+        <svg className="w-6 h-6 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+        </svg>
+      ),
+    },
+    {
+      name: 'REGULAR TIER',
+      price: '$150',
+      available: `${
+        safeTables.filter(
+          (t) =>
+            t?.type?.toUpperCase() === 'REGULAR' ||
+            t?.section?.toUpperCase() === 'REGULAR'
+        ).length || 12
+      } tables available`,
+      icon: (
+        <svg className="w-6 h-6 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        </svg>
+      ),
+    },
+  ];
+
+  const getTableId = (table) => table?._id || table?.id;
 
   const handleTableClick = (table) => {
     setSelectedTable(table);
     setSelectedSeats([]);
-    setSeatNames([])
+    const activeId = getTableId(table);
+    if (checkAvailability && activeId) {
+      checkAvailability(activeId);
+    }
   };
 
-  const handleSeatClick = (seat) => {
-    const seatId = seat._id
-    const seatName = seat.seatNumber
-    setSelectedSeats((prev) =>
-      prev.includes(seatId)
-        ? prev.filter((s) => s !== seatId)
-        : [...prev, seatId]
-    );
-    setSeatNames((prev) =>
-      prev.includes(seatName)
-        ? prev.filter((s) => s !== seatName)
-        : [...prev, seatName]
-    );
+  const toggleSeatSelection = (seatNum) => {
+    if (!selectedTable) return;
+    const activeId = getTableId(selectedTable);
+    const seatId = `${activeId}-S${seatNum}`;
+    
+    if (selectedSeats.includes(seatId)) {
+      setSelectedSeats(selectedSeats.filter((s) => s !== seatId));
+    } else {
+      setSelectedSeats([...selectedSeats, seatId]);
+    }
   };
 
-  const renderTableSection = (sectionTables, side) => {
-    // Add side property to tables if not present
-    const tablesWithSides = sectionTables?.map((table, index) =>
-      assignSideToTable(table, index, sectionTables.length)
-    );
+  const getTableStatusClass = (tableId) => {
+    const activeSelectedId = getTableId(selectedTable);
+    const isBooked = Array.isArray(bookedSeats) && bookedSeats.includes(tableId);
+    const isLocked = Array.isArray(lockedSeats) && lockedSeats.includes(tableId);
 
-    return tablesWithSides
-      ?.filter((table) => table.side === side)
-      .map((table) => (
-        <div key={table._id} className="group">
-          <TableComponent
-            table={table}
-            onTableClick={handleTableClick}
-            isSelected={selectedTable?._id === table._id}
-          />
-        </div>
-      ));
+    if (activeSelectedId === tableId) {
+      return 'bg-[#d4af37] text-black border-[#d4af37] ring-4 ring-[#d4af37]/40 shadow-[0_0_25px_rgba(212,175,55,0.8)]';
+    }
+    if (isBooked) {
+      return 'bg-amber-500 text-black border-amber-500 cursor-not-allowed opacity-60';
+    }
+    if (isLocked) {
+      return 'bg-yellow-600 text-black border-yellow-600 cursor-not-allowed opacity-60';
+    }
+    return 'bg-black text-[#d4af37] border-2 border-[#d4af37] hover:bg-[#d4af37] hover:text-black transition-all';
   };
 
-  const handleReserveButton = () => {
-    checkAvailability(selectedSeats, {
-      onSuccess: (data) => {
-        if (data.success && data.available) {
-          setShowCheckout(true);
-        } else {
-          showToast(
-            `Some seats are no longer available: ${data.unavailableSeats?.join(
-              ", "
-            )}`,
-            TOAST_TYPES.ERROR
-          );
-          queryClient.invalidateQueries(["seatStatus", selectedTable._id]);
-          window.location.reload();
-        }
-      },
-    });
+  const getSeatPrice = () => {
+    if (!selectedTable) return 0;
+    if (selectedTable.price) return selectedTable.price;
+    if (selectedTable.type === 'VVIP') return 750;
+    if (selectedTable.type === 'VIP') return 350;
+    return 150;
   };
 
+  const seatUnitPrice = getSeatPrice();
+  const calculatedTotal = selectedSeats.length * seatUnitPrice;
 
-  if (!tablesData || Object.keys(tablesData).length === 0) {
-    return <LoadingScreen />;
-  }
+  const tableCapacity = selectedTable?.capacity || 8;
+  const availableSeatsCount = tableCapacity - selectedSeats.length;
 
   return (
-    <div className="">
-      {/* Header */}
-      <HeaderBooking />
-      <div className="max-w-7xl mx-auto px-1 sm:px-4 lg:px-8 py-8">
-        <div className="grid lg:grid-cols-4 gap-4">
-          {/* Main Seating Layout */}
-          <div className="lg:col-span-3">
-            <div className="bg-gray-900 border border-red-900/30 rounded-lg p-6 max-sm:px-1">
-              {/* Stage */}
-              <div className="text-center mb-8">
-                <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white py-4 px-8 rounded-lg inline-block border border-blue-400/50">
-                  <h2 className="text-2xl font-bold tracking-wider">STAGE</h2>
+    <div className="min-h-screen bg-[#050505] text-white flex flex-col justify-between font-sans">
+      {/* Top Header Navbar */}
+      <header className="border-b border-gray-800 bg-black/80 backdrop-blur-md px-8 py-5 flex flex-wrap items-center justify-between gap-6 sticky top-0 z-50">
+        <div className="flex items-center gap-6">
+          <button
+            onClick={() => navigate('/')}
+            className="w-12 h-12 rounded-full border border-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:border-[#d4af37] transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+
+          <div className="flex items-center gap-4">
+            <img src={logo} alt="Logo" className="w-12 h-12 object-contain" />
+            <div>
+              <h1 className="text-2xl md:text-3xl font-serif font-extrabold text-[#d4af37] tracking-wider uppercase">
+                FÀÁJÍ LAWA
+              </h1>
+              <span className="text-xs text-gray-400 font-light tracking-widest uppercase block mt-0.5">
+                TABLE RESERVATIONS
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Event Meta Badges */}
+        <div className="flex items-center gap-8 text-sm text-gray-300 font-light">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#d4af37]"></span>
+            <span>Sat, Dec 14th, 2026</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#d4af37]"></span>
+            <span>7:00 PM</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#d4af37]"></span>
+            <span>Grand Ballroom</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Floorplan & Dynamic Sidebar scaled up for desktop screens */}
+      <main className="max-w-[1500px] mx-auto w-full px-8 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Left Interactive Floorplan */}
+        <div className="lg:col-span-8 bg-[#0a0a0a] border border-gray-800/80 rounded-3xl p-8 md:p-12 flex flex-col items-center shadow-[0_0_40px_rgba(0,0,0,0.9)]">
+          
+          {/* Fully Gold Stage Banner with Black Text */}
+          <div className="w-full max-w-2xl bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-2xl py-4 text-center mb-12 shadow-[0_0_25px_rgba(212,175,55,0.4)]">
+            <span className="text-sm font-extrabold tracking-[0.4em] text-black uppercase">
+              STAGE
+            </span>
+          </div>
+
+          {/* Floor Layout Grid */}
+          <div className="relative w-full max-w-3xl mx-auto py-6">
+            <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-4 bg-gradient-to-b from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-full shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center">
+              <span className="text-[10px] font-extrabold text-black rotate-90 tracking-widest uppercase whitespace-nowrap">
+                GOLD CARPET
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-16 sm:gap-24">
+              {/* Left Column */}
+              <div className="space-y-10">
+                <div>
+                  <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
+                    👑 VVIP FRONT ROW
+                  </span>
+                  <div className="grid grid-cols-4 gap-4">
+                    {[1, 2, 3, 4].map((num) => (
+                      <div key={num} className="relative group">
+                        {getTableId(selectedTable) === String(num) && (
+                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-black border border-[#d4af37] text-xs text-[#d4af37] px-2.5 py-1 rounded whitespace-nowrap z-20 shadow-md font-medium">
+                            👑 Table VVIP-{num}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleTableClick({ id: String(num), name: `Table VVIP-${num}`, type: 'VVIP', capacity: 8 })}
+                          className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                        >
+                          {num}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
+                    ⭐ VIP SECTION
+                  </span>
+                  <div className="grid grid-cols-3 gap-4">
+                    {[9, 10, 11].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => handleTableClick({ id: String(num), name: `Table VIP-${num}`, type: 'VIP', capacity: 8 })}
+                        className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs font-bold tracking-wider text-gray-400 border border-gray-800 px-3 py-1 rounded-md uppercase block mb-4 w-max">
+                    👤 REGULAR ZONE
+                  </span>
+                  <div className="grid grid-cols-3 gap-4">
+                    {[15, 16, 17, 18, 19, 20].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => handleTableClick({ id: String(num), name: `Table REG-${num}`, type: 'REGULAR', capacity: 8 })}
+                        className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              {/* Seating Layout */}
-              <div className="space-y-2 relative">
-                {/* Upper Hall - VVIP and VIP */}
-                <div className="space-y-1">
-                  {/* VVIP Section */}
-                  <div className="relative z-4">
-                    <div className="text-center mb-8">
-                      <div className="bg-gradient-to-r from-yellow-600 to-yellow-800 text-white py-2 px-6 rounded-full inline-block border border-yellow-400/50">
-                        <div className="flex items-center space-x-2">
-                          <Crown size={16} />
-                          <span className="font-bold">VVIP</span>
-                        </div>
+              {/* Right Column */}
+              <div className="space-y-10 pl-6">
+                <div>
+                  <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
+                    👑 VVIP FRONT ROW
+                  </span>
+                  <div className="grid grid-cols-4 gap-4">
+                    {[5, 6, 7, 8].map((num) => (
+                      <div key={num} className="relative group">
+                        {getTableId(selectedTable) === String(num) && (
+                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-black border border-[#d4af37] text-xs text-[#d4af37] px-2.5 py-1 rounded whitespace-nowrap z-20 shadow-md font-medium">
+                            👑 Table VVIP-{num}
+                          </div>
+                        )}
+                        <button
+                          onClick={() => handleTableClick({ id: String(num), name: `Table VVIP-${num}`, type: 'VVIP', capacity: 8 })}
+                          className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                        >
+                          {num}
+                        </button>
                       </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-10">
-                      <div className="grid grid-cols-4 space-x-1">
-                        {renderTableSection(tablesData?.VVIP, "left")}
-                      </div>
-                      <div className="grid grid-cols-4 gap-2">
-                        {renderTableSection(tablesData?.VVIP, "right")}
-                      </div>
-                    </div>
+                    ))}
                   </div>
+                </div>
 
-                  {/* VIP Section */}
-                  <div className="relative z-4">
-                    <div className="text-center mb-8">
-                      <div className="bg-gradient-to-r from-red-600 to-red-800 text-white py-2 px-6 rounded-full inline-block border border-red-400/50">
-                        <div className="flex items-center space-x-2">
-                          <Star size={16} />
-                          <span className="font-bold">VIP</span>
+                <div>
+                  <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
+                    ⭐ VIP SECTION
+                  </span>
+                  <div className="grid grid-cols-3 gap-4">
+                    {[12, 13, 14].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => handleTableClick({ id: String(num), name: `Table VIP-${num}`, type: 'VIP', capacity: 8 })}
+                        className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="text-xs font-bold tracking-wider text-gray-400 border border-gray-800 px-3 py-1 rounded-md uppercase block mb-4 w-max">
+                    👤 REGULAR ZONE
+                  </span>
+                  <div className="grid grid-cols-3 gap-4">
+                    {[25, 26, 27].map((num) => (
+                      <button
+                        key={num}
+                        onClick={() => handleTableClick({ id: String(num), name: `Table REG-${num}`, type: 'REGULAR', capacity: 8 })}
+                        className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                      >
+                        {num}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Legend Bottom Bar */}
+          <div className="flex items-center justify-center gap-8 mt-14 pt-8 border-t border-gray-800/80 w-full text-sm text-gray-400">
+            <div className="flex items-center gap-3">
+              <span className="w-4 h-4 rounded-full border-2 border-[#d4af37]" />
+              <span>Available</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-4 h-4 rounded-full bg-amber-500" />
+              <span>Booked</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-4 h-4 rounded-full bg-yellow-600" />
+              <span>Locked</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-4 h-4 rounded-full bg-[#d4af37]" />
+              <span>Selected</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Dynamic Sidebar Context */}
+        <div className="lg:col-span-4 space-y-8">
+          <div className="bg-[#0a0a0a] border border-gray-800 rounded-3xl p-8 md:p-10 space-y-8 shadow-[0_0_40px_rgba(0,0,0,0.9)]">
+            {!selectedTable ? (
+              <>
+                <div>
+                  <div className="w-10 h-10 rounded-full border border-[#d4af37]/40 flex items-center justify-center mb-4 text-[#d4af37] text-lg">
+                    👑
+                  </div>
+                  <h2 className="text-3xl font-serif font-bold text-[#fcf6ba] mb-3">
+                    Select Your Table
+                  </h2>
+                  <p className="text-sm text-gray-400 font-light leading-relaxed">
+                    Choose a table from the floor plan to view available seats and secure your premium gala reservation.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  {tierSummary.map((tier, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-[#050505] border border-gray-800 rounded-2xl p-5 flex items-center justify-between hover:border-[#d4af37]/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-black/50 border border-gray-800">
+                          {tier.icon}
+                        </div>
+                        <div>
+                          <h3 className="text-sm font-bold tracking-wider text-white uppercase">
+                            {tier.name}
+                          </h3>
+                          <span className="text-xs text-gray-400 font-light block mt-0.5">
+                            {tier.available}
+                          </span>
                         </div>
                       </div>
+                      <span className="text-xl font-serif font-bold text-[#d4af37]">
+                        {tier.price}
+                      </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-16">
-                      <div className="grid grid-cols-3 gap-2">
-                        {renderTableSection(tablesData?.VIP, "left")}
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {renderTableSection(tablesData?.VIP, "right")}
-                      </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <div className="w-10 h-10 rounded-full border border-[#d4af37]/40 flex items-center justify-center mb-4 text-[#d4af37] text-lg">
+                    👑
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-3xl font-serif font-bold text-[#fcf6ba]">
+                      {selectedTable.name}
+                    </h2>
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/40">
+                      {availableSeatsCount} / {tableCapacity} Available
+                    </span>
+                  </div>
+                  <span className="text-xs font-bold tracking-widest text-[#d4af37] uppercase block mt-1.5">
+                    {selectedTable.type} SECTION
+                  </span>
+                  <div className="mt-5 flex items-baseline gap-2">
+                    <span className="text-4xl font-serif font-bold text-[#d4af37]">
+                      ${seatUnitPrice}
+                    </span>
+                    <span className="text-sm text-gray-400 font-light">per seat</span>
+                  </div>
+                </div>
+
+                {/* Individual Seats Grid */}
+                <div className="space-y-4 pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold tracking-widest text-[#d4af37] uppercase block">
+                      SELECT SEATS
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {selectedSeats.length} of {tableCapacity} selected
+                    </span>
+                  </div>
+                  <div className="bg-[#050505] border border-gray-800/80 rounded-2xl p-8 flex flex-col items-center">
+                    <div className="w-28 border border-[#d4af37]/40 text-center py-1.5 rounded text-xs text-[#d4af37] font-semibold mb-8">
+                      {selectedTable.name}
+                    </div>
+                    <div className="grid grid-cols-4 gap-4 w-full max-w-xs">
+                      {Array.from({ length: tableCapacity }, (_, i) => i + 1).map((seatNum) => {
+                        const activeId = getTableId(selectedTable);
+                        const seatId = `${activeId}-S${seatNum}`;
+                        const isSelected = selectedSeats.includes(seatId);
+
+                        return (
+                          <button
+                            key={seatNum}
+                            onClick={() => toggleSeatSelection(seatNum)}
+                            className={`h-12 rounded-full font-bold text-sm flex items-center justify-center transition-all ${
+                              isSelected
+                                ? 'bg-[#d4af37] text-black border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.7)]'
+                                : 'bg-[#0a0a0a] text-white border border-gray-800 hover:border-[#d4af37]'
+                            }`}
+                          >
+                            {seatNum}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
 
-                {/* Vertical Red Carpet Divider */}
-                <div className="relative py-0 px-6 my-0">
-                  <div className="absolute inset-y-0 top-80 left-[47%] md:left-[49%] flex items-center justify-center">
-                    <div className="h-270 w-6 bg-gradient-to-b from-red-800 via-red-600 to-red-800 rounded-full border border-red-400/50"></div>
+                {/* Selection Totals */}
+                <div className="pt-6 border-t border-gray-800 space-y-3">
+                  <span className="text-xs font-bold tracking-widest text-[#d4af37] uppercase block">
+                    YOUR SELECTION
+                  </span>
+                  <div className="flex items-center justify-between text-sm text-gray-400 font-light">
+                    <span>{selectedSeats.length} seat(s) selected</span>
+                    {selectedSeats.length > 0 && (
+                      <span className="text-xs text-[#d4af37] font-semibold">
+                        Seats: {selectedSeats.map((s) => s.split('-S')[1]).join(', ')}
+                      </span>
+                    )}
                   </div>
-                  <div className="relative flex justify-center items-center h-12">
-                    <span className="bg-black px-2 py-2.5 md:py-4 md:px-3 text-red-400 text-sm font-bold tracking-wider border border-red-600/50 rounded rotate-90 whitespace-nowrap">
-                      RED CARPET
+                  <div className="flex items-baseline justify-between pt-2">
+                    <span className="text-sm text-gray-400 font-light">Total Price:</span>
+                    <span className="text-4xl font-serif font-bold text-[#d4af37]">
+                      ${calculatedTotal}
                     </span>
                   </div>
                 </div>
 
-                {/* Lower Hall - Silver and Regular */}
-                <div className="space-y-2">
-                  {/* Silver Section */}
-                  <div className="relative z-4">
-                    <div className="text-center mb-8">
-                      <div className="bg-gradient-to-r from-gray-400 to-gray-600 text-white py-2 px-6 rounded-full inline-block border border-gray-300/50">
-                        <div className="flex items-center space-x-2">
-                          <Shield size={16} />
-                          <span className="font-bold">SILVER</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-16">
-                      <div className="grid grid-cols-3 gap-2">
-                        {renderTableSection(tablesData?.SILVER, "left")}
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        {renderTableSection(tablesData?.SILVER, "right")}
-                      </div>
-                    </div>
-                  </div>
+                {/* Action Buttons */}
+                <div className="space-y-4 pt-2">
+                  <button
+                    onClick={() => {
+                      if (selectedSeats.length > 0) setShowCheckout(true);
+                    }}
+                    disabled={selectedSeats.length === 0}
+                    className={`w-full py-4 rounded-xl font-extrabold text-sm tracking-widest uppercase transition-all ${
+                      selectedSeats.length > 0
+                        ? 'bg-[#d4af37] text-black hover:brightness-110 cursor-pointer shadow-[0_0_20px_rgba(212,175,55,0.5)]'
+                        : 'bg-[#b89730]/40 text-black/40 cursor-not-allowed'
+                    }`}
+                  >
+                    RESERVE {selectedSeats.length} SEAT(S)
+                  </button>
 
-                  {/* Regular Section */}
-                  <div className="relative z-4">
-                    <div className="text-center mb-8">
-                      <div className="bg-gradient-to-r from-amber-700 to-amber-900 text-white py-2 px-6 rounded-full inline-block border border-amber-600/50">
-                        <div className="flex items-center space-x-2">
-                          <Users size={16} />
-                          <span className="font-bold">REGULAR</span>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-10 ">
-                      <div className="grid grid-cols-4 space-x-1 space-y-8">
-                        {renderTableSection(tablesData?.REGULAR, "left")}
-                      </div>
-                      <div className="grid grid-cols-4 space-x-1 space-y-8">
-                        {renderTableSection(tablesData?.REGULAR, "right")}
-                      </div>
-                    </div>
-                  </div>
+                  <button
+                    onClick={() => {
+                      setSelectedTable(null);
+                      setSelectedSeats([]);
+                    }}
+                    className="w-full py-4 rounded-xl font-bold text-sm tracking-widest uppercase border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 transition-colors"
+                  >
+                    BACK TO TABLES
+                  </button>
                 </div>
-              </div>
-
-              {/* Legend */}
-              <div className="mt-12 max-sm:mt-8 border-t border-gray-700 pt-6">
-                <h3 className="text-lg font-bold mb-4 text-center">LEGEND</h3>
-                <div className="flex justify-center flex-wrap space-x-4 space-y-2 text-sm">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-gray-600 to-gray-800 border border-gray-400"></div>
-                    <span>Available</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded-full bg-red-800 border border-red-600"></div>
-                    <span>Booked</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded-full bg-yellow-800 border border-yellow-600"></div>
-                    <span>Locked</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-4 h-4 rounded-full bg-gradient-to-br from-green-600 border to-green-800 border-green-400"></div>
-                    <span>Selected</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Booking Panel */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-900 border border-red-900/30 rounded-lg p-6 sticky top-24">
-              {!selectedTable ? (
-                <div className="text-center">
-                  <Crown className="w-16 h-16 text-red-500 mx-auto mb-4" />
-                  <h3 className="text-xl font-bold mb-2">Select Your Table</h3>
-                  <p className="text-gray-400 mb-6">
-                    Choose a table to view available seats and make your
-                    reservation
-                  </p>
-
-                  <div className="space-y-4">
-                    {tablesData && ["VVIP", "VIP", "SILVER", "REGULAR"].map((type) => {
-                      const availableTables = tablesData[type]?.filter(
-                        (t) => t.bookedSeats.length < t.capacity
-                      ).length;
-                      return (
-                        <div
-                          key={type}
-                          className={`bg-gradient-to-r ${getSectionColor(
-                            type
-                          )} p-4 rounded border border-white/20`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-2">
-                              {getSectionIcon(type)}
-                              <span className="font-bold uppercase">
-                                {type}
-                              </span>
-                            </div>
-                            <div className="text-right">
-                              <div className="font-bold">
-                                {getSectionPrice(type)}
-                              </div>
-                              <div className="text-sm opacity-80">
-                                {availableTables} tables available
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div>
-                  <div className="flex items-center justify-between mb-6">
-                    <div>
-                      <h3 className="text-xl font-bold">
-                        Table {selectedTable.tableNumber}
-                      </h3>
-                      <p className="text-gray-400 uppercase">
-                        {selectedTable.type} Section
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-red-400">
-                        {getSectionPrice(selectedTable.type)}
-                      </div>
-                      <div className="text-sm text-gray-400">per person</div>
-                    </div>
-                  </div>
-
-                  {/* Seat Selection */}
-                  <div className="mb-6">
-                    <h4 className="font-bold mb-10">Select Seats</h4>
-                    <TableVisualization
-                      table={selectedTable}
-                      selectedSeats={selectedSeats}
-                      onSeatClick={handleSeatClick}
-                      bookedSeats={bookedSeats}
-                      lockedSeats={lockedSeats}
-                    />
-                    <div className="grid grid-cols-4 gap-2">
-                      {selectedTable.seats.map((seat) => (
-                        <SeatComponent
-                          key={seat._id}
-                          seat={seat}
-                          seatNumber={extractSeatNumber(seat.seatNumber)}
-                          isBooked={selectedTable.bookedSeats.includes(
-                            seat.seatNumber
-                          )}
-                          isSelected={selectedSeats.includes(seat._id)}
-                          isLocked={lockedSeats.includes(seat._id)}
-                          isBookedNow={bookedSeats.includes(seat._id)}
-                          onSeatClick={handleSeatClick}
-                        />
-                      ))}
-                    </div>
-                    <div className="mt-3 text-sm text-gray-400">
-                      {selectedSeats.length} seat(s) selected
-                    </div>
-                  </div>
-
-                  {/* Total */}
-                  {selectedSeats.length > 0 && (
-                    <div className="border-t border-gray-700 pt-4 mb-6">
-                      <div className="flex justify-between items-center">
-                        <span className="font-bold">
-                          Total ({selectedSeats.length} seats)
-                        </span>
-                        <span className="text-2xl font-bold text-red-400">
-                          ₦{totalAmount.toLocaleString()}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Action Buttons */}
-                  <div className="space-y-3">
-                    <button
-                      onClick={handleReserveButton}
-                      className={`w-full py-3 rounded font-bold transition-all cursor-pointer duration-300 ${
-                        selectedSeats.length > 0
-                          ? "bg-gradient-to-r from-red-600 to-red-800 text-white border border-red-400/50 hover:shadow-lg"
-                          : "bg-gray-700 text-gray-400 cursor-not-allowed"
-                      }`}
-                      disabled={selectedSeats.length === 0 || isChecking}
-                    >
-                      {isChecking
-                        ? "Checking availability..."
-                        : `RESERVE ${selectedSeats.length} SEATS(S)`}
-                      RESERVE SEATS
-                    </button>
-                    <button
-                      className="w-full cursor-pointer py-3 border border-gray-600 text-gray-300 rounded font-bold hover:bg-gray-800 transition-all duration-300"
-                      onClick={() => setSelectedTable(null)}
-                    >
-                      BACK TO TABLES
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };
-
-SeatSelection.propTypes = {};
 
 export default SeatSelection;

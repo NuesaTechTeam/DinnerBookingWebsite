@@ -1,16 +1,16 @@
-import React from 'react'
+import React from 'react';
 
-const SeatComponent = ({seat, seatNumber, isBooked, isSelected, onSeatClick, isLocked, isBookedNow }) => {
+const SeatComponent = ({ seat, seatNumber, isBooked, isSelected, onSeatClick, isLocked, isBookedNow }) => {
   return (
     <div
-      className={`w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold cursor-pointer transition-all duration-200 ${
+      className={`w-8 h-8 rounded-full border flex items-center justify-center text-xs font-bold transition-all duration-200 select-none ${
         isBooked || isBookedNow
-          ? "bg-red-800 border-red-600 text-red-300 cursor-not-allowed"
+          ? "bg-red-950/80 border-red-800/60 text-red-400/50 cursor-not-allowed"
           : isLocked
-          ? "bg-yellow-800 border-yellow-600 text-yellow-300 cursor-not-allowed"
+          ? "bg-amber-950/80 border-amber-700/60 text-amber-500 cursor-not-allowed"
           : isSelected
-          ? "bg-green-600 border-green-400 text-white transform scale-110"
-          : "bg-gray-700 border-gray-500 text-gray-300 hover:bg-gray-600 hover:border-gray-400"
+          ? "bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] border-[#fcf6ba] text-black font-extrabold shadow-[0_0_12px_rgba(212,175,55,0.6)] transform scale-110 cursor-pointer"
+          : "bg-black/60 border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/20 hover:border-[#d4af37] hover:scale-105 cursor-pointer"
       }`}
       onClick={() =>
         (!isBooked && !isBookedNow && !isLocked) && onSeatClick(seat)
@@ -21,4 +21,4 @@ const SeatComponent = ({seat, seatNumber, isBooked, isSelected, onSeatClick, isL
   );
 };
 
-export default SeatComponent
+export default SeatComponent;

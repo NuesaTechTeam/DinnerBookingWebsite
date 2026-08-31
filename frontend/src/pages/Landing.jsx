@@ -1,10 +1,11 @@
 import React from 'react'
-import { HeaderHero, CTA, Faqs, Features,Hero, Packages,Quote, Testimonials, Footer} from "../components/Hero/index.js"
-import {Error, LoadingScreen} from "../components/index.js"
+import Navbar from "../components/Navbar.jsx" // Changed import here
+import { CTA, Faqs, Features, Hero, Packages, Quote, Testimonials, Footer } from "../components/Hero/index.js"
+import { Error, LoadingScreen } from "../components/index.js"
 import { useTables } from '../hooks/tableHooks.js'
 
 const Landing = () => {
-const {isLoading, error, refetch} = useTables()
+  const { isLoading, error, refetch } = useTables()
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -20,7 +21,7 @@ const {isLoading, error, refetch} = useTables()
   return (
     <div className='min-h-screen bg-black text-white overflow-x-hidden scroll-smooth'>
       {/* Header */}
-      <HeaderHero />
+      <Navbar /> {/* Now using your updated Navbar component */}
       {/* Hero section */}
       <Hero />
       {/* Quote */}
@@ -36,7 +37,7 @@ const {isLoading, error, refetch} = useTables()
       {/* Faqs section */}
       <Faqs />
       {/* Footer section */}
-     <Footer />
+      <Footer />
     </div>
   )
 }

@@ -1,70 +1,111 @@
-import React, { useEffect, useState } from "react";
-import { testimonials } from "../../lib/constants";
-import { Star } from "lucide-react";
+import React, { useState, useEffect } from 'react';
 
 const Testimonials = () => {
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
+  const reviews = [
+    {
+      quote: "AN EVENING OF UNPARALLELED SOPHISTICATION. THE ATMOSPHERE AND CULINARY ARTISTRY WERE ABSOLUTELY INTOXICATING.",
+      author: "Chief O. Adebayo",
+      role: "VVIP Guest",
+      stars: 5,
+    },
+    {
+      quote: "THE FINEST CELEBRATION OF PAN-AFRICAN HIGH CULTURE AND GASTRONOMY I HAVE EVER EXPERIENCED.",
+      author: "Lady K. Mensah",
+      role: "Cultural Patron",
+      stars: 5,
+    },
+    {
+      quote: "EXQUISITE DETAILS, WORLD-CLASS ENTERTAINMENT, AND ROYAL HOSPITALITY FROM START TO FINISH.",
+      author: "Dr. E. Nwachukwu",
+      role: "Gala Attendee",
+      stars: 5,
+    },
+  ];
 
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  // Auto-play slider every 5 seconds
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentTestimonial((prev) => (prev + 1) % testimonials.length);
+      setCurrentIndex((prev) => (prev + 1) % reviews.length);
     }, 5000);
+    return () => clearInterval(timer);
+  }, [reviews.length]);
 
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
   return (
-    <section
-      id='famiglia'
-      className='py-20 max-sm:py-16 bg-black border-t border-red-900/30'
-    >
-      <div className='max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center'>
-        <h2 className='text-4xl font-bold text-white mb-12 tracking-wide'>
-          WHAT THE <span className='text-red-500'>FAMIGLIA</span> SAYS
-        </h2>
+    <section className="py-24 px-6 md:px-12 lg:px-20 bg-[#050505] text-white border-y border-[#d4af37]/20 relative overflow-hidden">
+      {/* Background Radial Glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(212,175,55,0.04)_0%,transparent_70%)] pointer-events-none" />
 
-        <div className='relative'>
-          {testimonials.map((testimonial, index) => (
+      {/* Section Header */}
+      <div className="max-w-3xl mx-auto text-center mb-12 relative z-10">
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold uppercase tracking-widest text-white">
+          WHAT THE <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11]">ROYALTY</span> SAYS
+        </h2>
+      </div>
+
+      {/* Carousel Card Container */}
+      <div className="max-w-3xl mx-auto relative z-10 min-h-[220px] flex flex-col justify-center">
+        {reviews.map((review, index) => {
+          const isActive = index === currentIndex;
+          return (
             <div
               key={index}
-              className={`transition-all duration-500 ${
-                index === currentTestimonial
-                  ? "opacity-100 transform translate-x-0"
-                  : "opacity-0 transform translate-x-full absolute inset-0"
+              className={`transition-all duration-700 ease-in-out transform ${
+                isActive
+                  ? 'opacity-100 scale-100 block'
+                  : 'opacity-0 scale-95 hidden'
               }`}
             >
-              <div className='bg-gradient-to-br from-red-900/20 to-black border border-red-900/50 p-8 max-sm:px-4 max-sm:py-6 shadow-lg'>
-                <div className='flex justify-center mb-4 gap-1'>
-                  {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star
+              <div className="bg-[#0a0a0a] border border-[#d4af37]/40 rounded-2xl p-8 md:p-10 text-center shadow-[0_0_25px_rgba(212,175,55,0.1)]">
+                {/* 5-Star Rating */}
+                <div className="flex justify-center gap-1.5 mb-6 text-[#d4af37]">
+                  {[...Array(review.stars)].map((_, i) => (
+                    <svg
                       key={i}
-                      className='w-5 h-5 text-red-400 fill-current'
-                    />
+                      className="w-4 h-4 fill-current drop-shadow-[0_0_5px_rgba(212,175,55,0.5)]"
+                      viewBox="0 0 20 20"
+                    >
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
                   ))}
                 </div>
-                <blockquote className='text-xl text-gray-300 mb-6 italic font-light font-cinzel'>
-                  "{testimonial.text}"
-                </blockquote>
-                <cite className='text-lg font-bold text-red-400 tracking-wide font-playfair'>
-                  — {testimonial.name}
-                </cite>
+
+                {/* Review Text */}
+                <p className="text-base sm:text-lg md:text-xl font-serif text-[#fcf6ba] italic tracking-wide leading-relaxed mb-6 uppercase">
+                  "{review.quote}"
+                </p>
+
+                {/* Author Info */}
+                <div className="flex items-center justify-center gap-2">
+                  <span className="text-xs font-semibold tracking-widest text-[#d4af37] uppercase">
+                    — {review.author}
+                  </span>
+                  <span className="text-gray-500 text-xs">•</span>
+                  <span className="text-xs text-gray-400 font-light uppercase">
+                    {review.role}
+                  </span>
+                </div>
               </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
+      </div>
 
-        <div className='flex justify-center mt-8 space-x-2'>
-          {testimonials.map((_, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentTestimonial(index)}
-              className={`w-3 h-3 transition-all duration-300 ${
-                index === currentTestimonial ? "bg-red-500" : "bg-gray-600"
-              }`}
-            />
-          ))}
-        </div>
+      {/* Pagination Dots */}
+      <div className="flex justify-center gap-3 mt-8 relative z-10">
+        {reviews.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+              index === currentIndex
+                ? 'w-8 bg-gradient-to-r from-[#b38728] to-[#fcf6ba]'
+                : 'w-2 bg-gray-700 hover:bg-[#d4af37]/50'
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
       </div>
     </section>
   );

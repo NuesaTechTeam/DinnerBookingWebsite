@@ -4,17 +4,20 @@
   --font-poppins: "Poppins", sans-serif;
   --font-lora: "Lora", serif;
   --font-montserrat: "Montserrat", sans-serif;
-  --font-cormorant: "Cormorant Garamond", sans-serif;
-  --font-playfair: "Playfair", serif;
+  --font-cormorant: "Cormorant Garamond", serif;
+  --font-playfair: "Playfair Display", serif;
   --font-bitter: "Bitter", serif;
   --font-neue: "Bebas Neue", cursive;
   --font-cinzel: "Cinzel", serif;
   --font-oswald: "Oswald", sans-serif;
   --font-dancing: "Dancing Script", cursive;
   --font-crimson: "Crimson Text", serif;
-  --color-green: #0f5132;
-  --color-green-light: #4caf50;
-  --color-green-dark: #0d3c1f;
+  
+  /* Luxury Gold & Dark Palette */
+  --color-gold: #d4af37;
+  --color-gold-light: #fcf6ba;
+  --color-gold-dark: #aa7c11;
+  --color-obsidian: #09090b;
 }
 
 @utility scrollbar-hidden {
@@ -31,7 +34,8 @@ body {
   scrollbar-width: none;
   scroll-behavior: smooth;
   font-family: var(--font-montserrat);
-  @apply text-gray-700;
+  background-color: #09090b;
+  @apply text-zinc-100;
 }
 
 body::-webkit-scrollbar {
@@ -62,7 +66,6 @@ body::-webkit-scrollbar {
   from {
     height: 0;
   }
-
   to {
     height: var(--radix-accordion-content-height);
   }
@@ -72,7 +75,6 @@ body::-webkit-scrollbar {
   from {
     height: var(--radix-accordion-content-height);
   }
-
   to {
     height: 0;
   }
@@ -86,17 +88,18 @@ body::-webkit-scrollbar {
   animation: slideDown 300ms cubic-bezier(0.87, 0, 0.13, 1);
 }
 
+/* Updated Gold Particles */
 @utility particle {
   position: absolute;
   width: 2px;
   height: 2px;
-  background: #ffd700;
+  background: #d4af37;
   border-radius: 50%;
   opacity: 0;
   animation: float 8s infinite linear;
 
   &:nth-child(odd) {
-    background: #d32f2f;
+    background: #fcf6ba;
     animation-duration: 12s;
   }
 }
@@ -107,7 +110,7 @@ body::-webkit-scrollbar {
   }
 
   .animate-logoGlow {
-    animation: logoGlow 2s ease-in-out infinite alternate;
+    animation: logoGlow 2.5s ease-in-out infinite alternate;
   }
 
   .animate-titleShimmer {
@@ -143,7 +146,6 @@ body::-webkit-scrollbar {
       opacity: 0;
       transform: scale(0.95);
     }
-
     to {
       opacity: 1;
       transform: scale(1);
@@ -156,10 +158,10 @@ body::-webkit-scrollbar {
       opacity: 0;
     }
     10% {
-      opacity: 1;
+      opacity: 0.8;
     }
     90% {
-      opacity: 1;
+      opacity: 0.8;
     }
     100% {
       transform: translateY(-100px) translateX(100px);
@@ -167,14 +169,15 @@ body::-webkit-scrollbar {
     }
   }
 
+  /* Warm Gold Ambient Glow */
   @keyframes logoGlow {
     0% {
-      filter: drop-shadow(0 0 20px rgba(211, 47, 47, 0.5));
+      filter: drop-shadow(0 0 15px rgba(212, 175, 55, 0.3));
       transform: scale(1);
     }
     100% {
-      filter: drop-shadow(0 0 30px rgba(255, 215, 0, 0.7));
-      transform: scale(1.05);
+      filter: drop-shadow(0 0 30px rgba(252, 246, 186, 0.6));
+      transform: scale(1.03);
     }
   }
 
@@ -184,7 +187,7 @@ body::-webkit-scrollbar {
       opacity: 1;
     }
     50% {
-      opacity: 0.8;
+      opacity: 0.85;
     }
   }
 

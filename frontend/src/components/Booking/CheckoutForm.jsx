@@ -112,26 +112,21 @@ const CheckoutForm = ({
     setFormData((prev) => ({ ...prev, invoiceNumber: "" }));
   };
 
-  // const [isPaymentLoading, setIsPaymentLoading] = useState(false);
   const isProcessing =
     createBookingMutation.isPending || verifyPaymentMutation.isPending;
 
-  //payment calculation
+  // Payment calculation
   const paystackFeePercentage = 5;
   const paystackFixedFee = 100;
 
-  const calculateTotalAmount = (baseAmount) => {
+  const calculateTotalAmount = (baseAmt) => {
     const calculatedFee =
-      (paystackFeePercentage / 100) * baseAmount + paystackFixedFee;
-    const totalFee = Math.min(calculatedFee, 3000); //cap at 3000
-    return Math.round(baseAmount + totalFee);
+      (paystackFeePercentage / 100) * baseAmt + paystackFixedFee;
+    const totalFee = Math.min(calculatedFee, 3000); // cap at 3000
+    return Math.round(baseAmt + totalFee);
   };
 
   const totalAmount = calculateTotalAmount(finalAmount);
-  // const feeAmount = totalAmount - baseAmount;
-
-  // const discount = otpData.isOtpVerified ? 2000 : 0;
-  // const finalAmount = baseAmount - discount;
 
   const paystackConfig = {
     publicKey: import.meta.env.VITE_PUBLIC_KEY_PAYSTACK,
@@ -194,7 +189,6 @@ const CheckoutForm = ({
   };
 
   const onPaymentClose = () => {
-    // console.log("Payment window closed");
     window.location.reload();
   };
 
@@ -205,37 +199,6 @@ const CheckoutForm = ({
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
-  // const handleSendOtp = async () => {
-  //   if (!formData.email || !formData.isEngineering) return;
-
-  //   setOtpData((prev) => ({ ...prev, isLoading: true }));
-
-  //   // Simulate OTP sending - replace with actual API call
-  //   setTimeout(() => {
-  //     setOtpData((prev) => ({
-  //       ...prev,
-  //       isOtpSent: true,
-  //       isLoading: false,
-  //     }));
-  //   }, 1500);
-  // };
-
-  // const handleVerifyOtp = async () => {
-  //   if (!otpData.otp) return;
-
-  //   setOtpData((prev) => ({ ...prev, isLoading: true }));
-
-  //   // Simulate OTP verification - replace with actual API call
-  //   setTimeout(() => {
-  //     const isValid = otpData.otp === "123456"; // Mock verification
-  //     setOtpData((prev) => ({
-  //       ...prev,
-  //       isOtpVerified: isValid,
-  //       isLoading: false,
-  //     }));
-  //   }, 1000);
-  // };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -254,28 +217,20 @@ const CheckoutForm = ({
       return;
     }
 
-    // if (formData.isEngineering && !otpData.isOtpVerified) {
-    //   showToast("Please verify your engineering student status", TOAST_TYPES.INFO);
-    //   return;
-    // }
-
-    //create booking data
     const bookingData = {
       ...formData,
       seatIds: selectedSeats,
-      baseAmount: baseAmount, //without fees
-      totalAmount: totalAmount, // with fees
+      baseAmount: baseAmount,
+      totalAmount: totalAmount,
       tableId: selectedTable?._id,
       tableType: selectedTable?.type,
       invoiceNumber: discountApplied ? formData.invoiceNumber : undefined,
     };
 
-    //create booking first, then initialize payment after success
     createBookingMutation.mutate(bookingData, {
       onSuccess: (bookingResponse) => {
         if (bookingResponse.success) {
           const bookingId = bookingResponse.booking._id;
-          //initialize payment
           initializePayment({
             ...paystackConfig,
             metadata: {
@@ -298,103 +253,102 @@ const CheckoutForm = ({
   return (
     <AnimatePresence>
       <Motion.div
-        className="flex bg-black bg-opacity-50 items-center justify-center p-4 w-full max-w-md mx-auto"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto"
         {...scaleIn}
       >
         <Motion.div
-          className="bg-gradient-to-br from-gray-900 to-black border-2 border-red-600 rounded-lg shadow-2xl"
+          className="w-full max-w-md bg-[#09090b] border border-[#d4af37]/40 rounded-xl shadow-2xl my-8 overflow-hidden"
           style={{
             boxShadow:
-              "0 0 50px rgba(220, 38, 38, 0.3), inset 0 0 20px rgba(220, 38, 38, 0.1)",
+              "0 0 50px rgba(212, 175, 55, 0.15), inset 0 0 20px rgba(212, 175, 55, 0.05)",
           }}
           {...fadeInUp}
         >
           {/* Header */}
           <Motion.div
-            className="bg-gradient-to-r from-red-900 to-red-700 p-6 rounded-t-lg relative overflow-auto"
+            className="bg-gradient-to-r from-[#141414] via-[#1a1813] to-[#141414] border-b border-[#d4af37]/30 p-6 relative"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
           >
-            <div className="absolute inset-0 bg-black bg-opacity-20"></div>
             <div className="relative flex items-center justify-between">
               <Motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
               >
-                <h2 className="text-2xl font-bold text-white tracking-wide">
-                  CASABLANCA
+                <h2 className="text-2xl font-serif font-bold text-transparent bg-clip-text bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] tracking-wider uppercase">
+                  FÀÁJÍ LAWA 
                 </h2>
-                <p className="text-red-200 text-sm italic">Join The Famiglia</p>
+                <p className="text-[#d4af37]/80 text-xs tracking-widest font-light uppercase">
+                  • RESERVE YOUR seat
+                </p>
               </Motion.div>
               <Motion.button
                 onClick={onClose}
                 disabled={isProcessing}
-                className="text-white hover:text-red-300 transition-colors p-2 cursor-pointer"
+                className="text-gray-400 hover:text-[#d4af37] transition-colors p-2 cursor-pointer"
                 whileHover={{ scale: 1.1, rotate: 90 }}
                 whileTap={{ scale: 0.9 }}
                 initial={{ opacity: 0, rotate: -90 }}
                 animate={{ opacity: 1, rotate: 0 }}
                 transition={{ duration: 0.5, delay: 0.6 }}
               >
-                <X size={24} />
+                <X size={22} />
               </Motion.button>
             </div>
           </Motion.div>
 
           {/* Form Content */}
           <Motion.form
-            className="p-6 space-y-4 bg-gradient-to-b from-gray-900 to-black"
+            className="p-6 space-y-4 bg-[#09090b]"
             {...staggerContainer}
             onSubmit={handleSubmit}
           >
             {/* Seats Summary */}
             <Motion.div
-              className="bg-red-950 bg-opacity-30 border border-red-800 rounded-lg p-3 mb-4"
+              className="bg-[#121212] border border-[#d4af37]/30 rounded-lg p-4 mb-4"
               {...fadeInUp}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <div className="text-white text-sm">
-                <p>
-                  <span className="text-red-300">Selected Seats:</span>{" "}
-                  {seatNames.join(", ")}
+              <div className="text-white text-sm space-y-1">
+                <p className="flex justify-between">
+                  <span className="text-gray-400">Selected Seats:</span>{" "}
+                  <span className="font-semibold text-white">{seatNames.join(", ")}</span>
                 </p>
-                <p>
-                  <span className="text-red-300">Amount:</span> ₦
-                  {finalAmount.toLocaleString()}
-                </p>
-                <p>
-                  <span className="text-xs my-2 text-red-300">
-                    Charges or discount may apply
-                  </span>
+                <p className="flex justify-between">
+                  <span className="text-gray-400">Base Amount:</span>{" "}
+                  <span className="text-white font-medium">₦{finalAmount.toLocaleString()}</span>
                 </p>
                 {discountApplied && (
                   <Motion.p
-                    className="text-green-400"
+                    className="flex justify-between text-emerald-400"
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ duration: 0.4 }}
                   >
-                    <span className="text-red-300">Engineering Discount:</span>{" "}
-                    -₦
-                    {discountAmount.toLocaleString()}
+                    <span>Engineering Discount:</span>{" "}
+                    <span>-₦{discountAmount.toLocaleString()}</span>
                   </Motion.p>
                 )}
-                <p className="text-xl font-bold mt-2 text-white border-t border-red-800 pt-2">
-                  Total: ₦{totalAmount.toLocaleString()}
+                <p className="text-xs text-gray-400 pt-1">
+                  * Paystack processing fee included at final total
                 </p>
+                <div className="flex justify-between items-center text-lg font-bold text-[#d4af37] border-t border-[#d4af37]/20 pt-3 mt-2">
+                  <span>Total Amount:</span>
+                  <span>₦{totalAmount.toLocaleString()}</span>
+                </div>
               </div>
             </Motion.div>
 
             {/* Name Field */}
             <Motion.div
-              className="space-y-2"
+              className="space-y-1.5"
               {...fadeInUp}
               transition={{ duration: 0.5, delay: 0.4 }}
             >
-              <label className="text-red-300 text-sm font-medium flex items-center gap-2">
-                <User size={16} />
+              <label className="text-gray-300 text-xs font-medium uppercase tracking-wider flex items-center gap-2">
+                <User size={14} className="text-[#d4af37]" />
                 Full Name
               </label>
               <Motion.input
@@ -405,19 +359,19 @@ const CheckoutForm = ({
                 disabled={isProcessing}
                 required
                 placeholder="Enter your full name"
-                className="w-full capitalize bg-black bg-opacity-50 border border-red-800 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
-                whileFocus={{ scale: 1.02, borderColor: "#ef4444" }}
+                className="w-full capitalize bg-black/60 border border-gray-800 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:border-[#d4af37] focus:outline-none transition-colors"
+                whileFocus={{ scale: 1.01 }}
               />
             </Motion.div>
 
             {/* Matric No Field */}
             <Motion.div
-              className="space-y-2"
+              className="space-y-1.5"
               {...fadeInUp}
               transition={{ duration: 0.5, delay: 0.5 }}
             >
-              <label className="text-red-300 text-sm font-medium flex items-center gap-2">
-                <Shield size={16} />
+              <label className="text-gray-300 text-xs font-medium uppercase tracking-wider flex items-center gap-2">
+                <Shield size={14} className="text-[#d4af37]" />
                 Matric Number
               </label>
               <Motion.input
@@ -427,20 +381,20 @@ const CheckoutForm = ({
                 onChange={handleInputChange}
                 disabled={isProcessing}
                 required
-                placeholder="e.g., 18/ENG01/001"
-                className="w-full bg-black uppercase bg-opacity-50 border border-red-800 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
-                whileFocus={{ scale: 1.02, borderColor: "#ef4444" }}
+                placeholder="e.g., 21/ENG01/001"
+                className="w-full bg-black/60 border border-gray-800 rounded-lg px-4 py-2.5 text-white text-sm uppercase placeholder-gray-600 focus:border-[#d4af37] focus:outline-none transition-colors"
+                whileFocus={{ scale: 1.01 }}
               />
             </Motion.div>
 
             {/* Email Field */}
             <Motion.div
-              className="space-y-2"
+              className="space-y-1.5"
               {...fadeInUp}
               transition={{ duration: 0.5, delay: 0.6 }}
             >
-              <label className="text-red-300 text-sm font-medium flex items-center gap-2">
-                <Mail size={16} />
+              <label className="text-gray-300 text-xs font-medium uppercase tracking-wider flex items-center gap-2">
+                <Mail size={14} className="text-[#d4af37]" />
                 Email Address
               </label>
               <Motion.input
@@ -452,19 +406,19 @@ const CheckoutForm = ({
                 required
                 inputMode="email"
                 placeholder="your.email@example.com"
-                className="w-full bg-black bg-opacity-50 border border-red-800 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
-                whileFocus={{ scale: 1.02, borderColor: "#ef4444" }}
+                className="w-full bg-black/60 border border-gray-800 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:border-[#d4af37] focus:outline-none transition-colors"
+                whileFocus={{ scale: 1.01 }}
               />
             </Motion.div>
 
             {/* Phone Field */}
             <Motion.div
-              className="space-y-2"
+              className="space-y-1.5"
               {...fadeInUp}
               transition={{ duration: 0.5, delay: 0.7 }}
             >
-              <label className="text-red-300 text-sm font-medium flex items-center gap-2">
-                <Phone size={16} />
+              <label className="text-gray-300 text-xs font-medium uppercase tracking-wider flex items-center gap-2">
+                <Phone size={14} className="text-[#d4af37]" />
                 Phone Number
               </label>
               <Motion.input
@@ -476,14 +430,14 @@ const CheckoutForm = ({
                 required
                 inputMode="tel"
                 placeholder="+234123456789"
-                className="w-full bg-black bg-opacity-50 border border-red-800 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
-                whileFocus={{ scale: 1.02, borderColor: "#ef4444" }}
+                className="w-full bg-black/60 border border-gray-800 rounded-lg px-4 py-2.5 text-white text-sm placeholder-gray-600 focus:border-[#d4af37] focus:outline-none transition-colors"
+                whileFocus={{ scale: 1.01 }}
               />
             </Motion.div>
 
             {/* Engineering Student Checkbox */}
             <Motion.div
-              className="bg-red-950 bg-opacity-20 border border-red-800 rounded-lg p-4 space-y-3"
+              className="bg-black/40 border border-gray-800 rounded-lg p-3.5 space-y-3"
               {...fadeInUp}
               transition={{ duration: 0.5, delay: 0.8 }}
             >
@@ -493,11 +447,11 @@ const CheckoutForm = ({
                   name="isEngineering"
                   checked={formData.isEngineering}
                   onChange={handleInputChange}
-                  className="form-checkbox h-5 w-5 text-red-600 bg-black border-red-800 rounded focus:ring-red-500 focus:ring-2"
+                  className="form-checkbox h-4 w-4 text-[#d4af37] bg-black border-gray-700 rounded focus:ring-[#d4af37] focus:ring-1"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                 />
-                <span className="text-white text-sm">
+                <span className="text-gray-300 text-xs font-medium">
                   I am an Engineering student
                 </span>
               </label>
@@ -505,7 +459,7 @@ const CheckoutForm = ({
               {/* Discount Section */}
               {formData.isEngineering && isRegularTable && (
                 <Motion.div
-                  className="space-y-3 mt-4 pt-3 border-t border-red-800"
+                  className="space-y-3 mt-3 pt-3 border-t border-gray-800"
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
@@ -517,68 +471,68 @@ const CheckoutForm = ({
                       {...fadeInUp}
                       transition={{ duration: 0.5, delay: 0.7 }}
                     >
-                      <label className="text-red-300 text-sm font-medium flex items-center gap-2">
-                        <Receipt size={16} />
-                        Engineering Discount
+                      <label className="text-gray-300 text-xs font-medium flex items-center gap-2">
+                        <Receipt size={14} className="text-[#d4af37]" />
+                        Engineering Discount Code / Invoice
                       </label>
-                      <Motion.input
-                        type="text"
-                        name="invoiceNumber"
-                        value={formData.invoiceNumber}
-                        onChange={handleInputChange}
-                        disabled={
-                          verifyingDiscount ||
-                          isProcessing
-                        }
-                        inputMode="numeric"
-                        placeholder="Enter your invoice number"
-                        className="w-full bg-black bg-opacity-50 border border-red-800 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:border-red-500 focus:ring-1 focus:ring-red-500 transition-colors"
-                        whileFocus={{ scale: 1.02, borderColor: "#ef4444" }}
-                      />
-                      <Motion.button
-                        onClick={applyDiscount}
-                        disabled={
-                          verifyingDiscount ||
-                          isProcessing ||
-                          !formData.invoiceNumber.trim()
-                        }
-                        className="bg-green-700 hover:bg-green-600 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                      >
-                        {verifyingDiscount ? (
-                          <Motion.div
-                            className="rounded-full h-4 w-4 border-b-2 border-white"
-                            animate={{ rotate: 360 }}
-                            transition={{
-                              duration: 1,
-                              repeat: Infinity,
-                              ease: "linear",
-                            }}
-                          />
-                        ) : (
-                          "Apply Discount"
-                        )}
-                      </Motion.button>
+                      <div className="flex gap-2">
+                        <Motion.input
+                          type="text"
+                          name="invoiceNumber"
+                          value={formData.invoiceNumber}
+                          onChange={handleInputChange}
+                          disabled={verifyingDiscount || isProcessing}
+                          inputMode="numeric"
+                          placeholder="Enter invoice number"
+                          className="flex-1 bg-black/60 border border-gray-800 rounded-lg px-3 py-2 text-white text-xs placeholder-gray-600 focus:border-[#d4af37] focus:outline-none"
+                          whileFocus={{ scale: 1.01 }}
+                        />
+                        <Motion.button
+                          type="button"
+                          onClick={applyDiscount}
+                          disabled={
+                            verifyingDiscount ||
+                            isProcessing ||
+                            !formData.invoiceNumber.trim()
+                          }
+                          className="bg-[#d4af37] hover:bg-[#b38728] disabled:bg-gray-800 text-black font-semibold px-3 py-2 rounded-lg transition-colors text-xs uppercase tracking-wider"
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                        >
+                          {verifyingDiscount ? (
+                            <Motion.div
+                              className="rounded-full h-3.5 w-3.5 border-b-2 border-black"
+                              animate={{ rotate: 360 }}
+                              transition={{
+                                duration: 1,
+                                repeat: Infinity,
+                                ease: "linear",
+                              }}
+                            />
+                          ) : (
+                            "Apply"
+                          )}
+                        </Motion.button>
+                      </div>
                     </Motion.div>
                   ) : (
                     <Motion.div
-                      className="flex items-center gap-2 text-green-400 text-sm"
-                      initial={{ opacity: 0, scale: 0.8 }}
+                      className="flex items-center justify-between text-emerald-400 text-xs bg-emerald-950/30 border border-emerald-800/40 p-2.5 rounded-lg"
+                      initial={{ opacity: 0, scale: 0.95 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.5, type: "spring" }}
+                      transition={{ duration: 0.4 }}
                     >
-                      <CheckCircle size={16} />
-                      Engineering student status verified! ₦2,000 discount
-                      applied.
-                      <Motion.button
+                      <div className="flex items-center gap-2">
+                        <CheckCircle size={14} />
+                        <span>Verified! ₦2,000 discount applied.</span>
+                      </div>
+                      <button
+                        type="button"
                         onClick={removeDiscount}
-                        className="bg-green-700 hover:bg-green-600 disabled:bg-gray-700 text-white px-4 py-2 rounded-lg transition-colors text-sm"
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
+                        className="text-gray-400 hover:text-white underline text-[11px]"
                       >
-                        Remove Discount
-                      </Motion.button>
+                        Remove
+                      </button>
                     </Motion.div>
                   )}
                 </Motion.div>
@@ -588,34 +542,30 @@ const CheckoutForm = ({
             {/* Payment Button */}
             <Motion.button
               type="submit"
-              // onClick={handlePayment}
               disabled={isProcessing || selectedSeats.length === 0}
-              className="w-full bg-gradient-to-r cursor-pointer from-red-700 to-red-600 hover:from-red-600 hover:to-red-500 disabled:from-gray-700 disabled:to-gray-600 text-white font-bold py-4 px-6 rounded-lg transition-all duration-300 disabled:cursor-not-allowed flex items-center justify-center gap-3 text-lg shadow-lg"
-              whileHover={{
-                scale: 1.02,
-                boxShadow: "0 0 25px rgba(220, 38, 38, 0.5)",
-              }}
-              whileTap={{ scale: 0.98 }}
+              className="w-full bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] text-black font-extrabold py-3.5 px-6 rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2.5 text-sm uppercase tracking-widest shadow-[0_0_20px_rgba(212,175,55,0.25)] hover:brightness-110 cursor-pointer mt-4"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.9 }}
             >
               {isProcessing ? (
                 <Motion.div
-                  className="rounded-full h-6 w-6 border-b-2 border-white"
+                  className="rounded-full h-5 w-5 border-b-2 border-black"
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 />
               ) : (
                 <>
-                  <CreditCard size={20} />
+                  <CreditCard size={18} />
                   Pay ₦{totalAmount.toLocaleString()}
                 </>
               )}
             </Motion.button>
 
             <Motion.p
-              className="text-xs text-gray-400 text-center mt-2"
+              className="text-[11px] text-gray-500 text-center mt-2 uppercase tracking-wider"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 1.1 }}
@@ -625,7 +575,7 @@ const CheckoutForm = ({
 
             {/* Error messages */}
             {createBookingMutation.isError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg">
+              <div className="bg-red-950/40 border border-red-800 text-red-300 p-3 rounded-lg text-xs">
                 Booking failed:{" "}
                 {createBookingMutation.error.response?.data?.message ||
                   createBookingMutation.error.message}
@@ -633,7 +583,7 @@ const CheckoutForm = ({
             )}
 
             {verifyPaymentMutation.isError && (
-              <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg">
+              <div className="bg-red-950/40 border border-red-800 text-red-300 p-3 rounded-lg text-xs">
                 Payment verification failed:{" "}
                 {verifyPaymentMutation.error.response?.data?.message ||
                   verifyPaymentMutation.error.message}

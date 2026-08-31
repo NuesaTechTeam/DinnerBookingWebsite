@@ -1,84 +1,137 @@
-import React from 'react'
-import { packages } from '../../lib/constants';
-import { Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Packages = () => {
- const navigate =  useNavigate()
-  const handleClick = () => { 
-   navigate("/book")
- }
-  return (
-    <section
-      id='packages'
-      className='py-20 max-sm:py-16 bg-gradient-to-b from-black to-red-900/20'
-    >
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-        <div className='text-center mb-16'>
-          <h2 className='text-4xl md:text-5xl font-bold text-white mb-4 tracking-wide'>
-            CHOOSE YOUR <span className='text-red-500'>RANK</span>
-          </h2>
-          <p className='text-xl text-gray-400 max-w-3xl mx-auto font-light'>
-            Every position in the famiglia comes with its privileges
-          </p>
-        </div>
+  const tiers = [
+    {
+      name: 'REGULAR',
+      price: '$150',
+      period: '/ person',
+      isRecommended: false,
+      features: [
+        'Standard banquet seating',
+        'Exquisite 3-course meal',
+        'Signature Welcome drink',
+        'Award-winning Live entertainment',
+      ],
+      buttonStyle: 'border border-[#d4af37]/40 text-white hover:border-[#d4af37] hover:bg-[#d4af37]/10',
+    },
+    {
+      name: 'VIP',
+      price: '$350',
+      period: '/ person',
+      isRecommended: true,
+      badgeText: 'RECOMMENDED',
+      features: [
+        'Premium stage-front seating',
+        'Gastronomic 5-course meal',
+        'Premium drinks package',
+        'Award-winning Live entertainment',
+        'Exclusive Meet & Greet with Chef',
+      ],
+      buttonStyle: 'bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] text-black font-extrabold hover:brightness-110 shadow-[0_0_15px_rgba(212,175,55,0.3)]',
+    },
+    {
+      name: 'VVIP',
+      price: '$750',
+      period: '/ person',
+      isRecommended: false,
+      features: [
+        'Exclusive front-row private seating',
+        'Masterful 7-course tasting menu',
+        'Unlimited premium vintage drinks',
+        'Private VVIP lounge access & personal waiter',
+        'Artisanal curated Luxury gift bag',
+      ],
+      buttonStyle: 'border border-[#d4af37]/40 text-white hover:border-[#d4af37] hover:bg-[#d4af37]/10',
+    },
+  ];
 
-        <div className='grid md:grid-cols-3 gap-10'>
-          {packages.map((pkg, index) => (
-            <div
-              key={index}
-              className={`relative bg-black border-2 p-8 transition-all duration-300 hover:shadow-2xl hover:shadow-red-500/20 hover:scale-105 ${
-                index === 3
-                  ? "border-red-500 bg-gradient-to-b from-red-900/20 to-black transform scale-105"
-                  : "border-red-900/50 hover:border-red-500/70"
-              }`}
-            >
-              {index === 3 && (
-                <div className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
-                  <span className='bg-gradient-to-r from-red-600 to-red-800 text-white px-4 max-sm:px-1 py-2 text-sm font-bold tracking-wide border border-red-400/50'>
-                    MOST RESPECTED
-                  </span>
-                </div>
-              )}
-              <div className='text-center mb-8'>
-                <div className='inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-600 to-red-800 text-white border border-red-400/50 mb-4'>
-                  {pkg.icon}
-                </div>
-                <h3 className='text-2xl font-bold text-white mb-2 tracking-wide'>
-                  {pkg.name}
-                </h3>
-                <div className='text-4xl font-bold text-red-400 mb-2'>
-                  {pkg.price}
-                </div>
-                <p className='text-gray-400 flex items-center justify-center font-medium'>
-                  <Users className='w-4 h-4 mr-1' />
-                  {pkg.guests}
-                </p>
+  return (
+    <section id="packages" className="py-24 px-6 md:px-12 lg:px-20 bg-[#050505] text-white">
+      {/* Section Header */}
+      <div className="max-w-3xl mx-auto text-center mb-16">
+        <span className="text-[#d4af37] text-xs font-semibold tracking-[0.25em] uppercase mb-3 block">
+          CURATED ACCESS
+        </span>
+        <h2 className="text-4xl md:text-5xl font-serif font-bold text-[#fcf6ba] mb-4">
+          Our Packages
+        </h2>
+        <p className="text-gray-400 text-sm md:text-base font-light">
+          Choose the tier that fits your standard of celebration. Space is strictly limited.
+        </p>
+      </div>
+
+      {/* Pricing Cards Grid */}
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
+        {tiers.map((tier, index) => (
+          <div
+            key={index}
+            className={`relative flex flex-col justify-between rounded-2xl p-8 bg-[#0a0a0a] transition-all duration-300 ${
+              tier.isRecommended
+                ? 'border-2 border-[#d4af37] shadow-[0_0_35px_rgba(212,175,55,0.2)] transform md:-translate-y-2'
+                : 'border border-gray-800 hover:border-[#d4af37]/40'
+            }`}
+          >
+            {/* Recommended Badge */}
+            {tier.isRecommended && (
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#d4af37] text-black text-[10px] font-extrabold tracking-widest uppercase px-4 py-1 rounded-full shadow-md">
+                {tier.badgeText}
               </div>
-              <ul className='space-y-3 mb-8'>
-                {pkg.features.map((feature, idx) => (
-                  <li key={idx} className='flex items-center text-gray-300'>
-                    <div className='w-2 h-2 bg-red-500 mr-3 flex-shrink-0'></div>
-                    {feature}
+            )}
+
+            <div>
+              {/* Tier Name */}
+              <span className="text-xs font-semibold tracking-wider text-[#d4af37] uppercase block mb-2">
+                {tier.name}
+              </span>
+
+              {/* Price */}
+              <div className="flex items-baseline gap-1 mb-8 pb-6 border-b border-gray-800">
+                <span className="text-4xl md:text-5xl font-serif font-extrabold text-white">
+                  {tier.price}
+                </span>
+                <span className="text-xs text-gray-400 font-light">
+                  {tier.period}
+                </span>
+              </div>
+
+              {/* Feature Checklist */}
+              <ul className="space-y-4 mb-8">
+                {tier.features.map((feature, fIndex) => (
+                  <li key={fIndex} className="flex items-start gap-3 text-xs md:text-sm text-gray-300">
+                    <svg
+                      className="w-4 h-4 text-[#d4af37] shrink-0 mt-0.5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2.5"
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                    <span className="leading-tight">{feature}</span>
                   </li>
                 ))}
               </ul>
-              <button
-                onClick={handleClick}
-                className={`w-full py-3 font-bold transition-all duration-300 tracking-wide ${
-                  index === 1
-                    ? "bg-gradient-to-r from-red-600 to-red-800 text-white border border-red-400/50 hover:shadow-lg hover:shadow-red-500/25"
-                    : "border-2 border-red-500 text-red-400 hover:bg-red-500 hover:text-white"
-                }`}
-              >
-                CLAIM YOUR POSITION
-              </button>
             </div>
-          ))}
-        </div>
+
+            {/* Book Now Button */}
+            <Link to="/book" className="w-full">
+              <button
+                className={`w-full py-3.5 rounded-lg text-xs font-bold tracking-widest uppercase transition-all cursor-pointer ${tier.buttonStyle}`}
+              >
+                BOOK NOW
+              </button>
+            </Link>
+          </div>
+        ))}
       </div>
     </section>
   );
-}
+};
 
-export default Packages
+export default Packages;

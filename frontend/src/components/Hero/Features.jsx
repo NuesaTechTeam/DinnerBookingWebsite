@@ -1,41 +1,75 @@
-import React from 'react'
-import { features } from '../../lib/constants';
+import React from 'react';
 
 const Features = () => {
+  const stats = [
+    { value: '07', label: 'MASTER CHEFS' },
+    { value: '05', label: 'LIVE ORCHESTRAS' },
+    { value: '12', label: 'AFRICAN COUNTRIES' },
+  ];
+
   return (
-    <section className='py-20 max-sm:py-16 bg-black'>
-      <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'>
-        <div className='text-center mb-16'>
-          <h2 className='text-4xl md:text-5xl font-bold text-white mb-4 tracking-wide'>
-            THE <span className='text-red-500'>CASABLANCA</span> EXPERIENCE
+    <section className="py-20 md:py-28 px-6 md:px-12 lg:px-20 bg-[#050505] text-white">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        
+        {/* Left Column: Text Content */}
+        <div className="flex flex-col justify-center">
+          {/* Eyebrow Header */}
+          <span className="text-[#d4af37] text-xs md:text-sm font-semibold tracking-[0.25em] uppercase mb-3">
+            HERITAGE & ELEGANCE
+          </span>
+
+          {/* Main Title */}
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-serif font-bold text-[#fcf6ba] leading-tight mb-8">
+            A Cultural Tapestry of Gastronomy and Music
           </h2>
-          <p className='text-xl text-gray-400 max-w-3xl mx-auto font-light'>
-            Where every detail is orchestrated with the precision of a master
-            strategist
-          </p>
+
+          {/* Body Paragraphs */}
+          <div className="space-y-6 text-gray-300 text-sm md:text-base font-light leading-relaxed mb-12">
+            <p>
+              Fàájí Lawa is a curated celebration designed to immerse you in the rich
+              grandeur of the continent. From custom-scented tablescapes inspired by
+              the botanical landscapes of East Africa, to a masterfully curated symphony
+              of traditional strings and modern Afro-soul.
+            </p>
+            <p>
+              Our master chefs present an unforgettable fine dining journey. Witness
+              heritage recipes from Cape Town to Cairo reimagined with modern culinary
+              artistry and luxury ingredients, paired exclusively with reserve vintage
+              wines.
+            </p>
+          </div>
+
+          {/* Stats Section */}
+          <div className="grid grid-cols-3 gap-6 pt-6 border-t border-[#d4af37]/20">
+            {stats.map((stat, index) => (
+              <div key={index} className="flex flex-col">
+                <span className="text-3xl md:text-4xl font-serif font-bold text-[#d4af37] tracking-tight">
+                  {stat.value}
+                </span>
+                <span className="text-[10px] sm:text-xs font-semibold tracking-wider text-gray-400 uppercase mt-1">
+                  {stat.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className='grid md:grid-cols-3 gap-8'>
-          {features.map((feature, index) => (
-            <div
-              key={index}
-              className='group text-center p-8 border border-red-900/30 hover:border-red-500/50 hover:bg-red-900/10 transition-all duration-300 hover:shadow-xl hover:shadow-red-500/10'
-            >
-              <div className='inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-red-600 to-red-800 text-white border border-red-400/50 mb-6 group-hover:scale-110 transition-transform duration-300'>
-                {feature.icon}
-              </div>
-              <h3 className='text-2xl font-bold text-white mb-4 tracking-wide'>
-                {feature.title}
-              </h3>
-              <p className='text-gray-300 leading-relaxed font-light'>
-                {feature.description}
-              </p>
-            </div>
-          ))}
+        {/* Right Column: Culinary Image */}
+        <div className="relative">
+          <div className="relative rounded-2xl overflow-hidden border border-[#d4af37]/30 shadow-[0_0_30px_rgba(212,175,55,0.15)]">
+            <img
+              src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1000" // Replace with your exported image path from /assets if preferred
+              alt="Fine African Gastronomy"
+              className="w-full h-[400px] sm:h-[500px] object-cover object-center transform hover:scale-105 transition-transform duration-700"
+            />
+            {/* Subtle Gradient Overlay */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+          </div>
         </div>
+
       </div>
     </section>
   );
-}
+};
 
-export default Features
+export default Features;
