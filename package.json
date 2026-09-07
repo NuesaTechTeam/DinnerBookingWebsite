@@ -4,7 +4,7 @@
   "private": true,
   "description": "Dinner Booking Website - frontend + backend",
   "scripts": {
-    "build": "npm --prefix frontend run build",
+    "build": "npm --prefix frontend install && npm --prefix frontend run build",
     "dev": "npm --prefix frontend run dev"
   },
   "license": "ISC"
