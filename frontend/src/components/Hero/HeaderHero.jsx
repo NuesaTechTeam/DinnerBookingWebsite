@@ -55,7 +55,7 @@ const HeaderHero = () => {
               PACKAGES
             </a>
             <a
-              onClick={() => scrollToSection("famiglia")}
+              onClick={() => scrollToSection("experience")}
               className="text-gray-300 hover:text-[#d4af37] font-medium transition-colors tracking-wider text-xs uppercase cursor-pointer"
             >
               EXPERIENCE

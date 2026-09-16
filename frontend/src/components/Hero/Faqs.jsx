@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
+import Reveal from '../Reveal.jsx';
 
 const Faqs = () => {
   const [openIndex, setOpenIndex] = useState(null);
@@ -33,7 +35,7 @@ const Faqs = () => {
   return (
     <section className="py-24 px-6 md:px-12 lg:px-20 bg-[#050505] text-white">
       {/* Section Header */}
-      <div className="max-w-3xl mx-auto text-center mb-16">
+      <Reveal className="max-w-3xl mx-auto text-center mb-16" y={20}>
         <span className="text-[#d4af37] text-xs font-semibold tracking-[0.25em] uppercase mb-3 block">
           IMPORTANT DETAILS
         </span>
@@ -43,16 +45,20 @@ const Faqs = () => {
         <p className="text-gray-400 text-sm md:text-base font-light">
           Everything you need to know about the evening's protocols.
         </p>
-      </div>
+      </Reveal>
 
       {/* Accordion Container */}
       <div className="max-w-3xl mx-auto space-y-2">
         {faqData.map((faq, index) => {
           const isOpen = openIndex === index;
           return (
-            <div
+            <Motion.div
               key={index}
-              className="border-b border-gray-800/80 transition-colors"
+              className="border-b border-gray-800/80"
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
             >
               <button
                 onClick={() => toggleFaq(index)}
@@ -83,16 +89,22 @@ const Faqs = () => {
               </button>
 
               {/* Collapsible Content */}
-              <div
-                className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                  isOpen ? "max-h-48 pb-6 opacity-100" : "max-h-0 opacity-0"
-                }`}
-              >
-                <p className="text-gray-400 text-sm md:text-base font-light leading-relaxed">
-                  {faq.answer}
-                </p>
-              </div>
-            </div>
+              <AnimatePresence initial={false}>
+                {isOpen && (
+                  <Motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3, ease: "easeInOut" }}
+                    className="overflow-hidden"
+                  >
+                    <p className="text-gray-400 text-sm md:text-base font-light leading-relaxed pb-6">
+                      {faq.answer}
+                    </p>
+                  </Motion.div>
+                )}
+              </AnimatePresence>
+            </Motion.div>
           );
         })}
       </div>

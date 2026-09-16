@@ -130,24 +130,24 @@ const SeatSelection = ({
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col justify-between font-sans">
       {/* Top Header Navbar */}
-      <header className="border-b border-gray-800 bg-black/80 backdrop-blur-md px-8 py-5 flex flex-wrap items-center justify-between gap-6 sticky top-0 z-50">
-        <div className="flex items-center gap-6">
+      <header className="border-b border-gray-800 bg-black/80 backdrop-blur-md px-4 sm:px-8 py-3 sm:py-5 flex flex-wrap items-center justify-between gap-3 sm:gap-6 sticky top-0 z-50">
+        <div className="flex items-center gap-3 sm:gap-6">
           <button
             onClick={() => navigate('/')}
-            className="w-12 h-12 rounded-full border border-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:border-[#d4af37] transition-colors"
+            className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full border border-gray-800 flex items-center justify-center text-gray-400 hover:text-white hover:border-[#d4af37] transition-colors"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
             </svg>
           </button>
 
-          <div className="flex items-center gap-4">
-            <img src={logo} alt="Logo" className="w-12 h-12 object-contain" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <img src={logo} alt="Logo" className="w-10 h-10 sm:w-12 sm:h-12 object-contain" />
             <div>
-              <h1 className="text-2xl md:text-3xl font-serif font-extrabold text-[#d4af37] tracking-wider uppercase">
+              <h1 className="text-lg sm:text-2xl md:text-3xl font-serif font-extrabold text-[#d4af37] tracking-wider uppercase">
                 FÀÁJÍ LAWA
               </h1>
-              <span className="text-xs text-gray-400 font-light tracking-widest uppercase block mt-0.5">
+              <span className="text-[10px] sm:text-xs text-gray-400 font-light tracking-widest uppercase block mt-0.5">
                 TABLE RESERVATIONS
               </span>
             </div>
@@ -155,50 +155,50 @@ const SeatSelection = ({
         </div>
 
         {/* Event Meta Badges */}
-        <div className="flex items-center gap-8 text-sm text-gray-300 font-light">
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#d4af37]"></span>
-            <span>Sat, Dec 14th, 2026</span>
+        <div className="flex w-full lg:w-auto flex-wrap items-center gap-x-4 gap-y-2 sm:gap-8 text-xs sm:text-sm text-gray-300 font-light">
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#d4af37]"></span>
+            <span>Sat, Oct 31st, 2026</span>
           </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#d4af37]"></span>
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#d4af37]"></span>
             <span>7:00 PM</span>
           </div>
-          <div className="flex items-center gap-2.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#d4af37]"></span>
-            <span>Grand Ballroom</span>
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 rounded-full bg-[#d4af37]"></span>
+            <span>Alfa Belgore Hall</span>
           </div>
         </div>
       </header>
 
       {/* Main Floorplan & Dynamic Sidebar scaled up for desktop screens */}
-      <main className="max-w-[1500px] mx-auto w-full px-8 py-12 grid grid-cols-1 lg:grid-cols-12 gap-12">
+      <main className="max-w-[1500px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         {/* Left Interactive Floorplan */}
-        <div className="lg:col-span-8 bg-[#0a0a0a] border border-gray-800/80 rounded-3xl p-8 md:p-12 flex flex-col items-center shadow-[0_0_40px_rgba(0,0,0,0.9)]">
+        <div className="lg:col-span-8 bg-[#0a0a0a] border border-gray-800/80 rounded-3xl p-4 sm:p-8 md:p-12 flex flex-col items-center shadow-[0_0_40px_rgba(0,0,0,0.9)]">
           
           {/* Fully Gold Stage Banner with Black Text */}
-          <div className="w-full max-w-2xl bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-2xl py-4 text-center mb-12 shadow-[0_0_25px_rgba(212,175,55,0.4)]">
-            <span className="text-sm font-extrabold tracking-[0.4em] text-black uppercase">
+          <div className="w-full max-w-2xl bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-2xl py-3 sm:py-4 text-center mb-8 sm:mb-12 shadow-[0_0_25px_rgba(212,175,55,0.4)]">
+            <span className="text-xs sm:text-sm font-extrabold tracking-[0.3em] sm:tracking-[0.4em] text-black uppercase">
               STAGE
             </span>
           </div>
 
           {/* Floor Layout Grid */}
-          <div className="relative w-full max-w-3xl mx-auto py-6">
-            <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-4 bg-gradient-to-b from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-full shadow-[0_0_20px_rgba(212,175,55,0.5)] flex items-center justify-center">
+          <div className="relative w-full max-w-3xl mx-auto py-4 sm:py-6">
+            <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-4 bg-gradient-to-b from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-full shadow-[0_0_20px_rgba(212,175,55,0.5)] hidden md:flex items-center justify-center">
               <span className="text-[10px] font-extrabold text-black rotate-90 tracking-widest uppercase whitespace-nowrap">
                 GOLD CARPET
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-16 sm:gap-24">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 lg:gap-24">
               {/* Left Column */}
               <div className="space-y-10">
                 <div>
                   <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
                     👑 VVIP FRONT ROW
                   </span>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-4 gap-2 sm:gap-4">
                     {[1, 2, 3, 4].map((num) => (
                       <div key={num} className="relative group">
                         {getTableId(selectedTable) === String(num) && (
@@ -208,7 +208,7 @@ const SeatSelection = ({
                         )}
                         <button
                           onClick={() => handleTableClick({ id: String(num), name: `Table VVIP-${num}`, type: 'VVIP', capacity: 8 })}
-                          className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                          className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                         >
                           {num}
                         </button>
@@ -221,12 +221,12 @@ const SeatSelection = ({
                   <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
                     ⭐ VIP SECTION
                   </span>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[9, 10, 11].map((num) => (
                       <button
                         key={num}
                         onClick={() => handleTableClick({ id: String(num), name: `Table VIP-${num}`, type: 'VIP', capacity: 8 })}
-                        className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                       >
                         {num}
                       </button>
@@ -238,12 +238,12 @@ const SeatSelection = ({
                   <span className="text-xs font-bold tracking-wider text-gray-400 border border-gray-800 px-3 py-1 rounded-md uppercase block mb-4 w-max">
                     👤 REGULAR ZONE
                   </span>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[15, 16, 17, 18, 19, 20].map((num) => (
                       <button
                         key={num}
                         onClick={() => handleTableClick({ id: String(num), name: `Table REG-${num}`, type: 'REGULAR', capacity: 8 })}
-                        className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                       >
                         {num}
                       </button>
@@ -253,12 +253,12 @@ const SeatSelection = ({
               </div>
 
               {/* Right Column */}
-              <div className="space-y-10 pl-6">
+              <div className="space-y-10 md:pl-6">
                 <div>
                   <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
                     👑 VVIP FRONT ROW
                   </span>
-                  <div className="grid grid-cols-4 gap-4">
+                  <div className="grid grid-cols-4 gap-2 sm:gap-4">
                     {[5, 6, 7, 8].map((num) => (
                       <div key={num} className="relative group">
                         {getTableId(selectedTable) === String(num) && (
@@ -268,7 +268,7 @@ const SeatSelection = ({
                         )}
                         <button
                           onClick={() => handleTableClick({ id: String(num), name: `Table VVIP-${num}`, type: 'VVIP', capacity: 8 })}
-                          className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                          className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                         >
                           {num}
                         </button>
@@ -281,12 +281,12 @@ const SeatSelection = ({
                   <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
                     ⭐ VIP SECTION
                   </span>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[12, 13, 14].map((num) => (
                       <button
                         key={num}
                         onClick={() => handleTableClick({ id: String(num), name: `Table VIP-${num}`, type: 'VIP', capacity: 8 })}
-                        className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                       >
                         {num}
                       </button>
@@ -298,12 +298,12 @@ const SeatSelection = ({
                   <span className="text-xs font-bold tracking-wider text-gray-400 border border-gray-800 px-3 py-1 rounded-md uppercase block mb-4 w-max">
                     👤 REGULAR ZONE
                   </span>
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[25, 26, 27].map((num) => (
                       <button
                         key={num}
                         onClick={() => handleTableClick({ id: String(num), name: `Table REG-${num}`, type: 'REGULAR', capacity: 8 })}
-                        className={`w-14 h-14 rounded-full font-bold text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
+                        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                       >
                         {num}
                       </button>
@@ -315,7 +315,7 @@ const SeatSelection = ({
           </div>
 
           {/* Legend Bottom Bar */}
-          <div className="flex items-center justify-center gap-8 mt-14 pt-8 border-t border-gray-800/80 w-full text-sm text-gray-400">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 sm:gap-8 mt-8 sm:mt-14 pt-6 sm:pt-8 border-t border-gray-800/80 w-full text-xs sm:text-sm text-gray-400">
             <div className="flex items-center gap-3">
               <span className="w-4 h-4 rounded-full border-2 border-[#d4af37]" />
               <span>Available</span>
@@ -337,7 +337,7 @@ const SeatSelection = ({
 
         {/* Right Dynamic Sidebar Context */}
         <div className="lg:col-span-4 space-y-8">
-          <div className="bg-[#0a0a0a] border border-gray-800 rounded-3xl p-8 md:p-10 space-y-8 shadow-[0_0_40px_rgba(0,0,0,0.9)]">
+          <div className="bg-[#0a0a0a] border border-gray-800 rounded-3xl p-5 sm:p-8 md:p-10 space-y-6 sm:space-y-8 shadow-[0_0_40px_rgba(0,0,0,0.9)]">
             {!selectedTable ? (
               <>
                 <div>
@@ -413,11 +413,11 @@ const SeatSelection = ({
                       {selectedSeats.length} of {tableCapacity} selected
                     </span>
                   </div>
-                  <div className="bg-[#050505] border border-gray-800/80 rounded-2xl p-8 flex flex-col items-center">
-                    <div className="w-28 border border-[#d4af37]/40 text-center py-1.5 rounded text-xs text-[#d4af37] font-semibold mb-8">
+                  <div className="bg-[#050505] border border-gray-800/80 rounded-2xl p-4 sm:p-8 flex flex-col items-center">
+                    <div className="w-28 border border-[#d4af37]/40 text-center py-1.5 rounded text-xs text-[#d4af37] font-semibold mb-6 sm:mb-8">
                       {selectedTable.name}
                     </div>
-                    <div className="grid grid-cols-4 gap-4 w-full max-w-xs">
+                    <div className="grid grid-cols-4 gap-3 sm:gap-4 w-full max-w-xs">
                       {Array.from({ length: tableCapacity }, (_, i) => i + 1).map((seatNum) => {
                         const activeId = getTableId(selectedTable);
                         const seatId = `${activeId}-S${seatNum}`;
@@ -427,7 +427,7 @@ const SeatSelection = ({
                           <button
                             key={seatNum}
                             onClick={() => toggleSeatSelection(seatNum)}
-                            className={`h-12 rounded-full font-bold text-sm flex items-center justify-center transition-all ${
+                            className={`h-11 sm:h-12 rounded-full font-bold text-sm flex items-center justify-center transition-all ${
                               isSelected
                                 ? 'bg-[#d4af37] text-black border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.7)]'
                                 : 'bg-[#0a0a0a] text-white border border-gray-800 hover:border-[#d4af37]'

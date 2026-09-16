@@ -32,7 +32,7 @@ const HeaderBooking = () => {
           <div className="hidden md:flex items-center space-x-6 text-xs text-gray-300 tracking-wider">
             <div className="flex items-center space-x-2 bg-[#141414] border border-[#d4af37]/20 px-3 py-1.5 rounded-full">
               <Calendar className="text-[#d4af37]" size={14} />
-              <span>23RD NOVEMBER, 2025</span>
+              <span>31ST OCTOBER, 2026</span>
             </div>
             <div className="flex items-center space-x-2 bg-[#141414] border border-[#d4af37]/20 px-3 py-1.5 rounded-full">
               <Clock className="text-[#d4af37]" size={14} />

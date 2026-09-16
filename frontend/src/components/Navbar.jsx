@@ -38,7 +38,12 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="fixed left-0 top-0 z-50 bg-[#050505]/95 backdrop-blur-md border-b border-[#d4af37]/20 w-full mx-auto flex items-center justify-between py-3 px-6 md:px-12 shadow-2xl">
+      <Motion.nav
+        initial={{ y: -80, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        className="fixed left-0 top-0 z-50 bg-[#050505]/95 backdrop-blur-md border-b border-[#d4af37]/20 w-full mx-auto flex items-center justify-between py-3 px-6 md:px-12 shadow-2xl"
+      >
         {/* Logo and Branding Section */}
         <Link to="/" className="flex items-center gap-3">
           <img 
@@ -88,7 +93,7 @@ const Navbar = () => {
         <button className="lg:hidden z-50 text-[#d4af37]">
           <Hamburger setMobileMenu={setIsOpen} mobileMenu={isOpen} />
         </button>
-      </nav>
+      </Motion.nav>
 
       {/* Mobile Drawer Menu */}
       <AnimatePresence>

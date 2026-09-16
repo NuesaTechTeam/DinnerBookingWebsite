@@ -19,7 +19,7 @@ export const testing = async (booking) => {
     await axios.post(
       "https://us-central1-emailservice-dc88e.cloudfunctions.net/api/email/send",
       {
-        subject: "Welcome to La Famiglia - Casablanca",
+        subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
         to_emails: [booking.email],
         html_body: generateEmailTemplate(booking, booking.seats),
       }
@@ -34,7 +34,7 @@ export const sendPresidentEmail = async (booking) => {
     const response = await axios.post(
       "https://us-central1-emailservice-dc88e.cloudfunctions.net/api/email/send",
       {
-        subject: "Welcome to La Famiglia - Casablanca",
+        subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
         to_emails: [booking.email],
         html_body: generateEmailTemplatePresident(booking),
       }
@@ -63,7 +63,7 @@ export const sendConfirmationEmail = async (booking) => {
      const response = await axios.post(
         "https://us-central1-emailservice-dc88e.cloudfunctions.net/api/email/send",
         {
-          subject: "Welcome to La Famiglia - Casablanca",
+          subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
           to_emails: [booking.email],
           html_body: generateEmailTemplate(booking, booking.seats),
         }
@@ -77,11 +77,11 @@ export const sendConfirmationEmail = async (booking) => {
     // const mailOptions = {
     //   from: process.env.EMAIL_FROM || "nuesadinner@gmail.com",
     //   to: booking.email,
-    //   subject: "Welcome to La Famiglia - Casablanca",
+    //   subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
     //   html: generateEmailTemplate(booking, booking.seats),
     //   text: `
     //     Dinner Booking Confirmation
-    //     Welcome to La Famiglia - Casablanca
+    //     FÀÁJÍ LAWA | Your Reservation is Confirmed
     //     ----------------------------
     //     Name: ${booking.name}
     //     Matric No: ${booking.matricNo}

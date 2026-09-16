@@ -1,4 +1,6 @@
 import React from 'react';
+import { motion as Motion } from 'framer-motion';
+import Reveal from '../Reveal.jsx';
 
 const Features = () => {
   const stats = [
@@ -8,11 +10,10 @@ const Features = () => {
   ];
 
   return (
-    <section className="py-20 md:py-28 px-6 md:px-12 lg:px-20 bg-[#050505] text-white">
+    <section className="py-20 md:py-28 px-6 md:px-12 lg:px-20 bg-[#050505] text-white overflow-hidden">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        
         {/* Left Column: Text Content */}
-        <div className="flex flex-col justify-center">
+        <Reveal className="flex flex-col justify-center" y={36}>
           {/* Eyebrow Header */}
           <span className="text-[#d4af37] text-xs md:text-sm font-semibold tracking-[0.25em] uppercase mb-3">
             HERITAGE & ELEGANCE
@@ -42,31 +43,37 @@ const Features = () => {
           {/* Stats Section */}
           <div className="grid grid-cols-3 gap-6 pt-6 border-t border-[#d4af37]/20">
             {stats.map((stat, index) => (
-              <div key={index} className="flex flex-col">
+              <Motion.div
+                key={index}
+                className="flex flex-col"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.6 }}
+                transition={{ duration: 0.5, delay: 0.15 * index }}
+              >
                 <span className="text-3xl md:text-4xl font-serif font-bold text-[#d4af37] tracking-tight">
                   {stat.value}
                 </span>
                 <span className="text-[10px] sm:text-xs font-semibold tracking-wider text-gray-400 uppercase mt-1">
                   {stat.label}
                 </span>
-              </div>
+              </Motion.div>
             ))}
           </div>
-        </div>
+        </Reveal>
 
         {/* Right Column: Culinary Image */}
-        <div className="relative">
-          <div className="relative rounded-2xl overflow-hidden border border-[#d4af37]/30 shadow-[0_0_30px_rgba(212,175,55,0.15)]">
+        <Reveal className="relative" delay={0.15} y={36}>
+          <div className="relative rounded-2xl overflow-hidden border border-[#d4af37]/30 shadow-[0_0_30px_rgba(212,175,55,0.15)] group">
             <img
-              src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1000" // Replace with your exported image path from /assets if preferred
+              src="https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=1000"
               alt="Fine African Gastronomy"
-              className="w-full h-[400px] sm:h-[500px] object-cover object-center transform hover:scale-105 transition-transform duration-700"
+              className="w-full h-[400px] sm:h-[500px] object-cover object-center transform group-hover:scale-105 transition-transform duration-700"
             />
             {/* Subtle Gradient Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
           </div>
-        </div>
-
+        </Reveal>
       </div>
     </section>
   );

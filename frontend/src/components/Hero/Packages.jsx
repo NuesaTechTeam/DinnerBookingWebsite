@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { motion as Motion } from 'framer-motion';
 
 const Packages = () => {
   const tiers = [
     {
       name: 'REGULAR',
-      price: '$150',
+      price: '₦8,000',
       period: '/ person',
       isRecommended: false,
       features: [
@@ -18,7 +19,7 @@ const Packages = () => {
     },
     {
       name: 'VIP',
-      price: '$350',
+      price: '₦25,000',
       period: '/ person',
       isRecommended: true,
       badgeText: 'RECOMMENDED',
@@ -33,7 +34,7 @@ const Packages = () => {
     },
     {
       name: 'VVIP',
-      price: '$750',
+      price: '₦40,000',
       period: '/ person',
       isRecommended: false,
       features: [
@@ -48,9 +49,15 @@ const Packages = () => {
   ];
 
   return (
-    <section id="packages" className="py-24 px-6 md:px-12 lg:px-20 bg-[#050505] text-white">
+    <section id="packages" className="py-24 px-6 md:px-12 lg:px-20 bg-[#050505] text-white overflow-hidden">
       {/* Section Header */}
-      <div className="max-w-3xl mx-auto text-center mb-16">
+      <Motion.div
+        className="max-w-3xl mx-auto text-center mb-16"
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.5 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+      >
         <span className="text-[#d4af37] text-xs font-semibold tracking-[0.25em] uppercase mb-3 block">
           CURATED ACCESS
         </span>
@@ -60,24 +67,35 @@ const Packages = () => {
         <p className="text-gray-400 text-sm md:text-base font-light">
           Choose the tier that fits your standard of celebration. Space is strictly limited.
         </p>
-      </div>
+      </Motion.div>
 
       {/* Pricing Cards Grid */}
       <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch">
         {tiers.map((tier, index) => (
-          <div
+          <Motion.div
             key={index}
-            className={`relative flex flex-col justify-between rounded-2xl p-8 bg-[#0a0a0a] transition-all duration-300 ${
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.6, ease: 'easeOut', delay: index * 0.15 }}
+            whileHover={{ y: -8 }}
+            className={`relative flex flex-col justify-between rounded-2xl p-8 bg-[#0a0a0a] transition-colors duration-300 ${
               tier.isRecommended
-                ? 'border-2 border-[#d4af37] shadow-[0_0_35px_rgba(212,175,55,0.2)] transform md:-translate-y-2'
+                ? 'border-2 border-[#d4af37] shadow-[0_0_35px_rgba(212,175,55,0.2)] md:-translate-y-2'
                 : 'border border-gray-800 hover:border-[#d4af37]/40'
             }`}
           >
             {/* Recommended Badge */}
             {tier.isRecommended && (
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#d4af37] text-black text-[10px] font-extrabold tracking-widest uppercase px-4 py-1 rounded-full shadow-md">
+              <Motion.div
+                className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-[#d4af37] text-black text-[10px] font-extrabold tracking-widest uppercase px-4 py-1 rounded-full shadow-md"
+                initial={{ opacity: 0, scale: 0.6 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.4, delay: 0.3 }}
+              >
                 {tier.badgeText}
-              </div>
+              </Motion.div>
             )}
 
             <div>
@@ -121,13 +139,15 @@ const Packages = () => {
 
             {/* Book Now Button */}
             <Link to="/book" className="w-full">
-              <button
+              <Motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 className={`w-full py-3.5 rounded-lg text-xs font-bold tracking-widest uppercase transition-all cursor-pointer ${tier.buttonStyle}`}
               >
                 BOOK NOW
-              </button>
+              </Motion.button>
             </Link>
-          </div>
+          </Motion.div>
         ))}
       </div>
     </section>

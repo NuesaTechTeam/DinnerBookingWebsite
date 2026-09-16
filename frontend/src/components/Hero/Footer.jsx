@@ -1,11 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import Reveal from '../Reveal.jsx';
 import nuesaLogo from '../../assets/logo.png'; // Make sure your NUESA logo image is inside src/assets
 
 const Footer = () => {
   return (
     <footer className="bg-[#050505] text-white pt-16 pb-12 px-6 md:px-12 lg:px-20 border-t border-[#d4af37]/20">
-      <div className="max-w-7xl mx-auto">
+      <Reveal className="max-w-7xl mx-auto" y={24}>
         {/* Top Grid Section */}
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 pb-16 border-b border-gray-800/80">
           
@@ -101,7 +102,7 @@ const Footer = () => {
             </a>
           </div>
         </div>
-      </div>
+      </Reveal>
     </footer>
   );
 };

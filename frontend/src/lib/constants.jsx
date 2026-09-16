@@ -28,25 +28,25 @@ export const navbarLinks = [
 export const socialLinks = [
   {
     title: "Twitter",
-    icon: <BsTwitterX size={24} className=' hover:text-blue-500' />,
+    icon: <BsTwitterX size={24} className=" hover:text-blue-500" />,
     link: "https://x.com/nuesa_abuad?s=21",
     color: "",
   },
   {
     title: "Snapchat",
-    icon: <BsSnapchat size={24} className=' hover:text-yellow-400' />,
+    icon: <BsSnapchat size={24} className=" hover:text-yellow-400" />,
     link: "https://snapchat.com/t/LFnYiU0W",
     color: "",
   },
   {
     title: "Instagram",
-    icon: <BsInstagram size={24} className=' hover:text-pink-500' />,
+    icon: <BsInstagram size={24} className=" hover:text-pink-500" />,
     link: "https://www.instagram.com/nuesaabuad?igsh=MThyYzg3aXN5ZHg2bQ==",
     color: "",
   },
   {
     title: "WhatsApp",
-    icon: <BsWhatsapp size={24} className=' hover:text-green-500' />,
+    icon: <BsWhatsapp size={24} className=" hover:text-green-500" />,
     link: "/",
     color: "",
   },
@@ -128,92 +128,77 @@ export const faqs = [
 
 export const testimonials = [
   {
-    name: "The Consigliere",
+    name: "Chief O. Adebayo",
     text: "An evening of unparalleled sophistication. The atmosphere was intoxicating.",
     rating: 5,
   },
   {
-    name: "Don Salvatore",
-    text: "They made us an offer we couldn't refuse. Absolutely magnificent.",
+    name: "Lady K. Mensah",
+    text: "The finest celebration of pan-African high culture and gastronomy.",
     rating: 5,
   },
   {
-    name: "La Famiglia",
-    text: "Honor, respect, and the finest dining experience. This is how business is done.",
+    name: "Dr. E. Nwachukwu",
+    text: "Exquisite details, world-class entertainment, and royal hospitality.",
     rating: 5,
   },
 ];
 
 export const packages = [
   {
-    name: "Soldier",
+    name: "Regular",
     price: "₦8,000",
     guests: "Regular",
     features: [
-      "General access seating",
-      "Standard meal and refreshments",
-      "Light entertainment",
-      "Complimentary treats",
+      "Standard banquet seating",
+      "Exquisite 3-course meal",
+      "Signature welcome drink",
+      "Award-winning live entertainment",
     ],
-    icon: <User className='w-6 h-6' />,
+    icon: <User className="w-6 h-6" />,
   },
   {
-    name: "Capo",
-    price: "₦18,000",
-    guests: "Silver",
-    features: [
-      "Central section seating",
-      "Standard plated meal and beverage",
-      "Snack and drink combo",
-      "Complimentary sweets and refreshments",
-    ],
-    icon: <Shield className='w-6 h-6' />,
-  },
-  {
-    name: "Underboss",
+    name: "VIP",
     price: "₦25,000",
     guests: "VIP Experience",
     features: [
-      "Priority seating in VIP section",
-      "Curated multi-course meal service",
-      "Table-served refreshments",
-      "Complimentary beverages",
-      "Exclusive guest souvenir",
+      "Premium stage-front seating",
+      "Gastronomic 5-course meal",
+      "Premium drinks package",
+      "Exclusive meet & greet with the chef",
     ],
-    icon: <Diamond className='w-6 h-6' />,
+    icon: <Diamond className="w-6 h-6" />,
   },
   {
-    name: "Don",
+    name: "VVIP",
     price: "₦40,000",
     guests: "VVIP Experience",
     features: [
-      "Premium front-row seating",
-      "Exclusive 3-course fine dining experience",
-      "Wide selection of premium beverages",
-      "Dedicated personal service",
-      "Signature souvenirs and keepsakes",
-      "Access to photo sessions",
-      "Priority guest treatment",
+      "Exclusive front-row private seating",
+      "Masterful 7-course tasting menu",
+      "Unlimited premium vintage drinks",
+      "Private VVIP lounge access & personal waiter",
+      "Artisanal curated luxury gift bag",
     ],
-    icon: <Crown className='w-6 h-6' />,
+    icon: <Crown className="w-6 h-6" />,
   },
 ];
 
 export const features = [
   {
-    icon: <Shield className='w-8 h-8' />,
+    icon: <Shield className="w-8 h-8" />,
     title: "Absolute Discretion",
     description:
-      "What happens at Casablanca, stays at Casablanca. Privacy and exclusivity guaranteed for all members of the famiglia.",
+      "An intimate, exclusive gathering where privacy and elegance are guaranteed for every guest of Fàájí Lawa.",
   },
   {
-    icon: <Crown className='w-8 h-8' />,
+    icon: <Crown className="w-8 h-8" />,
     title: "Uncompromising Quality",
     description:
       "Only the finest ingredients, prepared by masters of their craft. We accept nothing less than perfection.",
   },
   {
-    icon: <Diamond className='w-8 h-8' />,
+    icon: <Diamond className="w-8 h-8" />,
     title: "Legendary Service",
     description:
       "Service so impeccable, it becomes the stuff of legend. Every need anticipated, every desire fulfilled.",
@@ -231,11 +216,9 @@ export const tables = {
     },
     {
       id: "V2",
-      no_of_fruits: 4,
       number: 2,
       totalSeats: 4,
       bookedSeats: [2, 4],
-      hii: ["yhe", 4, 8,],
       section: "vvip",
     },
     { id: "V3", number: 3, totalSeats: 4, bookedSeats: [], section: "vvip" },
