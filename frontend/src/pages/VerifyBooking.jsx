@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Sparkles,
 } from "lucide-react";
+import { formatTierText } from "../lib/helpers.jsx";
 
 const VerifyBooking = () => {
   const { bookingId } = useParams();
@@ -257,13 +258,13 @@ const VerifyBooking = () => {
                   <div>
                     <p className="text-xs text-zinc-500 mb-1">TABLE</p>
                     <p className="text-white font-semibold text-sm">
-                      {booking.tables?.join(", ") || "TBA"}
+                      {formatTierText(booking.tables?.join(", ")) || "TBA"}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-zinc-500 mb-1">SEAT(S)</p>
                     <p className="text-white font-semibold text-sm">
-                      {booking.seatNumbers?.join(", ") || "TBA"}
+                      {formatTierText(booking.seatNumbers?.join(", ")) || "TBA"}
                     </p>
                   </div>
                 </div>
@@ -341,11 +342,11 @@ const VerifyBooking = () => {
                 >
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="font-semibold text-white text-sm">
-                      Seat {seat.seatNumber}
+                      Seat {formatTierText(seat.seatNumber)}
                     </span>
                     {seat.tableNumber && (
                       <span className="text-xs text-zinc-400 font-mono">
-                        (Table {seat.tableNumber})
+                        (Table {formatTierText(seat.tableNumber)})
                       </span>
                     )}
                     <span

@@ -2,6 +2,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../Hero/Footer.jsx';
 import logo from '../../assets/logo.png';
+import { getTierLabel } from '../../lib/helpers.jsx';
+import { Crown } from 'lucide-react';
 
 const SeatSelection = ({
   isLoading,
@@ -24,8 +26,8 @@ const SeatSelection = ({
 
   const tierSummary = [
     {
-      name: 'VVIP PACKAGE',
-      price: '$750',
+      name: 'PLATINUM PACKAGE',
+      price: '₦27,000',
       available: `${
         safeTables.filter(
           (t) =>
@@ -40,8 +42,8 @@ const SeatSelection = ({
       ),
     },
     {
-      name: 'VIP PACKAGE',
-      price: '$350',
+      name: 'GOLD PACKAGE',
+      price: '₦18,000',
       available: `${
         safeTables.filter(
           (t) =>
@@ -56,8 +58,8 @@ const SeatSelection = ({
       ),
     },
     {
-      name: 'REGULAR TIER',
-      price: '$150',
+      name: 'BRONZE TIER',
+      price: '₦10,000',
       available: `${
         safeTables.filter(
           (t) =>
@@ -116,9 +118,9 @@ const SeatSelection = ({
   const getSeatPrice = () => {
     if (!selectedTable) return 0;
     if (selectedTable.price) return selectedTable.price;
-    if (selectedTable.type === 'VVIP') return 750;
-    if (selectedTable.type === 'VIP') return 350;
-    return 150;
+    if (selectedTable.type === 'VVIP') return 27000;
+    if (selectedTable.type === 'VIP') return 18000;
+    return 10000;
   };
 
   const seatUnitPrice = getSeatPrice();
@@ -195,19 +197,23 @@ const SeatSelection = ({
               {/* Left Column */}
               <div className="space-y-10">
                 <div>
-                  <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    👑 VVIP FRONT ROW
+                  <span className="inline-flex items-center gap-2 text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase mb-4 w-max">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-white via-[#fcf6ba] to-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.55)]">
+                      <Crown size={11} className="text-black" strokeWidth={2.5} />
+                    </span>
+                    PLATINUM FRONT ROW
                   </span>
                   <div className="grid grid-cols-4 gap-2 sm:gap-4">
                     {[1, 2, 3, 4].map((num) => (
                       <div key={num} className="relative group">
                         {getTableId(selectedTable) === String(num) && (
-                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-black border border-[#d4af37] text-xs text-[#d4af37] px-2.5 py-1 rounded whitespace-nowrap z-20 shadow-md font-medium">
-                            👑 Table VVIP-{num}
+                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black border border-[#d4af37] text-xs text-[#d4af37] px-2.5 py-1 rounded whitespace-nowrap z-20 shadow-md font-medium">
+                            <Crown size={12} className="text-[#fcf6ba]" />
+                            Table PLATINUM-{num}
                           </div>
                         )}
                         <button
-                          onClick={() => handleTableClick({ id: String(num), name: `Table VVIP-${num}`, type: 'VVIP', capacity: 8 })}
+                          onClick={() => handleTableClick({ id: String(num), name: `Table PLATINUM-${num}`, type: 'VVIP', capacity: 8 })}
                           className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                         >
                           {num}
@@ -219,13 +225,13 @@ const SeatSelection = ({
 
                 <div>
                   <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    ⭐ VIP SECTION
+                    ⭐ GOLD SECTION
                   </span>
                   <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[9, 10, 11].map((num) => (
                       <button
                         key={num}
-                        onClick={() => handleTableClick({ id: String(num), name: `Table VIP-${num}`, type: 'VIP', capacity: 8 })}
+                        onClick={() => handleTableClick({ id: String(num), name: `Table GOLD-${num}`, type: 'VIP', capacity: 8 })}
                         className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                       >
                         {num}
@@ -236,13 +242,13 @@ const SeatSelection = ({
 
                 <div>
                   <span className="text-xs font-bold tracking-wider text-gray-400 border border-gray-800 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    👤 REGULAR ZONE
+                    👤 BRONZE ZONE
                   </span>
                   <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[15, 16, 17, 18, 19, 20].map((num) => (
                       <button
                         key={num}
-                        onClick={() => handleTableClick({ id: String(num), name: `Table REG-${num}`, type: 'REGULAR', capacity: 8 })}
+                        onClick={() => handleTableClick({ id: String(num), name: `Table BRONZE-${num}`, type: 'REGULAR', capacity: 8 })}
                         className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                       >
                         {num}
@@ -255,19 +261,23 @@ const SeatSelection = ({
               {/* Right Column */}
               <div className="space-y-10 md:pl-6">
                 <div>
-                  <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    👑 VVIP FRONT ROW
+                  <span className="inline-flex items-center gap-2 text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase mb-4 w-max">
+                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-white via-[#fcf6ba] to-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.55)]">
+                      <Crown size={11} className="text-black" strokeWidth={2.5} />
+                    </span>
+                    PLATINUM FRONT ROW
                   </span>
                   <div className="grid grid-cols-4 gap-2 sm:gap-4">
                     {[5, 6, 7, 8].map((num) => (
                       <div key={num} className="relative group">
                         {getTableId(selectedTable) === String(num) && (
-                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 bg-black border border-[#d4af37] text-xs text-[#d4af37] px-2.5 py-1 rounded whitespace-nowrap z-20 shadow-md font-medium">
-                            👑 Table VVIP-{num}
+                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black border border-[#d4af37] text-xs text-[#d4af37] px-2.5 py-1 rounded whitespace-nowrap z-20 shadow-md font-medium">
+                            <Crown size={12} className="text-[#fcf6ba]" />
+                            Table PLATINUM-{num}
                           </div>
                         )}
                         <button
-                          onClick={() => handleTableClick({ id: String(num), name: `Table VVIP-${num}`, type: 'VVIP', capacity: 8 })}
+                          onClick={() => handleTableClick({ id: String(num), name: `Table PLATINUM-${num}`, type: 'VVIP', capacity: 8 })}
                           className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                         >
                           {num}
@@ -279,13 +289,13 @@ const SeatSelection = ({
 
                 <div>
                   <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    ⭐ VIP SECTION
+                    ⭐ GOLD SECTION
                   </span>
                   <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[12, 13, 14].map((num) => (
                       <button
                         key={num}
-                        onClick={() => handleTableClick({ id: String(num), name: `Table VIP-${num}`, type: 'VIP', capacity: 8 })}
+                        onClick={() => handleTableClick({ id: String(num), name: `Table GOLD-${num}`, type: 'VIP', capacity: 8 })}
                         className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                       >
                         {num}
@@ -296,13 +306,13 @@ const SeatSelection = ({
 
                 <div>
                   <span className="text-xs font-bold tracking-wider text-gray-400 border border-gray-800 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    👤 REGULAR ZONE
+                    👤 BRONZE ZONE
                   </span>
                   <div className="grid grid-cols-3 gap-2 sm:gap-4">
                     {[25, 26, 27].map((num) => (
                       <button
                         key={num}
-                        onClick={() => handleTableClick({ id: String(num), name: `Table REG-${num}`, type: 'REGULAR', capacity: 8 })}
+                        onClick={() => handleTableClick({ id: String(num), name: `Table BRONZE-${num}`, type: 'REGULAR', capacity: 8 })}
                         className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
                       >
                         {num}
@@ -341,8 +351,8 @@ const SeatSelection = ({
             {!selectedTable ? (
               <>
                 <div>
-                  <div className="w-10 h-10 rounded-full border border-[#d4af37]/40 flex items-center justify-center mb-4 text-[#d4af37] text-lg">
-                    👑
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white via-[#fcf6ba] to-[#d4af37] flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(212,175,55,0.45)]">
+                    <Crown className="w-5 h-5 text-black" strokeWidth={2.5} />
                   </div>
                   <h2 className="text-3xl font-serif font-bold text-[#fcf6ba] mb-3">
                     Select Your Table
@@ -381,8 +391,8 @@ const SeatSelection = ({
             ) : (
               <>
                 <div>
-                  <div className="w-10 h-10 rounded-full border border-[#d4af37]/40 flex items-center justify-center mb-4 text-[#d4af37] text-lg">
-                    👑
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white via-[#fcf6ba] to-[#d4af37] flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(212,175,55,0.45)]">
+                    <Crown className="w-5 h-5 text-black" strokeWidth={2.5} />
                   </div>
                   <div className="flex items-center justify-between">
                     <h2 className="text-3xl font-serif font-bold text-[#fcf6ba]">
@@ -393,11 +403,11 @@ const SeatSelection = ({
                     </span>
                   </div>
                   <span className="text-xs font-bold tracking-widest text-[#d4af37] uppercase block mt-1.5">
-                    {selectedTable.type} SECTION
+                    {getTierLabel(selectedTable.type)} SECTION
                   </span>
                   <div className="mt-5 flex items-baseline gap-2">
                     <span className="text-4xl font-serif font-bold text-[#d4af37]">
-                      ${seatUnitPrice}
+                      ₦{seatUnitPrice.toLocaleString()}
                     </span>
                     <span className="text-sm text-gray-400 font-light">per seat</span>
                   </div>
@@ -457,7 +467,7 @@ const SeatSelection = ({
                   <div className="flex items-baseline justify-between pt-2">
                     <span className="text-sm text-gray-400 font-light">Total Price:</span>
                     <span className="text-4xl font-serif font-bold text-[#d4af37]">
-                      ${calculatedTotal}
+                      ₦{calculatedTotal.toLocaleString()}
                     </span>
                   </div>
                 </div>

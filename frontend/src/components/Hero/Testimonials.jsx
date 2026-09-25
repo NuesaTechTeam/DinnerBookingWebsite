@@ -7,7 +7,7 @@ const Testimonials = () => {
     {
       quote: "AN EVENING OF UNPARALLELED SOPHISTICATION. THE ATMOSPHERE AND CULINARY ARTISTRY WERE ABSOLUTELY INTOXICATING.",
       author: "Chief O. Adebayo",
-      role: "VVIP Guest",
+      role: "Platinum Guest",
       stars: 5,
     },
     {

@@ -5,8 +5,8 @@ import { motion as Motion } from 'framer-motion';
 const Packages = () => {
   const tiers = [
     {
-      name: 'REGULAR',
-      price: '₦8,000',
+      name: 'BRONZE',
+      price: '₦10,000',
       period: '/ person',
       isRecommended: false,
       features: [
@@ -18,8 +18,8 @@ const Packages = () => {
       buttonStyle: 'border border-[#d4af37]/40 text-white hover:border-[#d4af37] hover:bg-[#d4af37]/10',
     },
     {
-      name: 'VIP',
-      price: '₦25,000',
+      name: 'GOLD',
+      price: '₦18,000',
       period: '/ person',
       isRecommended: true,
       badgeText: 'RECOMMENDED',
@@ -33,15 +33,15 @@ const Packages = () => {
       buttonStyle: 'bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] text-black font-extrabold hover:brightness-110 shadow-[0_0_15px_rgba(212,175,55,0.3)]',
     },
     {
-      name: 'VVIP',
-      price: '₦40,000',
+      name: 'PLATINUM',
+      price: '₦27,000',
       period: '/ person',
       isRecommended: false,
       features: [
         'Exclusive front-row private seating',
         'Masterful 7-course tasting menu',
         'Unlimited premium vintage drinks',
-        'Private VVIP lounge access & personal waiter',
+        'Private Platinum lounge access & personal waiter',
         'Artisanal curated Luxury gift bag',
       ],
       buttonStyle: 'border border-[#d4af37]/40 text-white hover:border-[#d4af37] hover:bg-[#d4af37]/10',

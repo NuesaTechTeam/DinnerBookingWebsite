@@ -56,7 +56,7 @@ const CTA = () => {
                   CALL US
                 </span>
                 <span className="text-lg font-serif text-[#d4af37] font-semibold">
-                  +234 812 345 6789
+                  +234 810 284 1732
                 </span>
               </div>
             </Motion.div>
@@ -79,7 +79,7 @@ const CTA = () => {
                   EMAIL INQUIRIES
                 </span>
                 <span className="text-lg font-serif text-[#d4af37] font-semibold">
-                  nuesadinner@gmail.com
+                  nuesa.abuad.tech@gmail.com
                 </span>
               </div>
             </Motion.div>

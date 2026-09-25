@@ -103,10 +103,10 @@ const Error = ({ error, resetErrorBoundary, queryKey }) => {
           <p className="text-gray-400 text-xs">
             If the problem persists, contact support at{" "}
             <a
-              href="mailto:nuesadinner@gmail.com"
+              href="mailto:nuesa.abuad.tech@gmail.com"
               className="font-semibold text-[#d4af37] hover:underline"
             >
-              nuesadinner@gmail.com
+              nuesa.abuad.tech@gmail.com
             </a>
           </p>
         </div>

@@ -6,6 +6,7 @@ import { motion as Motion, AnimatePresence } from "framer-motion";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [hovered, setHovered] = useState(null);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -45,7 +46,14 @@ const Navbar = () => {
         className="fixed left-0 top-0 z-50 bg-[#050505]/95 backdrop-blur-md border-b border-[#d4af37]/20 w-full mx-auto flex items-center justify-between py-3 px-6 md:px-12 shadow-2xl"
       >
         {/* Logo and Branding Section */}
-        <Link to="/" className="flex items-center gap-3">
+        <Link
+          to="/"
+          onClick={() => {
+            setIsOpen(false);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="flex items-center gap-3"
+        >
           <img 
             src={logo} 
             alt="FÀÁJÍ LAWA" 
@@ -63,20 +71,27 @@ const Navbar = () => {
 
         {/* Desktop Navigation Links */}
         <div className="hidden lg:flex items-center gap-x-8">
-          {navLinks.map((link) => (
-            <a
-              key={link.title}
-              href={link.url}
-              onClick={(e) => handleNavClick(e, link.url)}
-              className={`text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer ${
-                location.pathname === link.url
-                  ? "text-[#fcf6ba] border-b-2 border-[#d4af37] pb-1"
-                  : "text-gray-300 hover:text-[#d4af37]"
-              }`}
-            >
-              {link.title}
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = hovered
+              ? hovered === link.title
+              : location.pathname === link.url;
+            return (
+              <a
+                key={link.title}
+                href={link.url}
+                onClick={(e) => handleNavClick(e, link.url)}
+                onMouseEnter={() => setHovered(link.title)}
+                onMouseLeave={() => setHovered(null)}
+                className={`text-xs font-semibold tracking-wider transition-all duration-200 cursor-pointer border-b-2 pb-1 ${
+                  isActive
+                    ? "text-[#fcf6ba] border-[#d4af37]"
+                    : "text-gray-300 border-transparent hover:text-[#d4af37]"
+                }`}
+              >
+                {link.title}
+              </a>
+            );
+          })}
         </div>
 
         {/* Action Button Section */}

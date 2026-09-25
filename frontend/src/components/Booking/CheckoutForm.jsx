@@ -76,7 +76,7 @@ const CheckoutForm = ({
       return;
     }
     if (!isRegularTable) {
-      showToast("Discounts apply only to REGULAR tables", TOAST_TYPES.INFO);
+      showToast("Discounts apply only to Bronze tables", TOAST_TYPES.INFO);
       return;
     }
     setVerifyingDiscount(true);

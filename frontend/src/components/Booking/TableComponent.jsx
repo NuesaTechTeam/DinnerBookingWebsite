@@ -1,5 +1,6 @@
 import { Crown, Shield, Star, User } from 'lucide-react';
 import React from 'react';
+import { getTierLabel } from '../../lib/helpers.jsx';
 
 const TableComponent = ({ table, onTableClick, isSelected }) => {
   const availableSeats = table.capacity - table.bookedSeats.length;
@@ -76,7 +77,7 @@ const TableComponent = ({ table, onTableClick, isSelected }) => {
       >
         <div className="flex items-center space-x-1 font-semibold">
           {getSectionIcon(table.type)}
-          <span className="text-[#d4af37]">Table {table.tableNumber}</span>
+          <span className="text-[#d4af37]">{getTierLabel(table.type)} Table {extractTableNumber(table.tableNumber)}</span>
         </div>
         <div className="text-emerald-400 text-[11px]">
           {availableSeats}/{table.capacity} available

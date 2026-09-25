@@ -16,7 +16,7 @@ const Faqs = () => {
     },
     {
       question: "Is parking available?",
-      answer: "Complimentary VIP valet parking is available at the venue entrance for all ticket holders. Secure, guarded parking facilities are provided throughout the duration of the gala."
+      answer: "Complimentary valet parking is available at the venue entrance for all ticket holders. Secure, guarded parking facilities are provided throughout the duration of the gala."
     },
     {
       question: "What is the cancellation policy?",

@@ -19,28 +19,28 @@ const initializeDatabase = async () => {
             //    shape: "ROUND",
             //    tableCount: 2,
             //    seatsPerTable: 4,
-            //    pricePerSeat: 100,
+            //    pricePerSeat: 27000,
             //  },
             //  {
             //    type: "VIP",
             //    shape: "ROUND",
             //    tableCount: 2,
             //    seatsPerTable: 4,
-            //    pricePerSeat: 100,
+            //    pricePerSeat: 18000,
             //  },
             //  {
             //    type: "SILVER",
             //    shape: "ROUND",
             //    tableCount: 2,
             //    seatsPerTable: 5,
-            //    pricePerSeat: 100,
+            //    pricePerSeat: 18000,
             //  },
              {
                type: "REGULAR",
                shape: "ROUND",
                tableCount: 1,
                seatsPerTable: 6,
-               pricePerSeat: 100,
+               pricePerSeat: 10000,
              },
            ];
 

@@ -1,5 +1,6 @@
 /* eslint-disable no-case-declarations */
 import React from "react";
+import { getTierLabel } from "../../lib/helpers.jsx";
 
 const TableVisualization = ({
   table,
@@ -123,7 +124,7 @@ const TableVisualization = ({
         } border-[#d4af37]/60 bg-[#121212] flex items-center justify-center relative shadow-[0_0_30px_rgba(212,175,55,0.1)]`}
       >
         <span className="text-[#d4af37] font-serif font-bold text-xs md:text-sm tracking-wider uppercase text-center px-2">
-          Table {extractTableNumber(table.tableNumber)}
+          {getTierLabel(table.type)} Table {extractTableNumber(table.tableNumber)}
         </span>
 
         {/* Seats arranged around the table */}

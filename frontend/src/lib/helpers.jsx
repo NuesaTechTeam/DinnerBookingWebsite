@@ -1,17 +1,36 @@
 import { Crown, Shield, Star, Users } from "lucide-react";
 
+export const TIER_LABELS = {
+  REGULAR: "Bronze",
+  VIP: "Gold",
+  VVIP: "Platinum",
+  SILVER: "Silver",
+};
+
+export const getTierLabel = (type) =>
+  TIER_LABELS[String(type || "").toUpperCase()] || type || "";
+
+export const formatTierText = (text) => {
+  if (!text) return text;
+  return String(text)
+    .replace(/VVIP/g, "Platinum")
+    .replace(/\bVIP\b/g, "Gold")
+    .replace(/\bREGULAR\b/gi, "Bronze")
+    .replace(/\bREG\b/gi, "Bronze");
+};
+
 export const getSectionPrice = (type) => {
   switch (type) {
     case "VVIP":
-      return "₦40,000";
+      return "₦27,000";
     case "VIP":
-      return "₦25,000";
+      return "₦18,000";
     case "SILVER":
       return "₦18,000";
     case "REGULAR":
-      return "₦8,000";
+      return "₦10,000";
     default:
-      return "₦8,000";
+      return "₦10,000";
   }
 };
 
