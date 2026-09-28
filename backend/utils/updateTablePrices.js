@@ -4,11 +4,11 @@ import { Table } from "../models/tableModel.js";
 
 dotenv.config();
 
-// Bronze (REGULAR) = ₦10,000 | Gold (VIP) = ₦18,000 | Platinum (VVIP) = ₦27,000
+// Bronze (REGULAR) = ₦12,000 (₦10,000 with engineering invoice discount) | Gold (VIP) = ₦20,000 (₦18,000 with discount) | Platinum (VVIP) = ₦27,000
 const PRICE_PER_SEAT = {
-  REGULAR: 10000,
+  REGULAR: 12000,
   SILVER: 18000,
-  VIP: 18000,
+  VIP: 20000,
   VVIP: 27000,
 };
 

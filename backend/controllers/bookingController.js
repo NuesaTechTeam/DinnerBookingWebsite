@@ -58,8 +58,8 @@ export const createBooking = async (req, res) => {
     let discountAmount = 0
     let engineeringStudentRef = null
 
-    // Apply discount only for REGULAR tables and if invoiceNumber is provided
-    if (invoiceNumber && tableType === "REGULAR") {
+    // Apply discount for REGULAR (Bronze) and VIP (Gold) tables and if invoiceNumber is provided
+    if (invoiceNumber && (tableType === "REGULAR" || tableType === "VIP")) {
       // Verify the invoice number is valid and not used
       const student = await Student.findOne({
         invoiceNumber: invoiceNumber.toUpperCase().trim(),

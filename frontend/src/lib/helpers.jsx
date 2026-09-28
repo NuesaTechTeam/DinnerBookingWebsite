@@ -24,13 +24,13 @@ export const getSectionPrice = (type) => {
     case "VVIP":
       return "₦27,000";
     case "VIP":
-      return "₦18,000";
+      return "₦20,000";
     case "SILVER":
       return "₦18,000";
     case "REGULAR":
-      return "₦10,000";
+      return "₦12,000";
     default:
-      return "₦10,000";
+      return "₦12,000";
   }
 };
 

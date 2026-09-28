@@ -1,133 +1,150 @@
-import React from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../Hero/Footer.jsx';
 import logo from '../../assets/logo.png';
-import { getTierLabel } from '../../lib/helpers.jsx';
-import { Crown } from 'lucide-react';
+import { getSectionPrice, formatTierText } from '../../lib/helpers.jsx';
+import { Crown, Star, User } from 'lucide-react';
+import SeatArrangement from './SeatArrangement.jsx';
+
+const naira = (value) => `₦${Number(value || 0).toLocaleString()}`;
+
+const getSeats = (table) => (Array.isArray(table?.seats) ? table.seats : []);
+
+const isTableSoldOut = (table) => {
+  const seats = getSeats(table);
+  return seats.length > 0 && seats.every((seat) => seat.isBooked);
+};
+
+const getTableLabel = (tableNumber) => {
+  const parts = String(tableNumber || '').split('-');
+  return parts[parts.length - 1];
+};
+
+const getSeatLabel = (seatNumber) => {
+  const match = String(seatNumber || '').match(/S(\d+)$/);
+  return match ? match[1] : seatNumber;
+};
+
+const groupByTier = (tablesData) => {
+  if (Array.isArray(tablesData)) {
+    return tablesData.reduce((acc, table) => {
+      const key = table?.type || 'OTHER';
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(table);
+      return acc;
+    }, {});
+  }
+  return tablesData || {};
+};
+
+const TIERS = [
+  {
+    key: 'VVIP',
+    label: 'PLATINUM',
+    tagline: 'FRONT ROW',
+    icon: Crown,
+    badge: 'from-white via-[#fcf6ba] to-[#d4af37]',
+    text: 'text-[#fcf6ba]',
+  },
+  {
+    key: 'VIP',
+    label: 'GOLD',
+    tagline: 'SECTION',
+    icon: Star,
+    badge: 'from-[#fcf6ba] via-[#d4af37] to-[#aa7c11]',
+    text: 'text-[#d4af37]',
+  },
+  {
+    key: 'REGULAR',
+    label: 'BRONZE',
+    tagline: 'ZONE',
+    icon: User,
+    badge: 'from-[#e0a879] via-[#b87333] to-[#6b4423]',
+    text: 'text-[#cd8f5f]',
+  },
+];
 
 const SeatSelection = ({
-  isLoading,
   selectedSeats = [],
-  tablesData = [],
+  tablesData = {},
   setSelectedSeats,
   setSelectedTable,
   setShowCheckout,
   bookedSeats = [],
   lockedSeats = [],
-  checkAvailability,
-  isChecking,
-  totalAmount,
-  setSeatNames,
   selectedTable,
+  setSeatNames,
 }) => {
   const navigate = useNavigate();
+  const grouped = useMemo(() => groupByTier(tablesData), [tablesData]);
 
-  const safeTables = Array.isArray(tablesData) ? tablesData : [];
+  const seatUnitPrice =
+    selectedTable?.pricePerSeat ||
+    Number(getSectionPrice(selectedTable?.type).replace(/[₦,]/g, '')) ||
+    0;
 
-  const tierSummary = [
-    {
-      name: 'PLATINUM PACKAGE',
-      price: '₦27,000',
-      available: `${
-        safeTables.filter(
-          (t) =>
-            t?.type?.toUpperCase() === 'VVIP' ||
-            t?.section?.toUpperCase() === 'VVIP'
-        ).length || 5
-      } tables available`,
-      icon: (
-        <svg className="w-6 h-6 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-        </svg>
-      ),
-    },
-    {
-      name: 'GOLD PACKAGE',
-      price: '₦18,000',
-      available: `${
-        safeTables.filter(
-          (t) =>
-            t?.type?.toUpperCase() === 'VIP' ||
-            t?.section?.toUpperCase() === 'VIP'
-        ).length || 3
-      } tables available`,
-      icon: (
-        <svg className="w-6 h-6 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-        </svg>
-      ),
-    },
-    {
-      name: 'BRONZE TIER',
-      price: '₦10,000',
-      available: `${
-        safeTables.filter(
-          (t) =>
-            t?.type?.toUpperCase() === 'REGULAR' ||
-            t?.section?.toUpperCase() === 'REGULAR'
-        ).length || 12
-      } tables available`,
-      icon: (
-        <svg className="w-6 h-6 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-        </svg>
-      ),
-    },
-  ];
+  const selectedSeatObjects = getSeats(selectedTable).filter((seat) =>
+    selectedSeats.includes(seat._id)
+  );
+  const calculatedTotal = selectedSeats.length * seatUnitPrice;
+  const tableCapacity = selectedTable?.capacity || getSeats(selectedTable).length || 0;
+  const availableSeatsCount = Math.max(0, tableCapacity - selectedSeats.length);
 
-  const getTableId = (table) => table?._id || table?.id;
+  useEffect(() => {
+    if (!setSeatNames) return;
+    const seats = getSeats(selectedTable);
+    setSeatNames(
+      selectedSeats.map((id) => {
+        const seat = seats.find((s) => s._id === id);
+        return seat ? formatTierText(seat.seatNumber) : id;
+      })
+    );
+  }, [selectedSeats, selectedTable, setSeatNames]);
 
   const handleTableClick = (table) => {
     setSelectedTable(table);
     setSelectedSeats([]);
-    const activeId = getTableId(table);
-    if (checkAvailability && activeId) {
-      checkAvailability(activeId);
-    }
+    if (setSeatNames) setSeatNames([]);
   };
 
-  const toggleSeatSelection = (seatNum) => {
-    if (!selectedTable) return;
-    const activeId = getTableId(selectedTable);
-    const seatId = `${activeId}-S${seatNum}`;
-    
-    if (selectedSeats.includes(seatId)) {
-      setSelectedSeats(selectedSeats.filter((s) => s !== seatId));
+  const toggleSeat = (seat) => {
+    if (seat.isBooked) return;
+    if (selectedSeats.includes(seat._id)) {
+      setSelectedSeats(selectedSeats.filter((s) => s !== seat._id));
     } else {
-      setSelectedSeats([...selectedSeats, seatId]);
+      setSelectedSeats([...selectedSeats, seat._id]);
     }
   };
 
-  const getTableStatusClass = (tableId) => {
-    const activeSelectedId = getTableId(selectedTable);
-    const isBooked = Array.isArray(bookedSeats) && bookedSeats.includes(tableId);
-    const isLocked = Array.isArray(lockedSeats) && lockedSeats.includes(tableId);
+  const getTableStatusClass = (table) => {
+    const isSelected = selectedTable?._id === table._id;
+    const soldOut = isTableSoldOut(table);
 
-    if (activeSelectedId === tableId) {
-      return 'bg-[#d4af37] text-black border-[#d4af37] ring-4 ring-[#d4af37]/40 shadow-[0_0_25px_rgba(212,175,55,0.8)]';
+    if (isSelected) {
+      return 'bg-[#d4af37] text-black border-[#d4af37] ring-4 ring-[#d4af37]/30 shadow-[0_0_20px_rgba(212,175,55,0.7)]';
     }
-    if (isBooked) {
-      return 'bg-amber-500 text-black border-amber-500 cursor-not-allowed opacity-60';
+    if (soldOut) {
+      return 'bg-[#121212] text-gray-600 border-gray-800 cursor-not-allowed opacity-50';
     }
-    if (isLocked) {
-      return 'bg-yellow-600 text-black border-yellow-600 cursor-not-allowed opacity-60';
-    }
-    return 'bg-black text-[#d4af37] border-2 border-[#d4af37] hover:bg-[#d4af37] hover:text-black transition-all';
+    return 'bg-black text-[#d4af37] border-2 border-[#d4af37]/70 hover:bg-[#d4af37] hover:text-black transition-all';
   };
 
-  const getSeatPrice = () => {
-    if (!selectedTable) return 0;
-    if (selectedTable.price) return selectedTable.price;
-    if (selectedTable.type === 'VVIP') return 27000;
-    if (selectedTable.type === 'VIP') return 18000;
-    return 10000;
+  const getSeatStatusClass = (seat) => {
+    const booked = seat.isBooked || bookedSeats.includes(seat._id);
+    const locked = !booked && lockedSeats.includes(seat._id);
+    const selected = selectedSeats.includes(seat._id);
+
+    if (booked) {
+      return 'bg-amber-950/60 text-amber-500/60 border-amber-800/50 cursor-not-allowed';
+    }
+    if (locked) {
+      return 'bg-yellow-900/50 text-yellow-500/60 border-yellow-800/50 cursor-not-allowed';
+    }
+    if (selected) {
+      return 'bg-[#d4af37] text-black border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.7)]';
+    }
+    return 'bg-[#0a0a0a] text-white border border-gray-800 hover:border-[#d4af37]';
   };
-
-  const seatUnitPrice = getSeatPrice();
-  const calculatedTotal = selectedSeats.length * seatUnitPrice;
-
-  const tableCapacity = selectedTable?.capacity || 8;
-  const availableSeatsCount = tableCapacity - selectedSeats.length;
 
   return (
     <div className="min-h-screen bg-[#050505] text-white flex flex-col justify-between font-sans">
@@ -173,158 +190,95 @@ const SeatSelection = ({
         </div>
       </header>
 
-      {/* Main Floorplan & Dynamic Sidebar scaled up for desktop screens */}
+      {/* Main Floorplan & Dynamic Sidebar */}
       <main className="max-w-[1500px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         {/* Left Interactive Floorplan */}
         <div className="lg:col-span-8 bg-[#0a0a0a] border border-gray-800/80 rounded-3xl p-4 sm:p-8 md:p-12 flex flex-col items-center shadow-[0_0_40px_rgba(0,0,0,0.9)]">
-          
-          {/* Fully Gold Stage Banner with Black Text */}
+          {/* Stage Banner */}
           <div className="w-full max-w-2xl bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-2xl py-3 sm:py-4 text-center mb-8 sm:mb-12 shadow-[0_0_25px_rgba(212,175,55,0.4)]">
             <span className="text-xs sm:text-sm font-extrabold tracking-[0.3em] sm:tracking-[0.4em] text-black uppercase">
               STAGE
             </span>
           </div>
 
-          {/* Floor Layout Grid */}
-          <div className="relative w-full max-w-3xl mx-auto py-4 sm:py-6">
-            <div className="absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-4 bg-gradient-to-b from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-full shadow-[0_0_20px_rgba(212,175,55,0.5)] hidden md:flex items-center justify-center">
-              <span className="text-[10px] font-extrabold text-black rotate-90 tracking-widest uppercase whitespace-nowrap">
+          <div className="relative w-full">
+            {/* Gold Carpet running through the middle */}
+            <div className="pointer-events-none absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-6 sm:w-8 hidden md:flex items-center justify-center z-0 rounded-full bg-gradient-to-b from-[#b38728] via-[#fcf6ba] to-[#aa7c11] shadow-[0_0_25px_rgba(212,175,55,0.45)]">
+              <span className="text-[9px] font-extrabold text-black rotate-90 tracking-[0.3em] uppercase whitespace-nowrap">
                 GOLD CARPET
               </span>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 lg:gap-24">
-              {/* Left Column */}
-              <div className="space-y-10">
-                <div>
-                  <span className="inline-flex items-center gap-2 text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase mb-4 w-max">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-white via-[#fcf6ba] to-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.55)]">
-                      <Crown size={11} className="text-black" strokeWidth={2.5} />
-                    </span>
-                    PLATINUM FRONT ROW
-                  </span>
-                  <div className="grid grid-cols-4 gap-2 sm:gap-4">
-                    {[1, 2, 3, 4].map((num) => (
-                      <div key={num} className="relative group">
-                        {getTableId(selectedTable) === String(num) && (
-                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black border border-[#d4af37] text-xs text-[#d4af37] px-2.5 py-1 rounded whitespace-nowrap z-20 shadow-md font-medium">
-                            <Crown size={12} className="text-[#fcf6ba]" />
-                            Table PLATINUM-{num}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleTableClick({ id: String(num), name: `Table PLATINUM-${num}`, type: 'VVIP', capacity: 8 })}
-                          className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
-                        >
-                          {num}
-                        </button>
+            <div className="relative z-10 space-y-12">
+              {TIERS.map((tier) => {
+                const list = grouped[tier.key] || [];
+                const Icon = tier.icon;
+                const isBanquet = tier.key === 'VVIP';
+                const mid = Math.ceil(list.length / 2);
+                const leftTables = list.slice(0, mid);
+                const rightTables = list.slice(mid);
+                const sideColumns = isBanquet
+                  ? 'grid-cols-2 gap-3'
+                  : tier.key === 'VIP'
+                  ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2'
+                  : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2';
+
+                const renderTable = (table) =>
+                  isBanquet ? (
+                    <button
+                      key={table._id}
+                      onClick={() => !isTableSoldOut(table) && handleTableClick(table)}
+                      disabled={isTableSoldOut(table)}
+                      className={`w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 ${getTableStatusClass(table)}`}
+                    >
+                      <Crown size={14} strokeWidth={2.5} />
+                      Table {getTableLabel(table.tableNumber)}
+                    </button>
+                  ) : (
+                    <button
+                      key={table._id}
+                      onClick={() => !isTableSoldOut(table) && handleTableClick(table)}
+                      disabled={isTableSoldOut(table)}
+                      title={`Table ${getTableLabel(table.tableNumber)} · ${table.capacity} seats`}
+                      className={`w-full aspect-square rounded-full font-bold text-xs flex items-center justify-center ${getTableStatusClass(table)}`}
+                    >
+                      {getTableLabel(table.tableNumber)}
+                    </button>
+                  );
+
+                return (
+                  <div key={tier.key} className="w-full">
+                    {/* Tier header (masks the carpet behind it) */}
+                    <div className="relative z-10 mx-auto mb-5 w-max max-w-full bg-[#0a0a0a] px-3">
+                      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                        <span className="inline-flex items-center gap-2 text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase">
+                          <span className={`inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br ${tier.badge} shadow-[0_0_8px_rgba(212,175,55,0.5)]`}>
+                            <Icon size={11} className="text-black" strokeWidth={2.5} />
+                          </span>
+                          {tier.label} {tier.tagline}
+                        </span>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
 
-                <div>
-                  <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    ⭐ GOLD SECTION
-                  </span>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                    {[9, 10, 11].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => handleTableClick({ id: String(num), name: `Table GOLD-${num}`, type: 'VIP', capacity: 8 })}
-                        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold tracking-wider text-gray-400 border border-gray-800 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    👤 BRONZE ZONE
-                  </span>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                    {[15, 16, 17, 18, 19, 20].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => handleTableClick({ id: String(num), name: `Table BRONZE-${num}`, type: 'REGULAR', capacity: 8 })}
-                        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* Right Column */}
-              <div className="space-y-10 md:pl-6">
-                <div>
-                  <span className="inline-flex items-center gap-2 text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase mb-4 w-max">
-                    <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-gradient-to-br from-white via-[#fcf6ba] to-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.55)]">
-                      <Crown size={11} className="text-black" strokeWidth={2.5} />
-                    </span>
-                    PLATINUM FRONT ROW
-                  </span>
-                  <div className="grid grid-cols-4 gap-2 sm:gap-4">
-                    {[5, 6, 7, 8].map((num) => (
-                      <div key={num} className="relative group">
-                        {getTableId(selectedTable) === String(num) && (
-                          <div className="absolute -top-9 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-black border border-[#d4af37] text-xs text-[#d4af37] px-2.5 py-1 rounded whitespace-nowrap z-20 shadow-md font-medium">
-                            <Crown size={12} className="text-[#fcf6ba]" />
-                            Table PLATINUM-{num}
-                          </div>
-                        )}
-                        <button
-                          onClick={() => handleTableClick({ id: String(num), name: `Table PLATINUM-${num}`, type: 'VVIP', capacity: 8 })}
-                          className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
-                        >
-                          {num}
-                        </button>
+                    {list.length === 0 ? (
+                      <p className="text-xs text-gray-500 font-light text-center">No tables available.</p>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-24 gap-y-3">
+                        <div className={`grid ${sideColumns}`}>
+                          {leftTables.map(renderTable)}
+                        </div>
+                        <div className={`grid ${sideColumns}`}>
+                          {rightTables.map(renderTable)}
+                        </div>
                       </div>
-                    ))}
+                    )}
                   </div>
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold tracking-wider text-[#d4af37] border border-[#d4af37]/40 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    ⭐ GOLD SECTION
-                  </span>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                    {[12, 13, 14].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => handleTableClick({ id: String(num), name: `Table GOLD-${num}`, type: 'VIP', capacity: 8 })}
-                        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <span className="text-xs font-bold tracking-wider text-gray-400 border border-gray-800 px-3 py-1 rounded-md uppercase block mb-4 w-max">
-                    👤 BRONZE ZONE
-                  </span>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                    {[25, 26, 27].map((num) => (
-                      <button
-                        key={num}
-                        onClick={() => handleTableClick({ id: String(num), name: `Table BRONZE-${num}`, type: 'REGULAR', capacity: 8 })}
-                        className={`w-11 h-11 sm:w-14 sm:h-14 rounded-full font-bold text-sm sm:text-base flex items-center justify-center ${getTableStatusClass(String(num))}`}
-                      >
-                        {num}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Legend Bottom Bar */}
+          {/* Legend */}
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-3 sm:gap-8 mt-8 sm:mt-14 pt-6 sm:pt-8 border-t border-gray-800/80 w-full text-xs sm:text-sm text-gray-400">
             <div className="flex items-center gap-3">
               <span className="w-4 h-4 rounded-full border-2 border-[#d4af37]" />
@@ -363,51 +317,61 @@ const SeatSelection = ({
                 </div>
 
                 <div className="space-y-4">
-                  {tierSummary.map((tier, idx) => (
-                    <div
-                      key={idx}
-                      className="bg-[#050505] border border-gray-800 rounded-2xl p-5 flex items-center justify-between hover:border-[#d4af37]/40 transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <div className="p-3 rounded-xl bg-black/50 border border-gray-800">
-                          {tier.icon}
+                  {TIERS.map((tier) => {
+                    const list = grouped[tier.key] || [];
+                    const totalSeats = list.reduce((sum, table) => sum + (table.capacity || 0), 0);
+                    const price = list[0]?.pricePerSeat || Number(getSectionPrice(tier.key).replace(/[₦,]/g, ''));
+                    const Icon = tier.icon;
+                    return (
+                      <div
+                        key={tier.key}
+                        className="bg-[#050505] border border-gray-800 rounded-2xl p-5 flex items-center justify-between hover:border-[#d4af37]/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-4">
+                          <div className={`p-3 rounded-xl bg-gradient-to-br ${tier.badge}`}>
+                            <Icon className="w-5 h-5 text-black" strokeWidth={2.5} />
+                          </div>
+                          <div>
+                            <h3 className="text-sm font-bold tracking-wider text-white uppercase">
+                              {tier.label}
+                            </h3>
+                            <span className="text-xs text-gray-400 font-light block mt-0.5">
+                              {list.length} tables · {totalSeats} seats
+                            </span>
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-sm font-bold tracking-wider text-white uppercase">
-                            {tier.name}
-                          </h3>
-                          <span className="text-xs text-gray-400 font-light block mt-0.5">
-                            {tier.available}
-                          </span>
-                        </div>
+                        <span className="text-xl font-serif font-bold text-[#d4af37]">
+                          {naira(price)}
+                        </span>
                       </div>
-                      <span className="text-xl font-serif font-bold text-[#d4af37]">
-                        {tier.price}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </>
             ) : (
               <>
                 <div>
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-white via-[#fcf6ba] to-[#d4af37] flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(212,175,55,0.45)]">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-4 shadow-[0_0_15px_rgba(212,175,55,0.45)] ${
+                    TIERS.find((t) => t.key === selectedTable.type)?.badge
+                      ? `bg-gradient-to-br ${TIERS.find((t) => t.key === selectedTable.type).badge}`
+                      : 'bg-gradient-to-br from-white via-[#fcf6ba] to-[#d4af37]'
+                  }`}>
                     <Crown className="w-5 h-5 text-black" strokeWidth={2.5} />
                   </div>
                   <div className="flex items-center justify-between">
-                    <h2 className="text-3xl font-serif font-bold text-[#fcf6ba]">
-                      {selectedTable.name}
+                    <h2 className="text-2xl sm:text-3xl font-serif font-bold text-[#fcf6ba]">
+                      {formatTierText(selectedTable.tableNumber)}
                     </h2>
                     <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#d4af37]/10 text-[#d4af37] border border-[#d4af37]/40">
                       {availableSeatsCount} / {tableCapacity} Available
                     </span>
                   </div>
                   <span className="text-xs font-bold tracking-widest text-[#d4af37] uppercase block mt-1.5">
-                    {getTierLabel(selectedTable.type)} SECTION
+                    {formatTierText(selectedTable.type)} SECTION
                   </span>
                   <div className="mt-5 flex items-baseline gap-2">
                     <span className="text-4xl font-serif font-bold text-[#d4af37]">
-                      ₦{seatUnitPrice.toLocaleString()}
+                      {naira(seatUnitPrice)}
                     </span>
                     <span className="text-sm text-gray-400 font-light">per seat</span>
                   </div>
@@ -423,31 +387,14 @@ const SeatSelection = ({
                       {selectedSeats.length} of {tableCapacity} selected
                     </span>
                   </div>
-                  <div className="bg-[#050505] border border-gray-800/80 rounded-2xl p-4 sm:p-8 flex flex-col items-center">
-                    <div className="w-28 border border-[#d4af37]/40 text-center py-1.5 rounded text-xs text-[#d4af37] font-semibold mb-6 sm:mb-8">
-                      {selectedTable.name}
-                    </div>
-                    <div className="grid grid-cols-4 gap-3 sm:gap-4 w-full max-w-xs">
-                      {Array.from({ length: tableCapacity }, (_, i) => i + 1).map((seatNum) => {
-                        const activeId = getTableId(selectedTable);
-                        const seatId = `${activeId}-S${seatNum}`;
-                        const isSelected = selectedSeats.includes(seatId);
-
-                        return (
-                          <button
-                            key={seatNum}
-                            onClick={() => toggleSeatSelection(seatNum)}
-                            className={`h-11 sm:h-12 rounded-full font-bold text-sm flex items-center justify-center transition-all ${
-                              isSelected
-                                ? 'bg-[#d4af37] text-black border-[#d4af37] shadow-[0_0_15px_rgba(212,175,55,0.7)]'
-                                : 'bg-[#0a0a0a] text-white border border-gray-800 hover:border-[#d4af37]'
-                            }`}
-                          >
-                            {seatNum}
-                          </button>
-                        );
-                      })}
-                    </div>
+                  <div className="bg-[#050505] border border-gray-800/80 rounded-2xl p-4 sm:p-6 flex flex-col items-center">
+                    <SeatArrangement
+                      table={selectedTable}
+                      bookedSeats={bookedSeats}
+                      lockedSeats={lockedSeats}
+                      onSeatClick={toggleSeat}
+                      getSeatStatusClass={getSeatStatusClass}
+                    />
                   </div>
                 </div>
 
@@ -458,16 +405,16 @@ const SeatSelection = ({
                   </span>
                   <div className="flex items-center justify-between text-sm text-gray-400 font-light">
                     <span>{selectedSeats.length} seat(s) selected</span>
-                    {selectedSeats.length > 0 && (
+                    {selectedSeatObjects.length > 0 && (
                       <span className="text-xs text-[#d4af37] font-semibold">
-                        Seats: {selectedSeats.map((s) => s.split('-S')[1]).join(', ')}
+                        Seats: {selectedSeatObjects.map((s) => getSeatLabel(s.seatNumber)).join(', ')}
                       </span>
                     )}
                   </div>
                   <div className="flex items-baseline justify-between pt-2">
                     <span className="text-sm text-gray-400 font-light">Total Price:</span>
                     <span className="text-4xl font-serif font-bold text-[#d4af37]">
-                      ₦{calculatedTotal.toLocaleString()}
+                      {naira(calculatedTotal)}
                     </span>
                   </div>
                 </div>
@@ -492,6 +439,7 @@ const SeatSelection = ({
                     onClick={() => {
                       setSelectedTable(null);
                       setSelectedSeats([]);
+                      if (setSeatNames) setSeatNames([]);
                     }}
                     className="w-full py-4 rounded-xl font-bold text-sm tracking-widest uppercase border border-[#d4af37]/40 text-[#d4af37] hover:bg-[#d4af37]/10 transition-colors"
                   >

@@ -1,12 +1,66 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { motion as Motion } from 'framer-motion';
+import { motion as Motion, useInView } from 'framer-motion';
+
+const PriceWithDiscount = ({ original, discounted, period }) => {
+  const ref = useRef(null);
+  const inView = useInView(ref, { amount: 0.5 });
+  const [showDiscount, setShowDiscount] = useState(false);
+
+  useEffect(() => {
+    if (!inView) {
+      setShowDiscount(false);
+      return undefined;
+    }
+    const interval = setInterval(() => setShowDiscount((prev) => !prev), 3200);
+    return () => clearInterval(interval);
+  }, [inView]);
+
+  return (
+    <div ref={ref} className="mb-8 pb-6 border-b border-gray-800">
+      <div className="flex items-baseline gap-2">
+        <span className="relative inline-block text-4xl md:text-5xl font-serif font-extrabold text-white">
+          {original}
+          <Motion.span
+            aria-hidden
+            className="absolute left-0 top-1/2 h-[3px] w-full origin-left rounded-full bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] shadow-[0_0_8px_rgba(212,175,55,0.7)]"
+            animate={{ scaleX: showDiscount ? 1 : 0 }}
+            transition={{ duration: 0.45, ease: 'easeOut' }}
+          />
+        </span>
+        <span className="text-xs text-gray-400 font-light">{period}</span>
+      </div>
+
+      <Motion.div
+        className="mt-1 flex items-baseline gap-2"
+        animate={{ opacity: showDiscount ? 1 : 0, y: showDiscount ? 0 : 6 }}
+        transition={{ duration: 0.35, ease: 'easeOut' }}
+      >
+        <span className="text-3xl md:text-4xl font-serif font-extrabold text-[#d4af37]">
+          {discounted}
+        </span>
+        <span className="text-xs text-gray-400 font-light">{period}</span>
+      </Motion.div>
+
+      <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[#d4af37]/10 border border-[#d4af37]/40 px-2.5 py-1">
+        <span className="text-[9px] font-bold tracking-widest uppercase text-[#d4af37]">
+          Engineering Discount
+        </span>
+      </div>
+      <p className="mt-2 text-[11px] leading-snug text-gray-400">
+        For Engineering students who have paid their NUESA dues — enter your invoice number at
+        checkout to get it for {discounted}.
+      </p>
+    </div>
+  );
+};
 
 const Packages = () => {
   const tiers = [
     {
       name: 'BRONZE',
-      price: '₦10,000',
+      price: '₦12,000',
+      discountedPrice: '₦10,000',
       period: '/ person',
       isRecommended: false,
       features: [
@@ -19,7 +73,8 @@ const Packages = () => {
     },
     {
       name: 'GOLD',
-      price: '₦18,000',
+      price: '₦20,000',
+      discountedPrice: '₦18,000',
       period: '/ person',
       isRecommended: true,
       badgeText: 'RECOMMENDED',
@@ -105,14 +160,22 @@ const Packages = () => {
               </span>
 
               {/* Price */}
-              <div className="flex items-baseline gap-1 mb-8 pb-6 border-b border-gray-800">
-                <span className="text-4xl md:text-5xl font-serif font-extrabold text-white">
-                  {tier.price}
-                </span>
-                <span className="text-xs text-gray-400 font-light">
-                  {tier.period}
-                </span>
-              </div>
+              {tier.discountedPrice ? (
+                <PriceWithDiscount
+                  original={tier.price}
+                  discounted={tier.discountedPrice}
+                  period={tier.period}
+                />
+              ) : (
+                <div className="flex items-baseline gap-1 mb-8 pb-6 border-b border-gray-800">
+                  <span className="text-4xl md:text-5xl font-serif font-extrabold text-white">
+                    {tier.price}
+                  </span>
+                  <span className="text-xs text-gray-400 font-light">
+                    {tier.period}
+                  </span>
+                </div>
+              )}
 
               {/* Feature Checklist */}
               <ul className="space-y-4 mb-8">

@@ -64,7 +64,8 @@ const CheckoutForm = ({
   const [verifyingDiscount, setVerifyingDiscount] = useState(false);
 
   // Calculate Amount
-  const isRegularTable = selectedTable?.type === "REGULAR";
+  const isDiscountEligible =
+    selectedTable?.type === "REGULAR" || selectedTable?.type === "VIP";
   const finalAmount = Math.max(
     0,
     baseAmount - (discountApplied ? discountAmount : 0)
@@ -75,8 +76,8 @@ const CheckoutForm = ({
       showToast("Please enter an invoice number", TOAST_TYPES.INFO);
       return;
     }
-    if (!isRegularTable) {
-      showToast("Discounts apply only to Bronze tables", TOAST_TYPES.INFO);
+    if (!isDiscountEligible) {
+      showToast("Discounts apply only to Bronze and Gold tables", TOAST_TYPES.INFO);
       return;
     }
     setVerifyingDiscount(true);
@@ -457,7 +458,7 @@ const CheckoutForm = ({
               </label>
 
               {/* Discount Section */}
-              {formData.isEngineering && isRegularTable && (
+              {formData.isEngineering && isDiscountEligible && (
                 <Motion.div
                   className="space-y-3 mt-3 pt-3 border-t border-gray-800"
                   initial={{ opacity: 0, height: 0 }}

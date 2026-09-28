@@ -66,12 +66,12 @@ export const faqs = [
   {
     question: "Is there a special discount for engineering students?",
     answer:
-      "Yes, engineering students enjoy a special discount of 2000 NGN for Bronze. Use the invoice number on your nuesa receipt as the coupon code when making reservations for your seats (Note: This discount only applies for Bronze table bookings).",
+      "Yes, engineering students enjoy a special discount of 2000 NGN on Bronze and Gold tables. Use the invoice number on your nuesa receipt as the coupon code when making reservations for your seats (Note: This discount applies to Bronze and Gold table bookings).",
   },
   {
     question: "How can I avail the engineering student discount?",
     answer:
-      "To get the ₦2,000 engineering student discount, you must have: 1) Paid your NUESA fees and received a receipt, 2) Submitted your invoice number and details through the official Google Form sent by NUESA. Once submitted and verified, enter your invoice number during checkout for automatic discount application. This discount is only available for Bronze table bookings.",
+      "To get the ₦2,000 engineering student discount, you must have: 1) Paid your NUESA fees and received a receipt, 2) Submitted your invoice number and details through the official Google Form sent by NUESA. Once submitted and verified, enter your invoice number during checkout for automatic discount application. This discount is only available for Bronze and Gold table bookings.",
   },
   {
     question: "How many types of seats are available?",
@@ -109,9 +109,9 @@ export const faqs = [
       "Ensure you: 1) Entered the invoice number correctly, 2) Submitted it via the official NUESA Google Form, 3) Haven't used it before. If you didn't submit the Google Form, your invoice number won't work. Contact NUESA support with proof of both payment and form submission.",
   },
   {
-    question: "Can I get the discount for Gold or other premium tables?",
+    question: "Can I get the discount for Platinum tables?",
     answer:
-      "No, the engineering student discount is exclusively available for Bronze table bookings only. Premium tables (Platinum, Gold) are not eligible for this discount.",
+      "No, the engineering student discount is available for Bronze and Gold table bookings only. Platinum tables are not eligible for this discount.",
   },
   {
     question:
@@ -147,7 +147,7 @@ export const testimonials = [
 export const packages = [
   {
     name: "Bronze",
-    price: "₦10,000",
+    price: "₦12,000",
     guests: "Bronze",
     features: [
       "Standard banquet seating",
@@ -159,7 +159,7 @@ export const packages = [
   },
   {
     name: "Gold",
-    price: "₦18,000",
+    price: "₦20,000",
     guests: "Gold Experience",
     features: [
       "Premium stage-front seating",

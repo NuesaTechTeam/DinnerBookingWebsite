@@ -44,7 +44,7 @@ const Testimonials = () => {
       {/* Section Header */}
       <Reveal className="max-w-3xl mx-auto text-center mb-12 relative z-10" y={20}>
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-serif font-bold uppercase tracking-widest text-white">
-          WHAT THE <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11]">ROYALTY</span> SAYS
+          WHAT THE <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11]">VIBE</span> IS
         </h2>
       </Reveal>
 

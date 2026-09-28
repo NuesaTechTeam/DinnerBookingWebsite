@@ -93,14 +93,6 @@ const Footer = () => {
         {/* Bottom Bar Section */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between text-xs text-gray-500 font-light gap-4">
           <p>© 2026 <span className="font-semibold text-gray-400">FÀÁJÍ LAWA</span>. All rights reserved.</p>
-          <div className="flex gap-6">
-            <a href="#privacy" className="hover:text-[#d4af37] transition-colors">
-              Privacy Policy
-            </a>
-            <a href="#terms" className="hover:text-[#d4af37] transition-colors">
-              Terms of Service
-            </a>
-          </div>
         </div>
       </Reveal>
     </footer>

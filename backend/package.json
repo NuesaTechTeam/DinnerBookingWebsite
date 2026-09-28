@@ -10,7 +10,8 @@
     "dev": "nodemon index.js",
     "import-students": "node utils/initializeStudents.js ./utils/Nuesa_Receipt_Details.xlsx",
     "import-students:dev": "nodemon utils/initializeStudents.js",
-    "update-prices": "node utils/updateTablePrices.js"
+    "update-prices": "node utils/updateTablePrices.js",
+    "seed-tables": "node utils/seedTables.js"
   },
   "author": "",
   "license": "ISC",
