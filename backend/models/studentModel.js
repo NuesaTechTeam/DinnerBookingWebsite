@@ -16,7 +16,7 @@ const engineeringStudentSchema = new mongoose.Schema(
     matricNo: {
       type: String,
       required: true,
-      unique: true,
+      index: true,
       uppercase: true,
       trim: true,
     },
@@ -52,7 +52,7 @@ const engineeringStudentSchema = new mongoose.Schema(
     transactionNumber: {
       type: String,
       required: true,
-      unique: true,
+      index: true,
       trim: true,
     },
     paymentDate: {
