@@ -1,4 +1,5 @@
 import { Student } from "../models/studentModel.js";
+import { testing } from "../utils/emailService.js";
 
 // Normalise a header/key so we can match it regardless of formatting
 // e.g. "Invoice Number" -> "invoicenumber"
@@ -117,6 +118,45 @@ export const registerStudents = async (req, res) => {
   } catch (error) {
     console.error("Register students error:", error);
     res.status(500).json({ success: false, message: "Failed to register students" });
+  }
+};
+
+// Send a sample confirmation email (for testing the Gmail setup)
+export const sendTestEmail = async (req, res) => {
+  try {
+    const token = req.headers["x-api-token"] || req.body?.token;
+    if (!process.env.REGISTER_TOKEN || token !== process.env.REGISTER_TOKEN) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    const to = req.query.to || req.body?.to || "tunmiseadepitan@gmail.com";
+
+    const booking = {
+      _id: "test-booking-0001",
+      name: "Test Guest",
+      matricNo: "21/ENG02/029",
+      email: to,
+      phone: "+2348000000000",
+      amount: 12000,
+      discountApplied: false,
+      createdAt: new Date(),
+      seats: [
+        { seatNumber: "REGULAR-1-S1", table: { tableNumber: "REGULAR-1" } },
+      ],
+    };
+
+    const ok = await testing(booking);
+
+    res.status(200).json({
+      success: ok,
+      to,
+      message: ok
+        ? "Test email sent"
+        : "Email send failed — check GMAIL_EMAIL / GMAIL_APP_PASSWORD on Render",
+    });
+  } catch (error) {
+    console.error("Test email error:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 };
 
