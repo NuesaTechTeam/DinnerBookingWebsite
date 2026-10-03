@@ -1,9 +1,8 @@
 import nodemailer from "nodemailer";
 import generateEmailTemplate from "./emailTemplate.js";
 import generateEmailTemplatePresident from "./presidentTemplate.js";
-import axios from "axios";
 
-//Create Transporter
+// Create Transporter (Gmail)
 const createTransporter = () => {
   return nodemailer.createTransport({
     service: "gmail",
@@ -14,44 +13,50 @@ const createTransporter = () => {
   });
 };
 
+const sendHtmlEmail = async ({ to, subject, html }) => {
+  const transporter = createTransporter();
+  const info = await transporter.sendMail({
+    from: process.env.EMAIL_FROM || process.env.GMAIL_EMAIL,
+    to,
+    subject,
+    html,
+  });
+  console.log("Email sent:", info.messageId, "->", to);
+  return info;
+};
+
 export const testing = async (booking) => {
   try {
-    await axios.post(
-      "https://us-central1-emailservice-dc88e.cloudfunctions.net/api/email/send",
-      {
-        subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
-        to_emails: [booking.email],
-        html_body: generateEmailTemplate(booking, booking.seats),
-      }
-    );
+    await sendHtmlEmail({
+      to: booking.email,
+      subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
+      html: generateEmailTemplate(booking, booking.seats),
+    });
+    return true;
   } catch (error) {
-    console.error("Error sending email via cloud function: ", error);
+    console.error("Error sending email:", error);
+    return false;
   }
 };
 
 export const sendPresidentEmail = async (booking) => {
   try {
-    const response = await axios.post(
-      "https://us-central1-emailservice-dc88e.cloudfunctions.net/api/email/send",
-      {
-        subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
-        to_emails: [booking.email],
-        html_body: generateEmailTemplatePresident(booking),
-      }
-    );
-
-    console.log("Confirmation email sent: ", response.data);
+    await sendHtmlEmail({
+      to: booking.email,
+      subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
+      html: generateEmailTemplatePresident(booking),
+    });
     return true;
   } catch (error) {
-    console.error("Error sending email via cloud function: ", error);
+    console.error("Error sending president email:", error);
     return false;
   }
-}
+};
 
 // Send confirmation email
 export const sendConfirmationEmail = async (booking) => {
   try {
-    // Populate seats with table information
+    // Populate seats with table information so the template can show tables
     await booking.populate({
       path: "seats",
       populate: {
@@ -60,55 +65,20 @@ export const sendConfirmationEmail = async (booking) => {
       },
     });
 
-     const response = await axios.post(
-        "https://us-central1-emailservice-dc88e.cloudfunctions.net/api/email/send",
-        {
-          subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
-          to_emails: [booking.email],
-          html_body: generateEmailTemplate(booking, booking.seats),
-        }
-      );
+    await sendHtmlEmail({
+      to: booking.email,
+      subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
+      html: generateEmailTemplate(booking, booking.seats),
+    });
 
-       console.log("Confirmation email sent: ", response.data);
-       return true;
-
-    // const transporter = createTransporter();
-
-    // const mailOptions = {
-    //   from: process.env.EMAIL_FROM || "nuesadinner@gmail.com",
-    //   to: booking.email,
-    //   subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
-    //   html: generateEmailTemplate(booking, booking.seats),
-    //   text: `
-    //     Dinner Booking Confirmation
-    //     FÀÁJÍ LAWA | Your Reservation is Confirmed
-    //     ----------------------------
-    //     Name: ${booking.name}
-    //     Matric No: ${booking.matricNo}
-    //     Email: ${booking.email}
-    //     Phone: ${booking.phone}
-    //     Amount: ₦${booking.amount.toLocaleString()}
-    //     Seats: ${booking.seats.map((seat) => seat.seatNumber).join(", ")}
-    //     Tables: ${[
-    //       ...new Set(booking.seats.map((seat) => seat.table.tableNumber)),
-    //     ].join(", ")}
-        
-    //     Thank you for your booking!
-        
-    //     If you have any questions, please contact us at nuesatechteam2025@gmail.com
-    //   `,
-    // };
-
-    // const info = await transporter.sendMail(mailOptions);
-    // console.log("Confirmation email sent: ", info.messageId);
-    // return true;
+    return true;
   } catch (error) {
-    console.error("Error sending email via cloud function: ", error);
+    console.error("Error sending confirmation email:", error);
     return false;
   }
 };
 
-// Send feedback notification
+// Send feedback/admin notification
 export const sendFeedbackNotification = async (booking) => {
   try {
     await booking.populate({
@@ -124,10 +94,7 @@ export const sendFeedbackNotification = async (booking) => {
     ];
     const seatNumbers = booking.seats.map((seat) => seat.seatNumber).join(", ");
 
-    const transporter = createTransporter();
-
-    const mailOptions = {
-      from: process.env.EMAIL_FROM || "nuesadinner@gmail.com",
+    await sendHtmlEmail({
       to: process.env.ADMIN_EMAIL || "nuesatechteam2025@gmail.com",
       subject: `New Dinner Booking: ${booking.name}`,
       html: `
@@ -144,11 +111,9 @@ export const sendFeedbackNotification = async (booking) => {
           booking.createdAt
         ).toLocaleString()}</p>
       `,
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
     console.log("Feedback notification sent");
-
     return true;
   } catch (error) {
     console.error("Error sending feedback notification:", error);
