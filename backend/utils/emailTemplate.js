@@ -367,6 +367,37 @@ const generateEmailTemplate = (booking, seats) => {
                 </p>
             </div>
 
+            <!-- QR Code Section (kept near the top so it is never collapsed/hidden) -->
+            <div class="qr-section">
+                <h3>Your Entry Pass</h3>
+                <p style="margin-bottom: 15px; color: #e0e0e0;">
+                    Present this QR code at the entrance for quick verification
+                </p>
+
+                <div class="qr-code">
+                    <img
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${verificationUrl}"
+                        alt="Booking QR Code"
+                        style="border: 1px solid #d4af37; border-radius: 8px; padding: 10px; background: #ffffff;"
+                    />
+                </div>
+
+                <p style="font-size: 12px; color: #b8b8b8; margin-top: 10px;">
+                    Scan this code to verify your booking
+                </p>
+            </div>
+
+            <div class="qr-instructions">
+                <strong>📋 Important Entry Instructions:</strong>
+                <ul style="margin: 10px 0; padding-left: 20px;">
+                    <li>Save this email and present it at the entrance of the event</li>
+                    <li>Have your QR code ready when approaching the entrance</li>
+                    <li>Ensure your phone brightness is at maximum for easy scanning</li>
+                    <li>If you booked multiple seats, all guests must arrive together</li>
+                    <li>Keep a valid ID card ready for additional verification</li>
+                </ul>
+            </div>
+
             <!-- Booking Details -->
             <div class="booking-details">
                 <h3>Your Reservation Details</h3>
@@ -457,37 +488,6 @@ const generateEmailTemplate = (booking, seats) => {
             </div>
         </div>
 
-        <!-- QR Code Section -->
-        <div class="qr-section">
-            <h3>Your Entry Pass</h3>
-            <p style="margin-bottom: 15px; color: #e0e0e0;">
-                Present this QR code at the entrance for quick verification
-            </p>
-
-            <div class="qr-code">
-                <img
-                    src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${verificationUrl}"
-                    alt="Booking QR Code"
-                    style="border: 1px solid #d4af37; border-radius: 8px; padding: 10px; background: #ffffff;"
-                />
-            </div>
-
-            <p style="font-size: 12px; color: #b8b8b8; margin-top: 10px;">
-                Scan this code to verify your booking
-            </p>
-        </div>
-
-        <div class="qr-instructions">
-            <strong>📋 Important Entry Instructions:</strong>
-            <ul style="margin: 10px 0; padding-left: 20px;">
-                <li>Save this email and present it at the entrance of the event</li>
-                <li>Have your QR code ready when approaching the entrance</li>
-                <li>Ensure your phone brightness is at maximum for easy scanning</li>
-                <li>If you booked multiple seats, all guests must arrive together</li>
-                <li>Keep a valid ID card ready for additional verification</li>
-            </ul>
-        </div>
-
         <!-- Footer -->
         <div class="footer">
             <p class="gold"><strong>FÀÁJÍ LAWA</strong></p>
@@ -495,7 +495,7 @@ const generateEmailTemplate = (booking, seats) => {
             <p>We look forward to seeing you at the event! If you have any questions or need to make changes to your booking, please contact us at least 24 hours before the event.</p>
             <p>If you have any questions, please contact us at nuesadinner@gmail.com</p>
             <div class="copyright">
-                ©2025/2026 NUESA ABUAD, REFORMATION ADMINISTRATION. All rights reserved.
+                ©2026/2027 NUESA ABUAD, REFORMATION ADMINISTRATION. All rights reserved.
             </div>
         </div>
     </div>
