@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import validator from "validator";
 import { Booking } from "../models/bookingModel.js";
 import { Seat } from "../models/seatModel.js";
 import {
@@ -8,6 +9,7 @@ import {
 import { Student } from "../models/studentModel.js";
 import { sendConfirmationEmail } from "../utils/emailService.js";
 import { Table } from "../models/tableModel.js";
+import { logActivity } from "../utils/activity.js";
 
 //Create a new booking with seat locking
 export const createBooking = async (req, res) => {
@@ -16,6 +18,18 @@ export const createBooking = async (req, res) => {
 
   try {
     const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, tableType,  } = req.body;
+
+    //Reject bad details BEFORE locking seats or creating anything -
+    //an invalid email would otherwise only be caught by Paystack mid-payment
+    const cleanEmail = String(email || "").trim().toLowerCase();
+    if (!validator.isEmail(cleanEmail)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Please enter a valid email address",
+      });
+    }
 
     //Check if seats are available and lock them
     const seats = await Seat.find({ _id: { $in: seatIds } }).session(session);
@@ -76,7 +90,7 @@ export const createBooking = async (req, res) => {
 
     // Create booking
     const booking = new Booking({
-      email,
+      email: cleanEmail,
       name,
       matricNo,
       phone,
@@ -105,6 +119,18 @@ export const createBooking = async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
+
+    logActivity(
+      "booking_created",
+      `${name} placed an unpaid reservation for ${
+        seatIds?.length || 0
+      } seat(s) - awaiting Paystack payment`,
+      {
+        bookingId: booking._id.toString(),
+        email: cleanEmail,
+        amount: totalAmount,
+      }
+    );
 
     res.status(200).json({
       success: true,
@@ -359,16 +385,13 @@ export const cleanupExpiredLocks = async () => {
       } expired seat locks`
     );
 
-    //cancel bookings that were pending but never paid
+    //Remove reservations that were never paid for
     const expiredBookings = await Booking.find({
       status: "pending",
       createdAt: { $lte: new Date(Date.now() - 30 * 60 * 1000) },
     });
 
     for (const booking of expiredBookings) {
-      booking.status = "cancelled";
-      await booking.save();
-
       //Update seats associated with this expired booking
       await Seat.updateMany(
         { _id: { $in: booking.seats } },
@@ -378,12 +401,22 @@ export const cleanupExpiredLocks = async () => {
           $unset: { bookedBy: "" },
         }
       );
+
+      //Delete it - no payment means no reservation
+      await Booking.deleteOne({ _id: booking._id });
+    }
+
+    if (expiredBookings.length > 0) {
+      logActivity(
+        "booking_removed",
+        `${expiredBookings.length} unpaid reservation(s) expired and were removed`
+      );
     }
 
     console.log(
-      `${new Date().toISOString()} - Cancelled ${
+      `${new Date().toISOString()} - Removed ${
         expiredBookings.length
-      } expired bookings`
+      } unpaid bookings`
     );
   } catch (error) {
     console.error("Cleanup error:", error);
@@ -463,7 +496,7 @@ export const getBookingsByEmail = async (req, res) => {
   }
 };
 
-// Cancel a booking
+// Remove an unpaid reservation (only reachable before payment succeeds)
 export const cancelBooking = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -482,20 +515,17 @@ export const cancelBooking = async (req, res) => {
       });
     }
 
-    if (booking.status === "cancelled") {
+    // A paid reservation can never be removed through this route
+    if (booking.paymentVerified || booking.status === "confirmed") {
       await session.abortTransaction();
       session.endSession();
       return res.status(400).json({
         success: false,
-        message: "Booking is already cancelled",
+        message: "Paid reservations cannot be removed",
       });
     }
 
-    // Update booking status
-    booking.status = "cancelled";
-    await booking.save({ session });
-
-    // Release seats
+    // Release the seats it was holding
     await Seat.updateMany(
       { _id: { $in: booking.seats } },
       {
@@ -506,12 +536,21 @@ export const cancelBooking = async (req, res) => {
       { session }
     );
 
+    // Delete it entirely - without payment the reservation never existed
+    await Booking.deleteOne({ _id: booking._id }).session(session);
+
     await session.commitTransaction();
     session.endSession();
 
+    logActivity(
+      "booking_removed",
+      `Unpaid reservation for ${booking.name} was removed`,
+      { bookingId: id, email: booking.email }
+    );
+
     res.json({
       success: true,
-      message: "Booking cancelled successfully",
+      message: "Reservation removed",
     });
   } catch (error) {
     await session.abortTransaction();
@@ -520,7 +559,7 @@ export const cancelBooking = async (req, res) => {
     console.error("Cancel booking error:", error);
     res.status(500).json({
       success: false,
-      message: "Failed to cancel booking",
+      message: "Failed to remove reservation",
     });
   }
 };

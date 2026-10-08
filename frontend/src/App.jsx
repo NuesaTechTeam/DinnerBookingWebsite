@@ -1,5 +1,5 @@
 import "./index.css";
-import { Booking, Gallery, Landing, VerifyBooking } from "./pages";
+import { Admin, Booking, Gallery, Landing, VerifyBooking } from "./pages";
 import { ScrollToTop } from "./components";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import React from "react";
@@ -16,6 +16,7 @@ const App = () => {
         {/* Disabled voting page route */}
         {/* <Route exact path="/voting" element={<Voting />} /> */}
         <Route exact path="/verify/:bookingId" element={<VerifyBooking />} />
+        <Route exact path="/admin" element={<Admin />} />
       </Routes>
     </Router>
   );

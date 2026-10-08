@@ -92,6 +92,7 @@ const Packages = () => {
       price: '₦27,000',
       period: '/ person',
       isRecommended: false,
+      disabled: true,
       features: [
         'Exclusive front-row private seating',
         'Masterful 7-course tasting menu',
@@ -133,9 +134,11 @@ const Packages = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, amount: 0.3 }}
             transition={{ duration: 0.6, ease: 'easeOut', delay: index * 0.15 }}
-            whileHover={{ y: -8 }}
+            whileHover={tier.disabled ? undefined : { y: -8 }}
             className={`relative flex flex-col justify-between rounded-2xl p-8 bg-[#0a0a0a] transition-colors duration-300 ${
-              tier.isRecommended
+              tier.disabled
+                ? 'border border-gray-800 opacity-55 grayscale'
+                : tier.isRecommended
                 ? 'border-2 border-[#d4af37] shadow-[0_0_35px_rgba(212,175,55,0.2)] md:-translate-y-2'
                 : 'border border-gray-800 hover:border-[#d4af37]/40'
             }`}
@@ -201,15 +204,24 @@ const Packages = () => {
             </div>
 
             {/* Book Now Button */}
-            <Link to="/book" className="w-full">
-              <Motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`w-full py-3.5 rounded-lg text-xs font-bold tracking-widest uppercase transition-all cursor-pointer ${tier.buttonStyle}`}
+            {tier.disabled ? (
+              <div
+                className="w-full py-3.5 rounded-lg text-xs font-bold tracking-widest uppercase text-center bg-gray-900 text-gray-500 border border-gray-700 cursor-not-allowed select-none"
+                aria-disabled="true"
               >
-                BOOK NOW
-              </Motion.button>
-            </Link>
+                BOOKING UNAVAILABLE
+              </div>
+            ) : (
+              <Link to="/book" className="w-full">
+                <Motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`w-full py-3.5 rounded-lg text-xs font-bold tracking-widest uppercase transition-all cursor-pointer ${tier.buttonStyle}`}
+                >
+                  BOOK NOW
+                </Motion.button>
+              </Link>
+            )}
           </Motion.div>
         ))}
       </div>

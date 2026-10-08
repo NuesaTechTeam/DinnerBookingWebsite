@@ -12,6 +12,7 @@ import seatRoute from "./routes/seatRoute.js"
 import tableRoute from "./routes/tableRoute.js"
 import discountRoute from "./routes/discountRoute.js"
 import studentRoute from "./routes/studentRoute.js"
+import adminRoute from "./routes/adminRoute.js"
 import { cleanupExpiredLocks } from "./controllers/bookingController.js";
 import initializeDatabase from "./utils/initializeDB.js";
 import syncExistingTables from "./utils/syncExistingTables.js";
@@ -71,6 +72,7 @@ app.use("/seat", seatRoute)
 app.use("/table", tableRoute)
 app.use("/discount", discountRoute)
 app.use("/student", studentRoute)
+app.use("/admin", adminRoute)
 
 app.use(errorHandler);
 

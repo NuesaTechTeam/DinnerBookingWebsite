@@ -5,6 +5,7 @@ import { sendConfirmationEmail, sendFeedbackNotification } from "../utils/emailS
 import mongoose from "mongoose";
 import { Table } from "../models/tableModel.js";
 import { markDiscountUsed } from "./discountController.js";
+import { logActivity } from "../utils/activity.js";
 
 //vVerify Paystack payment
 export const verifyPayment = async (req, res) => {
@@ -102,6 +103,12 @@ export const verifyPayment = async (req, res) => {
           session.endSession();
 
           await sendConfirmationEmail(booking);
+
+          logActivity(
+            "payment_verified",
+            `${booking.name} paid ₦${amountPaid.toLocaleString()} - booking confirmed`,
+            { bookingId: booking._id.toString(), reference, amount: amountPaid }
+          );
 
           //for now
           // await sendFeedbackNotification(booking)

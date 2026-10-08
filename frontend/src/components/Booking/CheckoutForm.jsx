@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import {
   X,
@@ -16,6 +16,9 @@ import { useVerifyPayment } from "../../hooks/paymentHooks";
 import { useToast } from "../../context/modal/useToast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVerifyEngineeringStudent } from "../../hooks/discountHooks";
+import BookingAPI from "../../utils/endpoints/bookingApi.js";
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
 
 const fadeInUp = {
   initial: { opacity: 0, y: 50 },
@@ -62,6 +65,9 @@ const CheckoutForm = ({
   const [discountApplied, setDiscountApplied] = useState(false);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [verifyingDiscount, setVerifyingDiscount] = useState(false);
+
+  const pendingBookingIdRef = useRef(null);
+  const paymentSucceededRef = useRef(false);
 
   // Calculate Amount
   const isDiscountEligible =
@@ -192,8 +198,17 @@ const CheckoutForm = ({
     );
   };
 
-  const onPaymentClose = () => {
-    window.location.reload();
+  const onPaymentClose = async () => {
+    // Nothing was paid: pull the reservation back so seats are not held hostage
+    if (!paymentSucceededRef.current && pendingBookingIdRef.current) {
+      try {
+        await BookingAPI.abandonBooking(pendingBookingIdRef.current);
+      } catch (error) {
+        console.error("Could not remove unpaid reservation:", error);
+      }
+      window.location.reload();
+    }
+    // If payment succeeded we let verification finish - do not reload
   };
 
   const handleInputChange = (e) => {
@@ -206,13 +221,25 @@ const CheckoutForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (
-      !formData.name ||
-      !formData.matricNo ||
-      !formData.email ||
-      !formData.phone
-    ) {
+
+    const cleaned = {
+      ...formData,
+      name: formData.name.trim(),
+      matricNo: formData.matricNo.trim(),
+      email: formData.email.trim(),
+      phone: formData.phone.trim(),
+      invoiceNumber: formData.invoiceNumber.trim(),
+    };
+
+    if (!cleaned.name || !cleaned.matricNo || !cleaned.email || !cleaned.phone) {
       showToast("Please fill in all required fields", TOAST_TYPES.INFO);
+      return;
+    }
+
+    // Paystack rejects invalid emails mid-payment - catch it here instead,
+    // before a reservation is created
+    if (!EMAIL_PATTERN.test(cleaned.email)) {
+      showToast("Please enter a valid email address", TOAST_TYPES.ERROR);
       return;
     }
 
@@ -222,26 +249,32 @@ const CheckoutForm = ({
     }
 
     const bookingData = {
-      ...formData,
+      ...cleaned,
+      invoiceNumber: discountApplied ? cleaned.invoiceNumber : undefined,
       seatIds: selectedSeats,
       baseAmount: baseAmount,
       totalAmount: totalAmount,
       tableId: selectedTable?._id,
       tableType: selectedTable?.type,
-      invoiceNumber: discountApplied ? formData.invoiceNumber : undefined,
     };
 
     createBookingMutation.mutate(bookingData, {
       onSuccess: (bookingResponse) => {
         if (bookingResponse.success) {
           const bookingId = bookingResponse.booking._id;
+          pendingBookingIdRef.current = bookingId;
+          paymentSucceededRef.current = false;
           initializePayment({
             ...paystackConfig,
+            email: cleaned.email,
             metadata: {
               ...paystackConfig.metadata,
-              bookingId: bookingResponse.booking._id,
+              bookingId: bookingId,
             },
-            onSuccess: (response) => onPaymentSuccess(response, bookingId),
+            onSuccess: (response) => {
+              paymentSucceededRef.current = true;
+              onPaymentSuccess(response, bookingId);
+            },
             onClose: onPaymentClose,
           });
         } else {

@@ -9,6 +9,11 @@ const BookingAPI = {
         const response = await axios.post("/booking/check-availability", {seatIds: seats})
         return response.data;
     },
+    // Removes an unpaid reservation when the Paystack popup is closed/cancelled
+    abandonBooking: async (bookingId) => {
+        const response = await axios.delete(`/booking/${bookingId}`)
+        return response.data;
+    },
 }
 
 export default BookingAPI
