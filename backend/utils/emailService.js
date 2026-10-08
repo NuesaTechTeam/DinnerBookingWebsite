@@ -1,28 +1,38 @@
-import nodemailer from "nodemailer";
+import axios from "axios";
 import generateEmailTemplate from "./emailTemplate.js";
 import generateEmailTemplatePresident from "./presidentTemplate.js";
 
-// Create Transporter (Gmail)
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: process.env.GMAIL_EMAIL,
-      pass: process.env.GMAIL_APP_PASSWORD,
-    },
-  });
-};
+// Render blocks outbound SMTP, so we send over HTTPS via Brevo's transactional API.
+const BREVO_URL = "https://api.brevo.com/v3/smtp/email";
 
-const sendHtmlEmail = async ({ to, subject, html }) => {
-  const transporter = createTransporter();
-  const info = await transporter.sendMail({
-    from: process.env.EMAIL_FROM || process.env.GMAIL_EMAIL,
-    to,
-    subject,
-    html,
-  });
-  console.log("Email sent:", info.messageId, "->", to);
-  return info;
+export const sendHtmlEmail = async ({ to, subject, html }) => {
+  const senderEmail =
+    process.env.EMAIL_FROM || process.env.GMAIL_EMAIL || "nuesa.abuad.tech@gmail.com";
+
+  const response = await axios.post(
+    BREVO_URL,
+    {
+      sender: { name: "FÀÁJÍ LAWA", email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    },
+    {
+      headers: {
+        "api-key": process.env.BREVO_API_KEY,
+        "Content-Type": "application/json",
+        accept: "application/json",
+      },
+    }
+  );
+
+  console.log(
+    "Email sent (Brevo):",
+    response.data?.messageId || response.status,
+    "->",
+    to
+  );
+  return response.data;
 };
 
 export const testing = async (booking) => {
@@ -34,7 +44,7 @@ export const testing = async (booking) => {
     });
     return true;
   } catch (error) {
-    console.error("Error sending email:", error);
+    console.error("Error sending email:", error?.response?.data || error.message);
     return false;
   }
 };
@@ -48,7 +58,7 @@ export const sendPresidentEmail = async (booking) => {
     });
     return true;
   } catch (error) {
-    console.error("Error sending president email:", error);
+    console.error("Error sending president email:", error?.response?.data || error.message);
     return false;
   }
 };
@@ -73,7 +83,10 @@ export const sendConfirmationEmail = async (booking) => {
 
     return true;
   } catch (error) {
-    console.error("Error sending confirmation email:", error);
+    console.error(
+      "Error sending confirmation email:",
+      error?.response?.data || error.message
+    );
     return false;
   }
 };
@@ -116,7 +129,10 @@ export const sendFeedbackNotification = async (booking) => {
     console.log("Feedback notification sent");
     return true;
   } catch (error) {
-    console.error("Error sending feedback notification:", error);
+    console.error(
+      "Error sending feedback notification:",
+      error?.response?.data || error.message
+    );
     return false;
   }
 };
