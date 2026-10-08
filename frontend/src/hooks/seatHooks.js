@@ -22,7 +22,7 @@ export const useSeatManagement = (tableId) => {
   const availabilityMutation = useMutation({
     mutationFn: BookingAPI.checkAvailability,
     onSuccess: () => {
-      queryClient.invalidateQueries(["seatStatus", tableId]);
+      queryClient.invalidateQueries({ queryKey: ["seatStatus", tableId] });
     },
   });
 

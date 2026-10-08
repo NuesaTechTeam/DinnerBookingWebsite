@@ -180,7 +180,8 @@ const CheckoutForm = ({
           "Payment successful! Confirmation email sent.",
           TOAST_TYPES.SUCCESS
         );
-        queryClient.invalidateQueries(["tables"]);
+        queryClient.invalidateQueries({ queryKey: ["tables"] });
+        queryClient.invalidateQueries({ queryKey: ["seatStatus"] });
         onClose();
       } else {
         showToast(

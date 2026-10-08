@@ -6,8 +6,8 @@ export const useTables = () => {
   return useQuery({
     queryKey: ["tables"],
     queryFn: () => TableAPI.getAllTables(),
-    staleTime: 10 * 60 * 1000,
-    cacheTime: 30 * 60 * 1000,
+    staleTime: 30 * 1000,
+    gcTime: 30 * 60 * 1000,
     retry: 2,
     select: (data) => {
       // Extract the data from the Axios response
