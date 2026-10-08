@@ -1,5 +1,6 @@
 import { Student } from "../models/studentModel.js";
-import { testing } from "../utils/emailService.js";
+import nodemailer from "nodemailer";
+import generateEmailTemplate from "../utils/emailTemplate.js";
 
 // Normalise a header/key so we can match it regardless of formatting
 // e.g. "Invoice Number" -> "invoicenumber"
@@ -145,18 +146,47 @@ export const sendTestEmail = async (req, res) => {
       ],
     };
 
-    const ok = await testing(booking);
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: process.env.GMAIL_EMAIL,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: process.env.EMAIL_FROM || process.env.GMAIL_EMAIL,
+      to,
+      subject: "FÀÁJÍ LAWA | Your Reservation is Confirmed",
+      html: generateEmailTemplate(booking, booking.seats),
+    });
 
     res.status(200).json({
-      success: ok,
+      success: true,
       to,
-      message: ok
-        ? "Test email sent"
-        : "Email send failed — check GMAIL_EMAIL / GMAIL_APP_PASSWORD on Render",
+      messageId: info.messageId,
+      diagnostics: {
+        gmailUser: process.env.GMAIL_EMAIL || "(not set)",
+        passwordSet: Boolean(process.env.GMAIL_APP_PASSWORD),
+        passwordLength: (process.env.GMAIL_APP_PASSWORD || "").length,
+        emailFrom: process.env.EMAIL_FROM || "(not set)",
+      },
     });
   } catch (error) {
     console.error("Test email error:", error);
-    res.status(500).json({ success: false, message: error.message });
+    res.status(500).json({
+      success: false,
+      to,
+      error: error.message,
+      code: error.code,
+      response: error.response,
+      diagnostics: {
+        gmailUser: process.env.GMAIL_EMAIL || "(not set)",
+        passwordSet: Boolean(process.env.GMAIL_APP_PASSWORD),
+        passwordLength: (process.env.GMAIL_APP_PASSWORD || "").length,
+        emailFrom: process.env.EMAIL_FROM || "(not set)",
+      },
+    });
   }
 };
 
