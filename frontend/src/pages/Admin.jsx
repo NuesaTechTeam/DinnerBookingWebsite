@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { motion as Motion } from "framer-motion";
 import {
   LogOut,
@@ -11,6 +11,10 @@ import {
   Clock,
   Activity as ActivityIcon,
   CheckCircle,
+  QrCode,
+  ScanLine,
+  Camera,
+  X,
 } from "lucide-react";
 import AdminAPI from "../utils/endpoints/adminApi.js";
 import logo from "../assets/logo.png";
@@ -442,8 +446,296 @@ const TeamAccess = ({ token, onLogout }) => {
   );
 };
 
-const Dashboard = ({ token, role, admin, onLogout }) => {
-  const [stats, setStats] = useState(null);
+const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
+  const [scanning, setScanning] = useState(false);
+  const [manual, setManual] = useState("");
+  const [status, setStatus] = useState(null);
+  const [booking, setBooking] = useState(null);
+  const [busySeat, setBusySeat] = useState({});
+  const [lastCode, setLastCode] = useState("");
+  const scannerRef = useRef(null);
+
+  const stopScanner = useCallback(async () => {
+    const scanner = scannerRef.current;
+    scannerRef.current = null;
+    if (scanner) {
+      try {
+        await scanner.stop();
+        scanner.clear();
+      } catch {}
+    }
+    setScanning(false);
+  }, []);
+
+  useEffect(() => () => stopScanner(), [stopScanner]);
+
+  const resolve = useCallback(
+    async (raw) => {
+      const code = String(raw || "").trim();
+      if (!code) return;
+      setLastCode(code);
+      setStatus({ type: "info", message: "Looking up booking..." });
+      try {
+        const res = await AdminAPI.lookupBooking(token, code);
+        setBooking(res.data);
+        setStatus({
+          type: "success",
+          message: `Found booking for ${res.data?.name || "guest"}`,
+        });
+      } catch (err) {
+        if (err.response?.status === 401) {
+          onLogout();
+          return;
+        }
+        setBooking(null);
+        setStatus({
+          type: "error",
+          message:
+            err.response?.data?.message ||
+            "No booking found for that code. Check the ticket and try again.",
+        });
+      }
+    },
+    [token, onLogout]
+  );
+
+  const startScanner = useCallback(async () => {
+    setStatus(null);
+    setBooking(null);
+    setScanning(true);
+    try {
+      const { Html5Qrcode } = await import("html5-qrcode");
+      await new Promise((resolve) => setTimeout(resolve, 60));
+      const scanner = new Html5Qrcode("qr-reader-region", { verbose: false });
+      scannerRef.current = scanner;
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 240, height: 240 } },
+        async (decodedText) => {
+          await stopScanner();
+          resolve(decodedText);
+        },
+        () => {}
+      );
+    } catch (err) {
+      await stopScanner();
+      setStatus({
+        type: "error",
+        message:
+          "Camera unavailable or permission denied. Use the manual code entry below.",
+      });
+    }
+  }, [resolve, stopScanner]);
+
+  const handleSeat = async (seatId) => {
+    if (!booking) return;
+    setBusySeat((prev) => ({ ...prev, [seatId]: true }));
+    try {
+      await AdminAPI.markSeat(token, booking._id, seatId);
+      await resolve(lastCode);
+      onCheckedIn?.();
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onLogout();
+        return;
+      }
+      setStatus({
+        type: "error",
+        message: err.response?.data?.message || "Check-in failed",
+      });
+    } finally {
+      setBusySeat((prev) => ({ ...prev, [seatId]: false }));
+    }
+  };
+
+  const handleAll = async () => {
+    if (!booking) return;
+    setBusySeat((prev) => ({ ...prev, ALL: true }));
+    try {
+      await AdminAPI.checkInBooking(token, booking._id);
+      await resolve(lastCode);
+      onCheckedIn?.();
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onLogout();
+        return;
+      }
+      setStatus({
+        type: "error",
+        message: err.response?.data?.message || "Check-in failed",
+      });
+    } finally {
+      setBusySeat((prev) => ({ ...prev, ALL: false }));
+    }
+  };
+
+  const seats = booking?.seats || [];
+  const remaining = seats.filter((s) => !s.isGivenTicket);
+
+  return (
+    <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden">
+      <div className="p-4 sm:p-5 border-b border-gray-800 flex items-center gap-3">
+        <QrCode size={18} className="text-[#d4af37]" />
+        <div>
+          <h2 className="text-sm font-bold tracking-widest text-[#d4af37] uppercase">
+            Check-in Station
+          </h2>
+          <p className="text-[11px] text-gray-500 mt-0.5">
+            Scan the guest ticket QR code, or type the booking code manually.
+          </p>
+        </div>
+      </div>
+
+      <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <div className="space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={startScanner}
+              disabled={scanning}
+              className="flex items-center gap-2 bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] text-black font-extrabold px-4 py-2.5 rounded-lg text-xs uppercase tracking-widest hover:brightness-110 disabled:opacity-60 transition-all cursor-pointer"
+            >
+              <Camera size={14} /> {scanning ? "Camera on" : "Scan QR code"}
+            </button>
+            {scanning && (
+              <button
+                onClick={stopScanner}
+                className="flex items-center gap-2 border border-gray-700 text-gray-300 px-4 py-2.5 rounded-lg text-xs uppercase tracking-widest hover:border-red-700 hover:text-red-400 transition-colors cursor-pointer"
+              >
+                <X size={14} /> Stop
+              </button>
+            )}
+          </div>
+
+          <div id="qr-reader-region" className="rounded-xl overflow-hidden bg-black/60 border border-gray-800 min-h-[120px]" />
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (manual.trim()) resolve(manual);
+            }}
+            className="flex gap-2"
+          >
+            <input
+              type="text"
+              value={manual}
+              onChange={(e) => setManual(e.target.value)}
+              placeholder="e.g. 6ac8102c or full ticket link"
+              className="flex-1 bg-black/60 border border-gray-800 rounded-lg px-3 py-2.5 text-xs text-white focus:border-[#d4af37] outline-none"
+            />
+            <button
+              type="submit"
+              className="flex items-center gap-1.5 border border-gray-700 hover:border-[#d4af37] text-gray-300 hover:text-[#d4af37] px-3 py-2.5 rounded-lg text-xs uppercase tracking-widest transition-colors cursor-pointer"
+            >
+              <Search size={13} /> Find
+            </button>
+          </form>
+
+          {status && (
+            <p
+              className={`text-xs rounded-lg px-3 py-2 border ${
+                status.type === "error"
+                  ? "bg-red-950/40 border-red-800 text-red-300"
+                  : status.type === "success"
+                  ? "bg-emerald-950/40 border-emerald-800 text-emerald-300"
+                  : "bg-black/40 border-gray-800 text-gray-400"
+              }`}
+            >
+              {status.message}
+            </p>
+          )}
+        </div>
+
+        <div className="border border-gray-800 rounded-xl p-4 bg-black/30">
+          {!booking ? (
+            <div className="h-full min-h-[160px] flex flex-col items-center justify-center text-center text-gray-600">
+              <ScanLine size={28} className="mb-2" />
+              <p className="text-xs">
+                No booking loaded. Scan a QR code or enter a code to begin.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div>
+                <p className="text-white font-semibold text-sm">
+                  {booking.name}
+                  <span
+                    className={`ml-2 inline-block px-2 py-0.5 rounded-full text-[9px] font-bold uppercase border ${
+                      STATUS_STYLES[booking.status] || STATUS_STYLES.cancelled
+                    }`}
+                  >
+                    {booking.status}
+                  </span>
+                </p>
+                <p className="text-gray-400 text-[11px]">{booking.email}</p>
+                <p className="text-gray-500 text-[10px]">
+                  {booking.matricNo} · {booking.phone}
+                </p>
+                <p className="text-gray-500 text-[10px] mt-1">
+                  Ticket ref: {String(booking._id).slice(-8)} ·{" "}
+                  {naira(booking.totalAmount)}
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-1.5">
+                {seats.map((seat) => {
+                  const label = `T${
+                    seat.table?.tableNumber
+                      ? tableLabel(seat.table.tableNumber)
+                      : "?"
+                  }·S${seatLabel(seat.seatNumber)}`;
+                  const attended = !!seat.isGivenTicket;
+                  return attended ? (
+                    <span
+                      key={seat._id}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold"
+                    >
+                      <CheckCircle size={10} /> {label}
+                    </span>
+                  ) : (
+                    <button
+                      key={seat._id}
+                      onClick={() => handleSeat(seat._id)}
+                      disabled={busySeat[seat._id] || booking.status !== "confirmed"}
+                      title={
+                        booking.status === "confirmed"
+                          ? `Check in ${label}`
+                          : "Only confirmed bookings can be checked in"
+                      }
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-dashed border-gray-600 bg-black/40 text-gray-300 text-[10px] font-semibold hover:border-[#d4af37] hover:text-[#d4af37] disabled:cursor-not-allowed disabled:opacity-50 transition-colors cursor-pointer"
+                    >
+                      {busySeat[seat._id] ? "..." : `${label} +`}
+                    </button>
+                  );
+                })}
+                {seats.length === 0 && (
+                  <span className="text-gray-500 text-xs">No seats</span>
+                )}
+              </div>
+
+              {booking.status === "confirmed" && remaining.length > 0 && (
+                <button
+                  onClick={handleAll}
+                  disabled={busySeat.ALL}
+                  className="w-full inline-flex items-center justify-center px-3 py-2 rounded-lg border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] text-[10px] font-bold uppercase tracking-wider hover:bg-[#d4af37]/20 disabled:opacity-50 transition-colors cursor-pointer"
+                >
+                  {busySeat.ALL ? "Checking in..." : "Check in all seats"}
+                </button>
+              )}
+
+              {booking.status === "confirmed" && remaining.length === 0 && (
+                <p className="text-emerald-400 text-[11px] font-semibold flex items-center gap-1.5">
+                  <CheckCircle size={13} /> All seats checked in
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStats] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [activity, setActivity] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -616,6 +908,13 @@ const Dashboard = ({ token, role, admin, onLogout }) => {
             </button>
           </div>
         )}
+
+        {/* QR check-in station */}
+        <CheckInStation
+          token={token}
+          onLogout={onLogout}
+          onCheckedIn={() => loadAll(true)}
+        />
 
         {/* Stat cards */}
         <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">

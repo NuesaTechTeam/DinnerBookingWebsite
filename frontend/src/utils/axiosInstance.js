@@ -5,7 +5,7 @@ const api =
 
 const instance = axios.create({
   baseURL: api,
-  timeout: 35000, // 35s timeout
+  timeout: 60000, // 60s - Render free instances can cold-start slowly
   headers: {
     "Content-Type": "application/json",
   },

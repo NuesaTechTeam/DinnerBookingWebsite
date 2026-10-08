@@ -166,36 +166,53 @@ const CheckoutForm = ({
 
   const initializePayment = usePaystackPayment(paystackConfig);
 
-  const onPaymentSuccess = (response, bookingId) => {
-    verifyPaymentMutation.mutate(
-      {
-        reference: response.reference,
-        bookingId: bookingId,
-      },
-      {
-        onSuccess: (verifyData) => {
-          if (verifyData.success) {
-            showToast(
-              "Payment successful! Confirmation email sent.",
-              TOAST_TYPES.SUCCESS
-            );
-            queryClient.invalidateQueries(["tables"]);
-            onClose();
-          } else {
-            showToast(
-              "Payment verification failed: " + verifyData.data.message,
-              TOAST_TYPES.ERROR
-            );
-          }
-        },
-        onError: (error) => {
-          showToast(
-            `Payment verification error: ${error.message}`,
-            TOAST_TYPES.ERROR
-          );
-        },
+  const onPaymentSuccess = async (response, bookingId, attempt = 1) => {
+    const reference = response.reference;
+
+    try {
+      const verifyData = await verifyPaymentMutation.mutateAsync({
+        reference,
+        bookingId,
+      });
+
+      if (verifyData.success) {
+        showToast(
+          "Payment successful! Confirmation email sent.",
+          TOAST_TYPES.SUCCESS
+        );
+        queryClient.invalidateQueries(["tables"]);
+        onClose();
+      } else {
+        showToast(
+          "Payment verification failed: " +
+            (verifyData.message || "please contact support"),
+          TOAST_TYPES.ERROR
+        );
       }
-    );
+    } catch (error) {
+      const networkIssue =
+        !error.response ||
+        error.code === "ECONNABORTED" ||
+        error.message === "Network Error";
+
+      // The money is safe - just retry confirming before worrying the user
+      if (networkIssue && attempt < 3) {
+        showToast(
+          `Payment received. Confirming... (attempt ${attempt}/3)`,
+          TOAST_TYPES.INFO
+        );
+        setTimeout(
+          () => onPaymentSuccess(response, bookingId, attempt + 1),
+          attempt * 3000
+        );
+        return;
+      }
+
+      showToast(
+        `Could not confirm your payment automatically. Your payment reference is ${reference}. Please keep it and contact support - do not pay again.`,
+        TOAST_TYPES.ERROR
+      );
+    }
   };
 
   const onPaymentClose = async () => {

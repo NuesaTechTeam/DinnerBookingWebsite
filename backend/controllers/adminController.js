@@ -1,4 +1,5 @@
 import bcrypt from "bcrypt";
+import mongoose from "mongoose";
 import { Booking } from "../models/bookingModel.js";
 import { Seat } from "../models/seatModel.js";
 import { Student } from "../models/studentModel.js";
@@ -67,6 +68,66 @@ export const login = async (req, res) => {
   } catch (error) {
     console.error("Admin login error:", error);
     res.status(500).json({ success: false, message: "Login failed" });
+  }
+};
+
+// GET /admin/lookup?code=...  - resolve a scanned QR / typed booking code
+export const lookupBooking = async (req, res) => {
+  try {
+    const raw = String(req.query.code || "").trim();
+    if (!raw) {
+      return res.status(400).json({
+        success: false,
+        message: "Provide a booking code",
+      });
+    }
+
+    // Accept a full verify URL (what the QR contains), a full id, or the
+    // short 8-character reference shown on the ticket
+    const urlMatch = raw.match(/verify\/([a-f0-9]{24})/i);
+    const code = (urlMatch ? urlMatch[1] : raw).replace(/^#/, "").trim();
+
+    let filter = null;
+    if (/^[a-f0-9]{24}$/i.test(code)) {
+      filter = { _id: code };
+    } else if (/^[a-f0-9]{4,23}$/i.test(code)) {
+      filter = {
+        $expr: {
+          $regexMatch: {
+            input: { $toString: "$_id" },
+            regex: `${code}$`,
+            options: "i",
+          },
+        },
+      };
+    }
+
+    if (!filter) {
+      return res.status(400).json({
+        success: false,
+        message: "That does not look like a valid booking code",
+      });
+    }
+
+    const booking = await Booking.find(filter)
+      .sort({ createdAt: -1 })
+      .limit(1)
+      .populate({
+        path: "seats",
+        populate: { path: "table", model: "Table" },
+      });
+
+    if (!booking || booking.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "No booking found for that code",
+      });
+    }
+
+    res.json({ success: true, data: booking[0] });
+  } catch (error) {
+    console.error("Admin lookup booking error:", error);
+    res.status(500).json({ success: false, message: "Lookup failed" });
   }
 };
 

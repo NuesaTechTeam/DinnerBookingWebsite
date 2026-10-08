@@ -6,6 +6,7 @@ import {
   getBookings,
   getStats,
   getActivity,
+  lookupBooking,
   listUsers,
   createUser,
   updateUser,
@@ -23,6 +24,7 @@ router.use(requireAdmin);
 router.get("/bookings", getBookings);
 router.get("/stats", getStats);
 router.get("/activity", getActivity);
+router.get("/lookup", lookupBooking);
 
 // Admin account management - super admin only
 router.get("/users", requireSuperAdmin, listUsers);

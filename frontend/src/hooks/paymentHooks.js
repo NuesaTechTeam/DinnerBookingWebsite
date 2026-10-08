@@ -1,27 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import PaymentAPI from "../utils/endpoints/paymentApi";
-import { useToast } from "../context/modal/useToast";
 
+// NOTE: UI feedback (toasts + retries) is handled by the caller so that a
+// verification hiccup never looks like a lost payment.
 export const useVerifyPayment = () => {
-  const { showToast, TOAST_TYPES } = useToast();
-
   return useMutation({
     mutationFn: PaymentAPI.verifyPayment,
-    onSuccess: (data) => {
-      if (data.success) {
-        showToast("Product created successfully", TOAST_TYPES.SUCCESS);
-      } else {
-        showToast(
-          `Payment verification failed: ${data.message}`,
-          TOAST_TYPES.ERROR
-        );
-      }
-    },
     onError: (error) => {
-      const errorMessage =
-        error.response?.data?.message || "Payment verification failed";
-      showToast({ errorMessage }, TOAST_TYPES.ERROR);
-
       console.error("Payment verification failed:", error);
     },
   });

@@ -45,6 +45,13 @@ const AdminAPI = {
     );
     return response.data;
   },
+  lookupBooking: async (token, code) => {
+    const response = await axios.get(
+      `/admin/lookup?code=${encodeURIComponent(code)}`,
+      authHeaders(token)
+    );
+    return response.data;
+  },
   // Check-in (mark attendance) - admin only
   markSeat: async (token, bookingId, seatId) => {
     const response = await axios.post(
