@@ -1103,11 +1103,32 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                         >
                           {b.status}
                         </span>
-                        {b.attendanceVerified && (
-                          <span className="ml-1 inline-block px-2 py-1 rounded-full text-[10px] font-bold uppercase border bg-[#d4af37]/10 text-[#d4af37] border-[#d4af37]/40">
-                            in
-                          </span>
-                        )}
+                        {(() => {
+                          const seats = b.seats || [];
+                          if (seats.length === 0) return null;
+                          const attended = seats.filter(
+                            (s) => s.isGivenTicket
+                          ).length;
+                          if (attended === seats.length) {
+                            return (
+                              <span className="ml-1 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase border bg-emerald-500/10 text-emerald-400 border-emerald-500/40">
+                                <CheckCircle size={10} /> checked in
+                              </span>
+                            );
+                          }
+                          if (attended > 0) {
+                            return (
+                              <span className="ml-1 inline-block px-2 py-1 rounded-full text-[10px] font-bold uppercase border bg-amber-500/10 text-amber-400 border-amber-500/40">
+                                partial {attended}/{seats.length}
+                              </span>
+                            );
+                          }
+                          return (
+                            <span className="ml-1 inline-block px-2 py-1 rounded-full text-[10px] font-bold uppercase border bg-gray-500/10 text-gray-400 border-gray-600/40">
+                              not checked in
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-gray-400 text-[11px] whitespace-nowrap">
                         {fmtDate(b.createdAt)}

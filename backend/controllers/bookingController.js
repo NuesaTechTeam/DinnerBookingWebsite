@@ -674,7 +674,7 @@ export const verifyQRCode = async (req, res) => {
 
     // Mark seats as "attended"
     await Seat.updateMany(
-      { _id: { $in: booking.seats } },
+      { _id: { $in: booking.seats.map((s) => s._id) } },
       {
         isGivenTicket: true,
       }

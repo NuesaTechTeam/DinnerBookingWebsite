@@ -42,7 +42,7 @@ const bookingSchema = new mongoose.Schema(
     },
     engineeringStudentRef: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "EngineeringStudent",
+      ref: "Student",
     },
     isEngineering: {
       type: Boolean,
