@@ -9,6 +9,26 @@ const AdminAPI = {
     const response = await axios.post("/admin/login", credentials);
     return response.data;
   },
+  getUsers: async (token) => {
+    const response = await axios.get("/admin/users", authHeaders(token));
+    return response.data;
+  },
+  createUser: async (token, payload) => {
+    const response = await axios.post(
+      "/admin/users",
+      payload,
+      authHeaders(token)
+    );
+    return response.data;
+  },
+  updateUser: async (token, userId, payload) => {
+    const response = await axios.patch(
+      `/admin/users/${userId}`,
+      payload,
+      authHeaders(token)
+    );
+    return response.data;
+  },
   getStats: async (token) => {
     const response = await axios.get("/admin/stats", authHeaders(token));
     return response.data;

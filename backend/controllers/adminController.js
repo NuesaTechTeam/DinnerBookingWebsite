@@ -1,31 +1,28 @@
-import crypto from "crypto";
+import bcrypt from "bcrypt";
 import { Booking } from "../models/bookingModel.js";
 import { Seat } from "../models/seatModel.js";
 import { Student } from "../models/studentModel.js";
+import { AdminUser } from "../models/adminUserModel.js";
 import { ActivityLog } from "../models/activityLogModel.js";
 import { logActivity } from "../utils/activity.js";
 import { signAdminToken } from "../middlewares/adminAuth.js";
 
-const matches = (provided, expected) => {
-  const a = Buffer.from(String(provided ?? ""));
-  const b = Buffer.from(String(expected ?? ""));
-  if (a.length !== b.length) return false;
-  return crypto.timingSafeEqual(a, b);
-};
+const USERNAME_RE = /^[a-z0-9_.-]{3,24}$/;
+const MIN_PASSWORD_LENGTH = 8;
+
+const sanitizeUser = (user) => ({
+  _id: user._id,
+  username: user.username,
+  role: user.role,
+  isActive: user.isActive,
+  lastLoginAt: user.lastLoginAt,
+  createdAt: user.createdAt,
+});
 
 // POST /admin/login
 export const login = async (req, res) => {
   try {
     const { username, password } = req.body || {};
-    const envUser = process.env.ADMIN_USERNAME;
-    const envPass = process.env.ADMIN_PASSWORD;
-
-    if (!envUser || !envPass) {
-      return res.status(503).json({
-        success: false,
-        message: "Admin login is not configured on this server",
-      });
-    }
 
     if (!username || !password) {
       return res.status(400).json({
@@ -34,24 +31,178 @@ export const login = async (req, res) => {
       });
     }
 
-    if (!matches(username, envUser) || !matches(password, envPass)) {
+    const clean = String(username).toLowerCase().trim();
+    const user = await AdminUser.findOne({ username: clean });
+
+    const denied = async (message) => {
       await logActivity(
         "admin_login_failed",
-        `Failed login attempt for "${String(username).slice(0, 40)}"`
+        `Failed login attempt for "${clean.slice(0, 40)}"`
       );
-      return res.status(401).json({
-        success: false,
-        message: "Invalid username or password",
-      });
+      return res.status(401).json({ success: false, message });
+    };
+
+    if (!user || !user.isActive) {
+      return await denied("Invalid username or password");
     }
 
-    const token = signAdminToken(envUser);
-    await logActivity("admin_login", `${envUser} logged in to the dashboard`);
+    const ok = await bcrypt.compare(String(password), user.passwordHash);
+    if (!ok) {
+      return await denied("Invalid username or password");
+    }
 
-    res.json({ success: true, token, admin: envUser, expiresIn: "12h" });
+    user.lastLoginAt = new Date();
+    await user.save();
+
+    const token = signAdminToken(user);
+    await logActivity("admin_login", `${user.username} logged in`);
+
+    res.json({
+      success: true,
+      token,
+      admin: user.username,
+      role: user.role,
+      expiresIn: "12h",
+    });
   } catch (error) {
     console.error("Admin login error:", error);
     res.status(500).json({ success: false, message: "Login failed" });
+  }
+};
+
+// GET /admin/users  (super admin)
+export const listUsers = async (req, res) => {
+  try {
+    const users = await AdminUser.find().select("-passwordHash").sort({ createdAt: 1 });
+    res.json({ success: true, data: users });
+  } catch (error) {
+    console.error("Admin list users error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch users" });
+  }
+};
+
+// POST /admin/users  (super admin)
+export const createUser = async (req, res) => {
+  try {
+    const { username, password, role } = req.body || {};
+    const clean = String(username || "").toLowerCase().trim();
+
+    if (!USERNAME_RE.test(clean)) {
+      return res.status(400).json({
+        success: false,
+        message: "Username must be 3-24 characters (a-z, 0-9, . _ -)",
+      });
+    }
+
+    if (String(password || "").length < MIN_PASSWORD_LENGTH) {
+      return res.status(400).json({
+        success: false,
+        message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+      });
+    }
+
+    if (role && !["super", "admin"].includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: "Role must be 'admin' or 'super'",
+      });
+    }
+
+    const exists = await AdminUser.findOne({ username: clean });
+    if (exists) {
+      return res.status(409).json({
+        success: false,
+        message: "That username is already taken",
+      });
+    }
+
+    const passwordHash = await bcrypt.hash(String(password), 12);
+    const user = await AdminUser.create({
+      username: clean,
+      passwordHash,
+      role: role || "admin",
+      isActive: true,
+    });
+
+    await logActivity(
+      "admin_user_created",
+      `${req.admin?.sub || "super admin"} created ${user.role} account "${clean}"`
+    );
+
+    res.status(201).json({ success: true, data: sanitizeUser(user) });
+  } catch (error) {
+    console.error("Admin create user error:", error);
+    res.status(500).json({ success: false, message: "Failed to create user" });
+  }
+};
+
+// PATCH /admin/users/:id  (super admin)  body: { isActive?, password? }
+export const updateUser = async (req, res) => {
+  try {
+    const user = await AdminUser.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const { isActive, password } = req.body || {};
+    const isSelf = req.admin?.uid === String(user._id);
+    const changes = [];
+
+    if (typeof isActive === "boolean") {
+      if (isSelf) {
+        return res.status(400).json({
+          success: false,
+          message: "You cannot change your own active status",
+        });
+      }
+
+      if (!isActive && user.role === "super") {
+        const otherActiveSupers = await AdminUser.countDocuments({
+          role: "super",
+          isActive: true,
+          _id: { $ne: user._id },
+        });
+        if (otherActiveSupers === 0) {
+          return res.status(400).json({
+            success: false,
+            message: "You cannot deactivate the last super admin",
+          });
+        }
+      }
+
+      user.isActive = isActive;
+      changes.push(isActive ? "activated" : "deactivated");
+    }
+
+    if (password !== undefined && password !== "") {
+      if (String(password).length < MIN_PASSWORD_LENGTH) {
+        return res.status(400).json({
+          success: false,
+          message: `Password must be at least ${MIN_PASSWORD_LENGTH} characters`,
+        });
+      }
+      user.passwordHash = await bcrypt.hash(String(password), 12);
+      changes.push("password reset");
+    }
+
+    if (changes.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Nothing to update",
+      });
+    }
+
+    await user.save();
+
+    await logActivity(
+      changes.includes("password reset") ? "admin_user_password_reset" : "admin_user_status",
+      `${req.admin?.sub || "super admin"} ${changes.join(" & ")} user "${user.username}"`
+    );
+
+    res.json({ success: true, data: sanitizeUser(user) });
+  } catch (error) {
+    console.error("Admin update user error:", error);
+    res.status(500).json({ success: false, message: "Failed to update user" });
   }
 };
 

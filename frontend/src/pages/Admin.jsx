@@ -16,6 +16,7 @@ import AdminAPI from "../utils/endpoints/adminApi.js";
 import logo from "../assets/logo.png";
 
 const TOKEN_KEY = "nuesa_admin_token";
+const PROFILE_KEY = "nuesa_admin_profile";
 
 const naira = (value) => `₦${Number(value || 0).toLocaleString()}`;
 
@@ -59,7 +60,7 @@ const Login = ({ onLogin }) => {
     try {
       const res = await AdminAPI.login({ username, password });
       if (res.success && res.token) {
-        onLogin(res.token);
+        onLogin({ token: res.token, admin: res.admin, role: res.role });
       } else {
         setError(res.message || "Login failed");
       }
@@ -156,7 +157,292 @@ const StatCard = ({ icon: Icon, label, value, sub }) => (
   </div>
 );
 
-const Dashboard = ({ token, onLogout }) => {
+const TeamAccess = ({ token, onLogout }) => {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [form, setForm] = useState({
+    username: "",
+    password: "",
+    role: "admin",
+  });
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState(null);
+
+  const load = useCallback(async () => {
+    try {
+      const res = await AdminAPI.getUsers(token);
+      setUsers(res.data || []);
+      setMsg(null);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onLogout();
+        return;
+      }
+      setMsg({
+        success: false,
+        message:
+          err.response?.data?.message || err.message || "Failed to load users",
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [token, onLogout]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const submit = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await AdminAPI.createUser(token, form);
+      if (res.success) {
+        setMsg({
+          success: true,
+          message: `Account "${res.data.username}" created`,
+        });
+        setForm({ username: "", password: "", role: "admin" });
+        await load();
+      } else {
+        setMsg({ success: false, message: res.message });
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onLogout();
+        return;
+      }
+      setMsg({
+        success: false,
+        message: err.response?.data?.message || "Failed to create user",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleActive = async (user) => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await AdminAPI.updateUser(token, user._id, {
+        isActive: !user.isActive,
+      });
+      if (res.success) {
+        setMsg({
+          success: true,
+          message: `${res.data.username} ${
+            res.data.isActive ? "activated" : "deactivated"
+          }`,
+        });
+        await load();
+      } else {
+        setMsg({ success: false, message: res.message });
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onLogout();
+        return;
+      }
+      setMsg({
+        success: false,
+        message: err.response?.data?.message || "Failed to update user",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const resetPassword = async (user) => {
+    const next = window.prompt(
+      `New password for "${user.username}" (min 8 characters):`,
+      ""
+    );
+    if (!next) return;
+
+    setBusy(true);
+    setMsg(null);
+    try {
+      const res = await AdminAPI.updateUser(token, user._id, {
+        password: next,
+      });
+      if (res.success) {
+        setMsg({
+          success: true,
+          message: `Password updated for ${res.data.username}`,
+        });
+      } else {
+        setMsg({ success: false, message: res.message });
+      }
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onLogout();
+        return;
+      }
+      setMsg({
+        success: false,
+        message: err.response?.data?.message || "Failed to update password",
+      });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden">
+      <div className="p-4 sm:p-5 border-b border-gray-800">
+        <h2 className="text-sm font-bold tracking-widest text-[#d4af37] uppercase">
+          Team Access ({users.length})
+        </h2>
+        <p className="text-[11px] text-gray-500 mt-1">
+          Accounts that can sign in to this dashboard. Only super admins can
+          manage accounts.
+        </p>
+      </div>
+
+      {msg && (
+        <div
+          className={`mx-4 sm:mx-5 mt-4 p-3 rounded-lg text-xs border ${
+            msg.success
+              ? "bg-emerald-950/40 border-emerald-800 text-emerald-300"
+              : "bg-red-950/40 border-red-800 text-red-300"
+          }`}
+        >
+          {msg.message}
+        </div>
+      )}
+
+      <div className="p-4 sm:p-5 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Existing accounts */}
+        <div className="space-y-2">
+          {loading ? (
+            <p className="text-gray-500 text-xs">Loading accounts...</p>
+          ) : users.length === 0 ? (
+            <p className="text-gray-500 text-xs">No accounts yet.</p>
+          ) : (
+            users.map((u) => (
+              <div
+                key={u._id}
+                className="flex flex-wrap items-center justify-between gap-3 border border-gray-800 rounded-xl px-4 py-3 bg-black/30"
+              >
+                <div className="min-w-0">
+                  <p className="text-white text-sm font-semibold truncate">
+                    {u.username}
+                    <span
+                      className={`ml-2 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                        u.role === "super"
+                          ? "border-[#d4af37]/50 text-[#d4af37] bg-[#d4af37]/10"
+                          : "border-gray-600 text-gray-400"
+                      }`}
+                    >
+                      {u.role}
+                    </span>
+                    {!u.isActive && (
+                      <span className="ml-2 text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border border-red-700 text-red-400 bg-red-950/40">
+                        inactive
+                      </span>
+                    )}
+                  </p>
+                  <p className="text-[10px] text-gray-500">
+                    {u.lastLoginAt
+                      ? `Last login ${fmtDate(u.lastLoginAt)}`
+                      : "Never signed in"}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => resetPassword(u)}
+                    disabled={busy}
+                    className="text-[10px] uppercase tracking-wider border border-gray-700 text-gray-300 hover:border-[#d4af37] hover:text-[#d4af37] px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-50 cursor-pointer"
+                  >
+                    Reset pw
+                  </button>
+                  <button
+                    onClick={() => toggleActive(u)}
+                    disabled={busy}
+                    className={`text-[10px] uppercase tracking-wider px-2.5 py-1.5 rounded-lg border transition-colors disabled:opacity-50 cursor-pointer ${
+                      u.isActive
+                        ? "border-red-800 text-red-400 hover:bg-red-950/50"
+                        : "border-emerald-800 text-emerald-400 hover:bg-emerald-950/50"
+                    }`}
+                  >
+                    {u.isActive ? "Deactivate" : "Activate"}
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Create account */}
+        <form onSubmit={submit} className="space-y-3">
+          <p className="text-[11px] text-gray-400 uppercase tracking-widest font-bold">
+            Add account
+          </p>
+          <div>
+            <label className="text-gray-400 text-[11px] font-medium uppercase tracking-wider block mb-1.5">
+              Username
+            </label>
+            <input
+              type="text"
+              value={form.username}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, username: e.target.value }))
+              }
+              required
+              minLength={3}
+              maxLength={24}
+              pattern="[a-zA-Z0-9_.\-]{3,24}"
+              title="3-24 characters: letters, numbers, dot, underscore, dash"
+              className="w-full bg-black/60 border border-gray-800 rounded-lg px-4 py-2.5 text-white text-sm focus:border-[#d4af37] outline-none transition-colors"
+            />
+          </div>
+          <div>
+            <label className="text-gray-400 text-[11px] font-medium uppercase tracking-wider block mb-1.5">
+              Password (min 8 characters)
+            </label>
+            <input
+              type="password"
+              value={form.password}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, password: e.target.value }))
+              }
+              required
+              minLength={8}
+              autoComplete="new-password"
+              className="w-full bg-black/60 border border-gray-800 rounded-lg px-4 py-2.5 text-white text-sm focus:border-[#d4af37] outline-none transition-colors"
+            />
+          </div>
+          <div>
+            <label className="text-gray-400 text-[11px] font-medium uppercase tracking-wider block mb-1.5">
+              Role
+            </label>
+            <select
+              value={form.role}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, role: e.target.value }))
+              }
+              className="w-full bg-black/60 border border-gray-800 rounded-lg px-4 py-2.5 text-white text-sm focus:border-[#d4af37] outline-none transition-colors"
+            >
+              <option value="admin">Admin - view & check in only</option>
+              <option value="super">Super admin - manage accounts</option>
+            </select>
+          </div>
+          <button
+            type="submit"
+            disabled={busy}
+            className="w-full bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] text-black font-extrabold py-2.5 rounded-lg text-xs uppercase tracking-widest hover:brightness-110 disabled:opacity-60 transition-all cursor-pointer"
+          >
+            {busy ? "Working..." : "Create account"}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const Dashboard = ({ token, role, admin, onLogout }) => {
   const [stats, setStats] = useState(null);
   const [bookings, setBookings] = useState([]);
   const [activity, setActivity] = useState([]);
@@ -284,7 +570,8 @@ const Dashboard = ({ token, onLogout }) => {
               FÀÁJÍ LAWA
             </h1>
             <span className="text-[9px] text-gray-400 tracking-[0.25em] uppercase">
-              Admin Dashboard · read only
+              Admin Dashboard · {admin || "signed in"}
+              {role ? ` · ${role}` : ""}
             </span>
           </div>
         </div>
@@ -564,36 +851,59 @@ const Dashboard = ({ token, onLogout }) => {
             </div>
           </div>
         </div>
+        {/* Team access (super admins only) */}
+        {role === "super" && (
+          <TeamAccess token={token} onLogout={onLogout} />
+        )}
       </main>
     </div>
   );
 };
 
 const Admin = () => {
-  const [token, setToken] = useState(() => {
+  const [session, setSession] = useState(() => {
     try {
-      return localStorage.getItem(TOKEN_KEY) || "";
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) return null;
+      const profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
+      return {
+        token,
+        admin: profile.admin || "",
+        role: profile.role || "admin",
+      };
     } catch {
-      return "";
+      return null;
     }
   });
 
-  const login = (newToken) => {
+  const login = (newSession) => {
     try {
-      localStorage.setItem(TOKEN_KEY, newToken);
+      localStorage.setItem(TOKEN_KEY, newSession.token);
+      localStorage.setItem(
+        PROFILE_KEY,
+        JSON.stringify({ admin: newSession.admin, role: newSession.role })
+      );
     } catch {}
-    setToken(newToken);
+    setSession(newSession);
   };
 
   const logout = useCallback(() => {
     try {
       localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(PROFILE_KEY);
     } catch {}
-    setToken("");
+    setSession(null);
   }, []);
 
-  if (!token) return <Login onLogin={login} />;
-  return <Dashboard token={token} onLogout={logout} />;
+  if (!session?.token) return <Login onLogin={login} />;
+  return (
+    <Dashboard
+      token={session.token}
+      role={session.role}
+      admin={session.admin}
+      onLogout={logout}
+    />
+  );
 };
 
 export default Admin;

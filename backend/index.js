@@ -16,6 +16,7 @@ import adminRoute from "./routes/adminRoute.js"
 import { cleanupExpiredLocks } from "./controllers/bookingController.js";
 import initializeDatabase from "./utils/initializeDB.js";
 import syncExistingTables from "./utils/syncExistingTables.js";
+import { ensureBootstrapAdmin } from "./utils/bootstrapAdmin.js";
 
 
 //Load env vars
@@ -62,6 +63,9 @@ app.get("/", (req, res) => {
 
 await connectDB(); 
 
+// Create the first super admin from env vars if no admin accounts exist yet
+await ensureBootstrapAdmin();
+
 // await initializeDatabase()
 // await syncExistingTables()
 
@@ -76,7 +80,7 @@ app.use("/admin", adminRoute)
 
 app.use(errorHandler);
 
-app.listen(port, (error) => {
+const server = app.listen(port, (error) => {
   if (!error) {
     console.log("server is running on port", port);
   } else {
@@ -93,11 +97,11 @@ console.log("Seat lock cleanup scheduled to run every 10 minutes");
 
 process.on("unhandledRejection", (reason, promise) => {
   console.log(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
-  app.close(() => process.exit(1));
+  server.close(() => process.exit(1));
 });
 
 // Handle uncaught exceptions
 process.on("uncaughtException", (error) => {
   console.log(`Uncaught Exception: ${error.message}`);
-  app.close(() => process.exit(1));
+  server.close(() => process.exit(1));
 });
