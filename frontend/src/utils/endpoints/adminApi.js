@@ -25,6 +25,23 @@ const AdminAPI = {
     );
     return response.data;
   },
+  // Check-in (mark attendance) - admin only
+  markSeat: async (token, bookingId, seatId) => {
+    const response = await axios.post(
+      `/booking/${bookingId}/mark-seat/${seatId}`,
+      null,
+      authHeaders(token)
+    );
+    return response.data;
+  },
+  checkInBooking: async (token, bookingId) => {
+    const response = await axios.post(
+      `/booking/verify/${bookingId}`,
+      null,
+      authHeaders(token)
+    );
+    return response.data;
+  },
 };
 
 export default AdminAPI;

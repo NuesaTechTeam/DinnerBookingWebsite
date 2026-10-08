@@ -35,8 +35,6 @@ const VerifyBooking = () => {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [markingAttendance, setMarkingAttendance] = useState({});
-  const [attendanceResult, setAttendanceResult] = useState(null);
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
@@ -55,58 +53,6 @@ const VerifyBooking = () => {
       fetchBookingDetails();
     }
   }, [bookingId]);
-
-  const markAsAttended = async () => {
-    if (!booking) return;
-
-    setMarkingAttendance(true);
-    try {
-      const response = await axios.post(`/booking/verify/${bookingId}`);
-      setAttendanceResult(response.data);
-
-      if (response.data.success) {
-        setBooking((prev) => ({
-          ...prev,
-          attendanceVerified: true,
-          attendanceVerifiedAt: new Date(),
-        }));
-      }
-    } catch (err) {
-      setAttendanceResult({
-        success: false,
-        message: err.response?.data?.message || "Failed to mark attendance",
-      });
-    } finally {
-      setMarkingAttendance(false);
-    }
-  };
-
-  const markSeatAsAttended = async (seatId) => {
-    if (!booking) return;
-
-    setMarkingAttendance((prev) => ({ ...prev, [seatId]: true }));
-    try {
-      const response = await axios.post(
-        `/booking/${bookingId}/mark-seat/${seatId}`
-      );
-      setAttendanceResult(response.data);
-
-      if (response.data.success) {
-        const updatedResponse = await axios.get(
-          `/booking/${bookingId}/booking-info`
-        );
-        setBooking(updatedResponse.data.booking);
-      }
-    } catch (err) {
-      setAttendanceResult({
-        success: false,
-        message:
-          err.response?.data?.message || "Failed to mark seat attendance",
-      });
-    } finally {
-      setMarkingAttendance((prev) => ({ ...prev, [seatId]: false }));
-    }
-  };
 
   if (loading) {
     return (
@@ -356,56 +302,22 @@ const VerifyBooking = () => {
                           : "bg-amber-500/10 text-amber-400 border border-amber-500/20"
                       }`}
                     >
-                      {seat.isGivenTicket ? "Attended" : "Pending"}
+                      {seat.isGivenTicket ? "Attended" : "Not checked in"}
                     </span>
                   </div>
-                  {!seat.isGivenTicket && (
-                    <button
-                      onClick={() => markSeatAsAttended(seat._id)}
-                      disabled={markingAttendance[seat._id]}
-                      className="w-full sm:w-auto bg-[#d4af37] text-black hover:bg-[#b5922a] disabled:bg-zinc-800 disabled:text-zinc-500 text-xs font-semibold px-4 py-2 rounded-lg transition-colors duration-200 disabled:cursor-not-allowed"
-                    >
-                      {markingAttendance[seat._id]
-                        ? "Marking..."
-                        : "Mark Attended"}
-                    </button>
-                  )}
                 </div>
               ))}
             </div>
 
-            {booking.allSeatsAttended && (
+            {booking.allSeatsAttended ? (
               <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 px-4 py-3 rounded-xl mt-4 text-center text-sm font-medium flex items-center justify-center">
-                <CheckCircle className="w-4 h-4 mr-2" /> All seats have been marked as attended
+                <CheckCircle className="w-4 h-4 mr-2" /> All seats have been checked in
+              </div>
+            ) : (
+              <div className="bg-amber-500/10 border border-amber-500/20 text-amber-300 px-4 py-3 rounded-xl mt-4 text-center text-xs font-medium">
+                Check-in is completed by an authorised administrator at the door
               </div>
             )}
-          </div>
-        )}
-
-        {/* Attendance Result Feedback Alert */}
-        {attendanceResult && (
-          <div
-            className={`mt-6 p-4 rounded-xl border text-sm ${
-              attendanceResult.success
-                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
-                : "bg-red-500/10 border-red-500/30 text-red-400"
-            }`}
-          >
-            <div className="flex items-center">
-              <span className="mr-3 text-lg">
-                {attendanceResult.success ? "✅" : "❌"}
-              </span>
-              <div>
-                <p className="font-semibold">
-                  {attendanceResult.success
-                    ? "Attendance Confirmed"
-                    : "Action Failed"}
-                </p>
-                <p className="text-xs opacity-90 mt-0.5">
-                  {attendanceResult.message}
-                </p>
-              </div>
-            </div>
           </div>
         )}
 
@@ -428,7 +340,7 @@ const VerifyBooking = () => {
             </li>
             <li className="flex items-start">
               <span className="text-amber-400 mr-2">▪</span>
-              <span>All table members must present individual seating passes</span>
+              <span>Attendance can only be recorded by an authorised administrator</span>
             </li>
             <li className="flex items-start">
               <span className="text-red-400 mr-2">▪</span>

@@ -10,6 +10,7 @@ import {
   TicketCheck,
   Clock,
   Activity as ActivityIcon,
+  CheckCircle,
 } from "lucide-react";
 import AdminAPI from "../utils/endpoints/adminApi.js";
 import logo from "../assets/logo.png";
@@ -37,27 +38,6 @@ const tableLabel = (tableNumber) => {
 const seatLabel = (seatNumber) => {
   const match = String(seatNumber || "").match(/S(\d+)$/);
   return match ? match[1] : seatNumber;
-};
-
-const seatSummary = (booking) => {
-  const seats = Array.isArray(booking?.seats) ? booking.seats : [];
-  if (seats.length === 0) return "—";
-
-  const grouped = {};
-  seats.forEach((seat) => {
-    const table = seat.table?.tableNumber
-      ? tableLabel(seat.table.tableNumber)
-      : "?";
-    if (!grouped[table]) grouped[table] = [];
-    grouped[table].push(seatLabel(seat.seatNumber));
-  });
-
-  return Object.entries(grouped)
-    .map(
-      ([table, nums]) =>
-        `T${table}: ${nums.map((n) => `S${n}`).join(", ")}`
-    )
-    .join("  ·  ");
 };
 
 const STATUS_STYLES = {
@@ -186,6 +166,10 @@ const Dashboard = ({ token, onLogout }) => {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [lastSync, setLastSync] = useState(null);
+  const [checkingIn, setCheckingIn] = useState({});
+  const [actionError, setActionError] = useState("");
+  const [busyId, setBusyId] = useState("");
+  const [actionMsg, setActionMsg] = useState(null);
 
   const loadAll = useCallback(
     async (isRefresh = false) => {
@@ -225,9 +209,16 @@ const Dashboard = ({ token, onLogout }) => {
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
+    const shortRef = q.replace(/^#/, "");
     return bookings.filter((b) => {
       if (statusFilter !== "all" && b.status !== statusFilter) return false;
       if (!q) return true;
+      if (
+        String(b._id).includes(shortRef) ||
+        String(b._id).slice(-8).toLowerCase().includes(shortRef)
+      ) {
+        return true;
+      }
       return [b.name, b.email, b.matricNo, b.phone]
         .filter(Boolean)
         .join(" ")
@@ -235,6 +226,44 @@ const Dashboard = ({ token, onLogout }) => {
         .includes(q);
     });
   }, [bookings, query, statusFilter]);
+
+  const checkInSeat = async (bookingId, seatId) => {
+    setActionError("");
+    setCheckingIn((prev) => ({ ...prev, [seatId]: true }));
+    try {
+      await AdminAPI.markSeat(token, bookingId, seatId);
+      await loadAll(true);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onLogout();
+        return;
+      }
+      setActionError(
+        err.response?.data?.message || err.message || "Check-in failed"
+      );
+    } finally {
+      setCheckingIn((prev) => ({ ...prev, [seatId]: false }));
+    }
+  };
+
+  const checkInAll = async (bookingId) => {
+    setActionError("");
+    setCheckingIn((prev) => ({ ...prev, [bookingId]: true }));
+    try {
+      await AdminAPI.checkInBooking(token, bookingId);
+      await loadAll(true);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        onLogout();
+        return;
+      }
+      setActionError(
+        err.response?.data?.message || err.message || "Check-in failed"
+      );
+    } finally {
+      setCheckingIn((prev) => ({ ...prev, [bookingId]: false }));
+    }
+  };
 
   if (loading) {
     return (
@@ -286,6 +315,18 @@ const Dashboard = ({ token, onLogout }) => {
         {error && (
           <div className="bg-red-950/40 border border-red-800 text-red-300 p-3 rounded-lg text-xs">
             {error}
+          </div>
+        )}
+
+        {actionError && (
+          <div className="bg-red-950/40 border border-red-800 text-red-300 p-3 rounded-lg text-xs flex items-center justify-between gap-3">
+            <span>{actionError}</span>
+            <button
+              onClick={() => setActionError("")}
+              className="text-red-400 hover:text-white cursor-pointer"
+            >
+              dismiss
+            </button>
           </div>
         )}
 
@@ -370,7 +411,7 @@ const Dashboard = ({ token, onLogout }) => {
                 <thead className="sticky top-0 bg-[#0d0d0d] text-gray-400 uppercase text-[10px] tracking-widest">
                   <tr>
                     <th className="px-4 py-3">Guest</th>
-                    <th className="px-4 py-3">Seats</th>
+                    <th className="px-4 py-3">Seats / Check-in</th>
                     <th className="px-4 py-3 text-right">Amount</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Booked At</th>
@@ -399,8 +440,66 @@ const Dashboard = ({ token, onLogout }) => {
                           {b.matricNo} · {b.phone}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-gray-300 text-[11px]">
-                        {seatSummary(b)}
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {(b.seats || []).map((seat) => {
+                            const label = `T${
+                              seat.table?.tableNumber
+                                ? tableLabel(seat.table.tableNumber)
+                                : "?"
+                            }·S${seatLabel(seat.seatNumber)}`;
+                            const attended = !!seat.isGivenTicket;
+
+                            if (attended) {
+                              return (
+                                <span
+                                  key={seat._id}
+                                  title="Checked in"
+                                  className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold"
+                                >
+                                  <CheckCircle size={10} />
+                                  {label}
+                                </span>
+                              );
+                            }
+
+                            return (
+                              <button
+                                key={seat._id}
+                                onClick={() => checkInSeat(b._id, seat._id)}
+                                disabled={
+                                  checkingIn[seat._id] || b.status !== "confirmed"
+                                }
+                                title={
+                                  b.status === "confirmed"
+                                    ? `Check in ${label}`
+                                    : "Only confirmed bookings can be checked in"
+                                }
+                                className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-dashed border-gray-600 bg-black/40 text-gray-300 text-[10px] font-semibold hover:border-[#d4af37] hover:text-[#d4af37] disabled:cursor-not-allowed disabled:opacity-50 transition-colors cursor-pointer"
+                              >
+                                {checkingIn[seat._id] ? "..." : `${label} +`}
+                              </button>
+                            );
+                          })}
+
+                          {(b.seats || []).length === 0 && (
+                            <span className="text-gray-500">—</span>
+                          )}
+
+                          {b.status === "confirmed" &&
+                            (b.seats || []).some((s) => !s.isGivenTicket) && (
+                              <button
+                                onClick={() => checkInAll(b._id)}
+                                disabled={checkingIn[b._id]}
+                                title="Check in every seat on this booking"
+                                className="inline-flex items-center px-2 py-1 rounded-lg border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] text-[10px] font-bold uppercase tracking-wider hover:bg-[#d4af37]/20 disabled:opacity-50 transition-colors cursor-pointer"
+                              >
+                                {checkingIn[b._id]
+                                  ? "Checking in..."
+                                  : "Check in all"}
+                              </button>
+                            )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-right text-[#d4af37] font-semibold">
                         {naira(b.totalAmount)}

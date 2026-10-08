@@ -10,8 +10,9 @@ router.post("/check-availability", checkSeatAvailability)
 router.get("/", requireAdmin, getBookings)
 router.get("/:id", requireAdmin, getBooking)
 router.get("/:id/booking-info", getBookingInfo);
-router.post("/verify/:bookingId", verifyQRCode);
-router.post("/:bookingId/mark-seat/:seatId", markSeatAttendance);
+// Attendance check-in is admin-only so a ticket can only be used once
+router.post("/verify/:bookingId", requireAdmin, verifyQRCode);
+router.post("/:bookingId/mark-seat/:seatId", requireAdmin, markSeatAttendance);
 router.get("/email/:email", getBookingsByEmail);
 router.delete("/:id", cancelBooking);
 

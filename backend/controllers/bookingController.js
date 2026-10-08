@@ -577,7 +577,7 @@ export const getBookingInfo = async (req, res) => {
         },
       })
       .select(
-        "name email matricNo phone amount status discountApplied discountAmount createdAt seats"
+        "name email matricNo phone amount status discountApplied discountAmount attendanceVerified attendanceVerifiedAt createdAt seats"
       );
 
     if (!booking) {
@@ -635,7 +635,7 @@ export const getBookingInfo = async (req, res) => {
   }
 };
 
-// to mark attendance
+// to mark attendance (admin only)
 export const verifyQRCode = async (req, res) => {
   try {
     const { bookingId } = req.params;
@@ -652,11 +652,18 @@ export const verifyQRCode = async (req, res) => {
       });
     }
 
+    if (booking.status !== "confirmed") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot check in a ${booking.status} reservation`,
+      });
+    }
+
     // Check if already verified/used
     if (booking.attendanceVerified) {
       return res.status(400).json({
         success: false,
-        message: "This QR code has already been used for entry",
+        message: "This ticket has already been used for entry",
       });
     }
 
@@ -673,9 +680,16 @@ export const verifyQRCode = async (req, res) => {
       }
     );
 
+    await logActivity(
+      "check_in_all",
+      `${req.admin?.sub || "admin"} checked in "${booking.name}" (${booking.seats.length} seat${
+        booking.seats.length === 1 ? "" : "s"
+      }) [${booking._id}]`
+    );
+
     res.json({
       success: true,
-      message: "QR code verified successfully",
+      message: "Checked in successfully",
     });
   } catch (error) {
     console.error("QR verification error:", error);
@@ -704,6 +718,13 @@ export const markSeatAttendance = async (req, res) => {
       return res.status(404).json({
         success: false,
         message: "Booking not found",
+      });
+    }
+
+    if (booking.status !== "confirmed") {
+      return res.status(400).json({
+        success: false,
+        message: `Cannot check in a ${booking.status} reservation`,
       });
     }
 
@@ -741,6 +762,13 @@ export const markSeatAttendance = async (req, res) => {
       updatedBooking.attendanceVerifiedAt = new Date();
       await updatedBooking.save();
     }
+
+    await logActivity(
+      "seat_check_in",
+      `${req.admin?.sub || "admin"} checked in ${seat.seatNumber} for "${booking.name}" [${booking._id}]${
+        allSeatsAttended ? " (all seats attended)" : ""
+      }`
+    );
 
     res.json({
       success: true,
