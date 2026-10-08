@@ -124,13 +124,13 @@ export const registerStudents = async (req, res) => {
 
 // Send a sample confirmation email (for testing the Gmail setup)
 export const sendTestEmail = async (req, res) => {
+  const to = req.query.to || req.body?.to || "tunmiseadepitan@gmail.com";
+
   try {
     const token = req.headers["x-api-token"] || req.body?.token;
     if (!process.env.REGISTER_TOKEN || token !== process.env.REGISTER_TOKEN) {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
-
-    const to = req.query.to || req.body?.to || "tunmiseadepitan@gmail.com";
 
     const booking = {
       _id: "test-booking-0001",
