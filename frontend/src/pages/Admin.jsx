@@ -504,6 +504,15 @@ const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
     setBooking(null);
     setScanning(true);
     try {
+      // html5-qrcode JSON-parses its persisted settings with no try/catch.
+      // A corrupt value (e.g. the literal string "null") crashes the scanner
+      // with "Unexpected token ... is not valid JSON". Reset it if unparseable.
+      try {
+        const raw = localStorage.getItem("HTML5_QRCODE_DATA");
+        if (raw) JSON.parse(raw);
+      } catch {
+        localStorage.removeItem("HTML5_QRCODE_DATA");
+      }
       const { Html5Qrcode } = await import("html5-qrcode");
       await new Promise((resolve) => setTimeout(resolve, 60));
       const scanner = new Html5Qrcode("qr-reader-region", { verbose: false });
