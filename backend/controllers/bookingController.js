@@ -43,6 +43,27 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    // Release this guest's own earlier unpaid holds so an abandoned attempt
+    // (closed Paystack popup, refresh, etc.) never blocks their retry
+    const staleHolds = await Booking.find({
+      email: cleanEmail,
+      status: "pending",
+      paymentVerified: { $ne: true },
+    }).session(session);
+
+    if (staleHolds.length > 0) {
+      const staleSeatIds = staleHolds.flatMap((b) => b.seats);
+      await Seat.updateMany(
+        { _id: { $in: staleSeatIds }, isBooked: false },
+        { lockedUntil: null, bookedBy: null },
+        { session }
+      );
+      await Booking.deleteMany(
+        { _id: { $in: staleHolds.map((b) => b._id) } },
+        { session }
+      );
+    }
+
     //Check if seats are available and lock them
     const seats = await Seat.find({ _id: { $in: seatIds } }).session(session);
 

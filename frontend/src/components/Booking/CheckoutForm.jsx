@@ -276,18 +276,37 @@ const CheckoutForm = ({
       tableType: selectedTable?.type,
     };
 
+    // Guard against launching Paystack with a config it will reject
+    const amountForPaystack = Math.round(Number(totalAmount) * 100);
+    if (
+      !paystackConfig.publicKey ||
+      !cleaned.email ||
+      !Number.isFinite(amountForPaystack) ||
+      amountForPaystack <= 0
+    ) {
+      showToast(
+        "Unable to start payment (invalid amount or email). Please refresh the page and try again.",
+        TOAST_TYPES.ERROR
+      );
+      return;
+    }
+
     createBookingMutation.mutate(bookingData, {
       onSuccess: (bookingResponse) => {
         if (bookingResponse.success) {
           const bookingId = bookingResponse.booking._id;
           pendingBookingIdRef.current = bookingId;
           paymentSucceededRef.current = false;
+          // react-paystack v6 expects { config, onSuccess, onClose }
           initializePayment({
-            ...paystackConfig,
-            email: cleaned.email,
-            metadata: {
-              ...paystackConfig.metadata,
-              bookingId: bookingId,
+            config: {
+              ...paystackConfig,
+              email: cleaned.email,
+              amount: amountForPaystack,
+              metadata: {
+                ...paystackConfig.metadata,
+                bookingId: bookingId,
+              },
             },
             onSuccess: (response) => {
               paymentSucceededRef.current = true;
