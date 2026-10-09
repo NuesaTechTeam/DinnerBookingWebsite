@@ -25,6 +25,14 @@ const generateEntryCode = async (session) => {
 
 //Create a new booking with seat locking
 export const createBooking = async (req, res) => {
+  // Maintenance mode: pause all bookings
+  if (process.env.MAINTENANCE_MODE === "true") {
+    return res.status(503).json({
+      success: false,
+      message: "Bookings are currently paused. Please try again later.",
+    });
+  }
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
