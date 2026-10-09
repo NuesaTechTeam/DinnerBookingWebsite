@@ -16,10 +16,12 @@ export const authLimiter = rateLimit({
 export const apiLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
   max: 150, // Limit each IP to 150 requests per hour
-  // /student routes are called by the Google Form webhook (token protected)
-  // /admin routes use their own stricter authLimiter on login + JWT auth elsewhere
+  // Never count CORS preflight requests or the token-protected webhook/admin
+  // routes against the limit (preflights would otherwise inflate usage 2x).
   skip: (req) =>
-    req.path.startsWith("/student") || req.path.startsWith("/admin"),
+    req.method === "OPTIONS" ||
+    req.path.startsWith("/student") ||
+    req.path.startsWith("/admin"),
   message: {
     success: false,
     message: "Too many requests from this IP",

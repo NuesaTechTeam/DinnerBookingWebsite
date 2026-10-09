@@ -58,8 +58,6 @@ const isAllowedOrigin = (origin) => {
 
 //middleware
 app.set("trust proxy", ["loopback", "linklocal", "uniquelocal"]);
-app.use(apiLimiter);
-app.use(express.json());
 const corsOptions = {
   origin: (origin, callback) => {
     if (isAllowedOrigin(origin)) {
@@ -74,7 +72,12 @@ const corsOptions = {
   optionsSuccessStatus: 200, // For legacy browser support
 };
 
+// CORS must run before the rate limiter so that EVERY response - including
+// rate-limited (429) and error responses - still carries CORS headers.
+// Otherwise the browser reports a misleading "No Access-Control-Allow-Origin".
 app.use(cors(corsOptions));
+app.use(apiLimiter);
+app.use(express.json());
 app.use(logger);
 
 //api creation
