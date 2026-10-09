@@ -540,10 +540,14 @@ const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
     if (!booking) return;
     setBusySeat((prev) => ({ ...prev, [seatId]: true }));
     try {
-      await AdminAPI.markSeat(token, booking._id, seatId);
+      const res = await AdminAPI.markSeat(token, booking._id, seatId);
+      console.log("[handleSeat] success:", res);
+      setStatus({ type: "success", message: res.message || "Seat checked in" });
+      await new Promise((r) => setTimeout(r, 300));
       await resolve(lastCode);
       onCheckedIn?.();
     } catch (err) {
+      console.error("[handleSeat] error:", err);
       if (err.response?.status === 401) {
         onLogout();
         return;
@@ -561,10 +565,14 @@ const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
     if (!booking) return;
     setBusySeat((prev) => ({ ...prev, ALL: true }));
     try {
-      await AdminAPI.checkInBooking(token, booking._id);
+      const res = await AdminAPI.checkInBooking(token, booking._id);
+      console.log("[handleAll] success:", res);
+      setStatus({ type: "success", message: res.message || "All seats checked in" });
+      await new Promise((r) => setTimeout(r, 300));
       await resolve(lastCode);
       onCheckedIn?.();
     } catch (err) {
+      console.error("[handleAll] error:", err);
       if (err.response?.status === 401) {
         onLogout();
         return;
@@ -819,16 +827,21 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
     setActionError("");
     setCheckingIn((prev) => ({ ...prev, [seatId]: true }));
     try {
-      await AdminAPI.markSeat(token, bookingId, seatId);
+      const res = await AdminAPI.markSeat(token, bookingId, seatId);
+      console.log("[checkInSeat] success:", res);
+      setActionMsg({ type: "success", message: res.message || "Seat checked in" });
+      // Small delay to let backend propagate
+      await new Promise((r) => setTimeout(r, 300));
       await loadAll(true);
     } catch (err) {
+      console.error("[checkInSeat] error:", err);
       if (err.response?.status === 401) {
         onLogout();
         return;
       }
-      setActionError(
-        err.response?.data?.message || err.message || "Check-in failed"
-      );
+      const msg = err.response?.data?.message || err.message || "Check-in failed";
+      setActionError(msg);
+      setActionMsg({ type: "error", message: msg });
     } finally {
       setCheckingIn((prev) => ({ ...prev, [seatId]: false }));
     }
@@ -838,16 +851,20 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
     setActionError("");
     setCheckingIn((prev) => ({ ...prev, [bookingId]: true }));
     try {
-      await AdminAPI.checkInBooking(token, bookingId);
+      const res = await AdminAPI.checkInBooking(token, bookingId);
+      console.log("[checkInAll] success:", res);
+      setActionMsg({ type: "success", message: res.message || "All seats checked in" });
+      await new Promise((r) => setTimeout(r, 300));
       await loadAll(true);
     } catch (err) {
+      console.error("[checkInAll] error:", err);
       if (err.response?.status === 401) {
         onLogout();
         return;
       }
-      setActionError(
-        err.response?.data?.message || err.message || "Check-in failed"
-      );
+      const msg = err.response?.data?.message || err.message || "Check-in failed";
+      setActionError(msg);
+      setActionMsg({ type: "error", message: msg });
     } finally {
       setCheckingIn((prev) => ({ ...prev, [bookingId]: false }));
     }
@@ -913,6 +930,24 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
             <button
               onClick={() => setActionError("")}
               className="text-red-400 hover:text-white cursor-pointer"
+            >
+              dismiss
+            </button>
+          </div>
+        )}
+
+        {actionMsg && (
+          <div
+            className={`p-3 rounded-lg text-xs flex items-center justify-between gap-3 ${
+              actionMsg.type === "success"
+                ? "bg-emerald-950/40 border border-emerald-800 text-emerald-300"
+                : "bg-red-950/40 border border-red-800 text-red-300"
+            }`}
+          >
+            <span>{actionMsg.message}</span>
+            <button
+              onClick={() => setActionMsg(null)}
+              className="text-current hover:opacity-70 cursor-pointer"
             >
               dismiss
             </button>
