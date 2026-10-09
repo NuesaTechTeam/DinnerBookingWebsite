@@ -372,6 +372,13 @@ const generateEmailTemplatePresident = (booking) => {
                 <p style="font-size: 12px; color: #b8b8b8; margin-top: 10px;">
                     Scan this code to verify your booking
                 </p>
+
+                <p style="font-size: 13px; color: #e0e0e0; margin-top: 20px; text-transform: uppercase; letter-spacing: 2px;">
+                    or type this entry code at the entrance
+                </p>
+                <p style="font-size: 38px; font-weight: 800; color: #d4af37; letter-spacing: 10px; font-family: 'Courier New', Courier, monospace; margin: 8px 0 0;">
+                    ${booking.code || "------"}
+                </p>
             </div>
 
             <div class="qr-instructions">
@@ -406,6 +413,10 @@ const generateEmailTemplatePresident = (booking) => {
                 <div class="detail-row">
                     <span class="detail-label">Seat(s) Reserved</span>
                     <span class="detail-value">${booking.seatNumber}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Entry Code</span>
+                    <span class="detail-value" style="color: #d4af37; font-weight: 700; letter-spacing: 3px;">${booking.code || "------"}</span>
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Event Date &amp; Time</span>

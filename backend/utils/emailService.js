@@ -8,7 +8,8 @@ const BREVO_URL = "https://api.brevo.com/v3/smtp/email";
 // Give every confirmation its own subject so Gmail (and other clients) do not
 // thread separate bookings together - threaded "collapsed" messages hide the QR.
 const confirmationSubject = (booking) => {
-  const ref = String(booking?._id || "").slice(-8).toUpperCase();
+  const ref =
+    booking?.code || String(booking?._id || "").slice(-8).toUpperCase();
   const who = booking?.name ? ` - ${booking.name}` : "";
   return `FÀÁJÍ LAWA | Reservation Confirmed${who} (#${ref})`;
 };

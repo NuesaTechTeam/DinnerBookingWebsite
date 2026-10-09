@@ -40,6 +40,12 @@ const bookingSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
     },
+    code: {
+      type: String,
+      unique: true,
+      sparse: true,
+      trim: true,
+    },
     engineeringStudentRef: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Student",

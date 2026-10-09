@@ -134,6 +134,7 @@ export const sendTestEmail = async (req, res) => {
 
     const booking = {
       _id: "test-booking-0001",
+      code: "123456",
       name: "Test Guest",
       matricNo: "21/ENG02/029",
       email: to,

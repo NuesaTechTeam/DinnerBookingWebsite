@@ -6,6 +6,7 @@ import { Student } from "../models/studentModel.js";
 import { AdminUser } from "../models/adminUserModel.js";
 import { ActivityLog } from "../models/activityLogModel.js";
 import { logActivity } from "../utils/activity.js";
+import { sendConfirmationEmail } from "../utils/emailService.js";
 import { signAdminToken } from "../middlewares/adminAuth.js";
 
 const USERNAME_RE = /^[a-z0-9_.-]{3,24}$/;
@@ -88,7 +89,10 @@ export const lookupBooking = async (req, res) => {
     const code = (urlMatch ? urlMatch[1] : raw).replace(/^#/, "").trim();
 
     let filter = null;
-    if (/^[a-f0-9]{24}$/i.test(code)) {
+    if (/^\d{6,8}$/.test(code)) {
+      // Short human-typeable code printed on the ticket email
+      filter = { code };
+    } else if (/^[a-f0-9]{24}$/i.test(code)) {
       filter = { _id: code };
     } else if (/^[a-f0-9]{4,23}$/i.test(code)) {
       filter = {
@@ -128,6 +132,42 @@ export const lookupBooking = async (req, res) => {
   } catch (error) {
     console.error("Admin lookup booking error:", error);
     res.status(500).json({ success: false, message: "Lookup failed" });
+  }
+};
+
+// POST /admin/resend/:bookingId  - re-email a guest their ticket
+export const resendConfirmation = async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const booking = await Booking.findById(bookingId);
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found",
+      });
+    }
+
+    const sent = await sendConfirmationEmail(booking);
+    if (!sent) {
+      return res.status(502).json({
+        success: false,
+        message: "The email could not be sent. Please try again.",
+      });
+    }
+
+    await logActivity(
+      "ticket_resent",
+      `${req.admin?.sub || "admin"} resent the ticket to ${booking.email} [${booking._id}]`
+    );
+
+    res.json({
+      success: true,
+      message: `Ticket emailed to ${booking.email}`,
+    });
+  } catch (error) {
+    console.error("Admin resend confirmation error:", error);
+    res.status(500).json({ success: false, message: "Failed to resend ticket" });
   }
 };
 

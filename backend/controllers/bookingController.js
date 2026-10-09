@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import crypto from "crypto";
 import validator from "validator";
 import { Booking } from "../models/bookingModel.js";
 import { Seat } from "../models/seatModel.js";
@@ -10,6 +11,17 @@ import { Student } from "../models/studentModel.js";
 import { sendConfirmationEmail } from "../utils/emailService.js";
 import { Table } from "../models/tableModel.js";
 import { logActivity } from "../utils/activity.js";
+
+// A short, human-typeable 6-digit entry code shown on the ticket email.
+// Falls back to 8 digits in the (very unlikely) event of a collision.
+const generateEntryCode = async (session) => {
+  for (let i = 0; i < 30; i++) {
+    const candidate = String(crypto.randomInt(100000, 1000000));
+    const exists = await Booking.findOne({ code: candidate }).session(session);
+    if (!exists) return candidate;
+  }
+  return String(crypto.randomInt(10000000, 100000000));
+};
 
 //Create a new booking with seat locking
 export const createBooking = async (req, res) => {
@@ -89,7 +101,9 @@ export const createBooking = async (req, res) => {
     }
 
     // Create booking
+    const bookingCode = await generateEntryCode(session);
     const booking = new Booking({
+      code: bookingCode,
       email: cleanEmail,
       name,
       matricNo,

@@ -581,7 +581,8 @@ const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
             Check-in Station
           </h2>
           <p className="text-[11px] text-gray-500 mt-0.5">
-            Scan the guest ticket QR code, or type the booking code manually.
+            Scan the guest ticket QR code, or type the 6-digit code from their
+            email.
           </p>
         </div>
       </div>
@@ -619,7 +620,7 @@ const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
               type="text"
               value={manual}
               onChange={(e) => setManual(e.target.value)}
-              placeholder="e.g. 6ac8102c or full ticket link"
+              placeholder="6-digit code, booking id, or ticket link"
               className="flex-1 bg-black/60 border border-gray-800 rounded-lg px-3 py-2.5 text-xs text-white focus:border-[#d4af37] outline-none"
             />
             <button
