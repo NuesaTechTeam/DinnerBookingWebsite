@@ -1185,8 +1185,15 @@ const Admin = () => {
   const [session, setSession] = useState(() => {
     try {
       const token = localStorage.getItem(TOKEN_KEY);
-      if (!token) return null;
-      const profile = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
+      if (!token || token === "null" || token === "undefined") return null;
+
+      const raw = localStorage.getItem(PROFILE_KEY);
+      let profile = {};
+      if (raw && raw !== "null" && raw !== "undefined") {
+        const parsed = JSON.parse(raw);
+        if (parsed && typeof parsed === "object") profile = parsed;
+      }
+
       return {
         token,
         admin: profile.admin || "",
