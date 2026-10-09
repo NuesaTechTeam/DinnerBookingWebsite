@@ -115,7 +115,8 @@ export const createBooking = async (req, res) => {
 
       if(student) {
         discountApplied = true
-        discountAmount = ENGINEERING_DISCOUNT_AMOUNT
+        // ₦2,000 off EACH seat (not a flat amount for the whole booking)
+        discountAmount = ENGINEERING_DISCOUNT_AMOUNT * (seatIds?.length || 0)
         finalAmount = Math.max(0, baseAmount - discountAmount)
         engineeringStudentRef = student._id
       }
@@ -170,11 +171,11 @@ export const createBooking = async (req, res) => {
     res.status(200).json({
       success: true,
       message: discountApplied
-        ? `Booking created successfully! ₦${ENGINEERING_DISCOUNT_AMOUNT.toLocaleString()} engineering discount applied.`
+        ? `Booking created successfully! ₦${discountAmount.toLocaleString()} engineering discount applied.`
         : "Booking created successfully",
       booking,
       discountApplied,
-      discountAmount: discountApplied ? ENGINEERING_DISCOUNT_AMOUNT : 0,
+      discountAmount: discountApplied ? discountAmount : 0,
       lockExpiry,
     });
   } catch (error) {

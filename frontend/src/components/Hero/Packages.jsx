@@ -73,8 +73,8 @@ const Packages = () => {
     },
     {
       name: 'GOLD',
-      price: '₦20,000',
-      discountedPrice: '₦18,000',
+      price: '₦22,000',
+      discountedPrice: '₦20,000',
       period: '/ person',
       isRecommended: true,
       badgeText: 'RECOMMENDED',

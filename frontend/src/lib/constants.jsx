@@ -159,7 +159,7 @@ export const packages = [
   },
   {
     name: "Gold",
-    price: "₦20,000",
+    price: "₦22,000",
     guests: "Gold Experience",
     features: [
       "Premium stage-front seating",

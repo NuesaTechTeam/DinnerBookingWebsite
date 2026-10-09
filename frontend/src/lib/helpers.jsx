@@ -24,7 +24,7 @@ export const getSectionPrice = (type) => {
     case "VVIP":
       return "₦27,000";
     case "VIP":
-      return "₦20,000";
+      return "₦22,000";
     case "SILVER":
       return "₦18,000";
     case "REGULAR":

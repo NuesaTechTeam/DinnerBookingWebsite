@@ -63,19 +63,19 @@ const CheckoutForm = ({
   });
 
   const [discountApplied, setDiscountApplied] = useState(false);
-  const [discountAmount, setDiscountAmount] = useState(0);
   const [verifyingDiscount, setVerifyingDiscount] = useState(false);
 
   const pendingBookingIdRef = useRef(null);
   const paymentSucceededRef = useRef(false);
 
-  // Calculate Amount
+  // Calculate Amount - engineering discount is ₦2,000 off EACH seat
+  const ENGINEERING_DISCOUNT_PER_SEAT = 2000;
   const isDiscountEligible =
     selectedTable?.type === "REGULAR" || selectedTable?.type === "VIP";
-  const finalAmount = Math.max(
-    0,
-    baseAmount - (discountApplied ? discountAmount : 0)
-  );
+  const discountAmount = discountApplied
+    ? ENGINEERING_DISCOUNT_PER_SEAT * selectedSeats.length
+    : 0;
+  const finalAmount = Math.max(0, baseAmount - discountAmount);
 
   const applyDiscount = async () => {
     if (!formData.invoiceNumber.trim()) {
@@ -95,8 +95,12 @@ const CheckoutForm = ({
 
       if (result.success) {
         setDiscountApplied(true);
-        setDiscountAmount(2000);
-        showToast("Engineering Discount Applied", TOAST_TYPES.SUCCESS);
+        showToast(
+          `Engineering Discount Applied - ₦${(
+            ENGINEERING_DISCOUNT_PER_SEAT * selectedSeats.length
+          ).toLocaleString()} off`,
+          TOAST_TYPES.SUCCESS
+        );
       } else {
         showToast(
           result.message || "Failed to verify discount",
@@ -115,7 +119,6 @@ const CheckoutForm = ({
 
   const removeDiscount = () => {
     setDiscountApplied(false);
-    setDiscountAmount(0);
     setFormData((prev) => ({ ...prev, invoiceNumber: "" }));
   };
 
@@ -598,7 +601,10 @@ const CheckoutForm = ({
                     >
                       <div className="flex items-center gap-2">
                         <CheckCircle size={14} />
-                        <span>Verified! ₦2,000 discount applied.</span>
+                        <span>
+                          Verified! ₦2,000 off each seat (₦
+                          {discountAmount.toLocaleString()} total).
+                        </span>
                       </div>
                       <button
                         type="button"

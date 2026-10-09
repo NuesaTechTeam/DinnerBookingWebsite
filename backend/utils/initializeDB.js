@@ -1,7 +1,7 @@
 import { Table } from "../models/tableModel.js";
 import { Seat } from "../models/seatModel.js";
 
-// Prices: Bronze (REGULAR) = ₦12,000 (₦10,000 with engineering invoice discount) | Gold (VIP) = ₦20,000 (₦18,000 with discount) | Platinum (VVIP) = ₦27,000
+// Prices: Bronze (REGULAR) = ₦12,000 (₦10,000 with engineering invoice discount) | Gold (VIP) = ₦22,000 (₦20,000 with discount) | Platinum (VVIP) = ₦27,000
 const tableConfigs = [
   {
     type: "VVIP",
@@ -15,7 +15,7 @@ const tableConfigs = [
     shape: "ROUND",
     // 16 Gold tables (one table seats 5, the rest seat 4)
     capacities: [5, ...Array(15).fill(4)],
-    pricePerSeat: 20000,
+    pricePerSeat: 22000,
   },
   {
     type: "REGULAR",
