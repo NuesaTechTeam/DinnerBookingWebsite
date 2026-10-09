@@ -77,7 +77,7 @@ const corsOptions = {
 // Otherwise the browser reports a misleading "No Access-Control-Allow-Origin".
 app.use(cors(corsOptions));
 app.use(apiLimiter);
-app.use(express.json());
+app.use(express.json({ strict: false }));
 app.use(logger);
 
 //api creation
