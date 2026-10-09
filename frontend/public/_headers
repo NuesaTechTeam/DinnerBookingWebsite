@@ -1,0 +1,4 @@
+# Always revalidate so users get the newest bundle right after a deploy.
+# Correctness (no stale app) matters more than asset caching here.
+/*
+  Cache-Control: no-store
