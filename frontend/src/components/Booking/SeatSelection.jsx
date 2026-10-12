@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Footer from '../Hero/Footer.jsx';
 import logo from '../../assets/logo.png';
 import { getSectionPrice, formatTierText } from '../../lib/helpers.jsx';
-import { Crown, Star, User } from 'lucide-react';
+import { Crown, Star, User, BadgePercent } from 'lucide-react';
 import SeatArrangement from './SeatArrangement.jsx';
 
 const naira = (value) => `₦${Number(value || 0).toLocaleString()}`;
@@ -390,6 +390,20 @@ const SeatSelection = ({
                       </div>
                     );
                   })}
+                </div>
+
+                {/* Engineering student discount note */}
+                <div className="flex items-start gap-3 bg-[#0a0a0a] border border-[#d4af37]/40 rounded-2xl p-4">
+                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-[#fcf6ba] to-[#d4af37] text-black">
+                    <BadgePercent className="w-3.5 h-3.5" strokeWidth={2.5} />
+                  </span>
+                  <p className="text-xs text-gray-300 font-light leading-relaxed">
+                    <span className="text-[#d4af37] font-semibold">
+                      Engineering students who have paid their dues
+                    </span>{' '}
+                    enjoy <span className="text-[#fcf6ba] font-semibold">₦2,000 off each seat</span>.
+                    Simply enter your invoice number at checkout to apply the discount.
+                  </p>
                 </div>
               </>
             ) : (
