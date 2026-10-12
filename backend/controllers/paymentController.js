@@ -38,13 +38,18 @@ export const verifyPayment = async (req, res) => {
             });
           }
 
-          // Verify that amount paid matches expected amount
-          if (amountPaid !== booking.totalAmount) {
+          // Verify the amount paid covers the expected amount.
+          // Paystack may add its own processing fee on top of the amount we
+          // requested (account-level "pass fees to customer" setting) and can
+          // round, so accept any payment that is at least what we expected and
+          // only reject genuine underpayments.
+          const expectedAmount = Number(booking.totalAmount) || 0;
+          if (amountPaid + 1 < expectedAmount) {
             await session.abortTransaction();
             session.endSession();
             return res.status(400).json({
               success: false,
-              message: `Amount paid (₦${amountPaid}) does not match expected amount (₦${booking.totalAmount})`,
+              message: `Amount paid (₦${amountPaid.toLocaleString()}) is less than the expected amount (₦${expectedAmount.toLocaleString()})`,
             });
           }
           booking.paymentVerified = true;
