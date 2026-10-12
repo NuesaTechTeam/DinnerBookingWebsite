@@ -388,7 +388,10 @@ export const getStats = async (req, res) => {
 
     const tierMap = { PLATINUM: 0, VIP: 0, REGULAR: 0 };
     seatsByTier.forEach((row) => {
-      if (row._id) tierMap[row._id] = row.count;
+      if (row._id) {
+        const key = row._id === "VVIP" ? "PLATINUM" : row._id;
+        tierMap[key] = row.count;
+      }
     });
 
     res.json({

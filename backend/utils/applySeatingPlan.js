@@ -12,7 +12,8 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const applySeatingPlan = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    const uri = process.env.PROD_MONGO_URI || process.env.MONGO_URI;
+    await mongoose.connect(uri);
     console.log("Connected to MongoDB");
 
     const bookingCount = await Booking.countDocuments();
