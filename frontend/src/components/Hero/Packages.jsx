@@ -73,8 +73,8 @@ const Packages = () => {
     },
     {
       name: 'GOLD',
-      price: '₦22,000',
-      discountedPrice: '₦20,000',
+      price: '₦20,000',
+      discountedPrice: '₦18,000',
       period: '/ person',
       isRecommended: true,
       badgeText: 'RECOMMENDED',
@@ -89,10 +89,10 @@ const Packages = () => {
     },
     {
       name: 'PLATINUM',
-      price: '₦27,000',
+      price: '₦30,000',
+      discountedPrice: '₦27,000',
       period: '/ person',
       isRecommended: false,
-      disabled: true,
       features: [
         'Exclusive front-row private seating',
         'Masterful 7-course tasting menu',

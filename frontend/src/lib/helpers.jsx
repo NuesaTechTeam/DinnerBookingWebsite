@@ -22,9 +22,9 @@ export const formatTierText = (text) => {
 export const getSectionPrice = (type) => {
   switch (type) {
     case "VVIP":
-      return "₦27,000";
+      return "₦30,000";
     case "VIP":
-      return "₦22,000";
+      return "₦20,000";
     case "SILVER":
       return "₦18,000";
     case "REGULAR":

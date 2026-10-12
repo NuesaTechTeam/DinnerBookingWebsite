@@ -8,8 +8,8 @@ import SeatArrangement from './SeatArrangement.jsx';
 
 const naira = (value) => `₦${Number(value || 0).toLocaleString()}`;
 
-// Platinum (VVIP) booking is disabled - set to false to re-enable it
-const PLATINUM_DISABLED = true;
+// Platinum (VVIP) booking is enabled
+const PLATINUM_DISABLED = false;
 
 const getSeats = (table) => (Array.isArray(table?.seats) ? table.seats : []);
 
@@ -211,8 +211,8 @@ const SeatSelection = ({
 
           <div className="relative w-full">
             {/* Gold Carpet running through the middle */}
-            <div className="pointer-events-none absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-6 sm:w-8 hidden md:flex items-center justify-center z-0 rounded-full bg-gradient-to-b from-[#b38728] via-[#fcf6ba] to-[#aa7c11] shadow-[0_0_25px_rgba(212,175,55,0.45)]">
-              <span className="text-[9px] font-extrabold text-black rotate-90 tracking-[0.3em] uppercase whitespace-nowrap">
+            <div className="pointer-events-none absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-4 sm:w-6 md:w-8 flex items-center justify-center z-0 rounded-full bg-gradient-to-b from-[#b38728] via-[#fcf6ba] to-[#aa7c11] shadow-[0_0_25px_rgba(212,175,55,0.45)]">
+              <span className="text-[6px] sm:text-[8px] md:text-[9px] font-extrabold text-black rotate-90 tracking-[0.2em] sm:tracking-[0.3em] uppercase whitespace-nowrap">
                 GOLD CARPET
               </span>
             </div>
@@ -226,10 +226,10 @@ const SeatSelection = ({
                 const leftTables = list.slice(0, mid);
                 const rightTables = list.slice(mid);
                 const sideColumns = isBanquet
-                  ? 'grid-cols-2 gap-3'
+                  ? 'grid-cols-2 gap-2 sm:gap-3'
                   : tier.key === 'VIP'
                   ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2'
-                  : 'grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2';
+                  : 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1.5 sm:gap-2';
 
                 const renderTable = (table) => {
                   const disabled =
@@ -296,7 +296,7 @@ const SeatSelection = ({
                     {list.length === 0 ? (
                       <p className="text-xs text-gray-500 font-light text-center">No tables available.</p>
                     ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 md:gap-x-24 gap-y-3">
+                      <div className="grid grid-cols-2 gap-x-8 sm:gap-x-16 md:gap-x-24 gap-y-3">
                         <div className={`grid ${sideColumns}`}>
                           {leftTables.map(renderTable)}
                         </div>

@@ -159,7 +159,7 @@ export const packages = [
   },
   {
     name: "Gold",
-    price: "₦22,000",
+    price: "₦20,000",
     guests: "Gold Experience",
     features: [
       "Premium stage-front seating",
@@ -171,7 +171,7 @@ export const packages = [
   },
   {
     name: "Platinum",
-    price: "₦27,000",
+    price: "₦30,000",
     guests: "Platinum Experience",
     features: [
       "Exclusive front-row private seating",

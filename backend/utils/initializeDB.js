@@ -1,27 +1,30 @@
 import { Table } from "../models/tableModel.js";
 import { Seat } from "../models/seatModel.js";
 
-// Prices: Bronze (REGULAR) = ₦12,000 (₦10,000 with engineering invoice discount) | Gold (VIP) = ₦22,000 (₦20,000 with discount) | Platinum (VVIP) = ₦27,000
+// Prices: Bronze (REGULAR) = ₦12,000 (₦10,000 with engineering invoice discount) | Gold (VIP) = ₦20,000 (₦18,000 with discount) | Platinum (VVIP) = ₦30,000 (₦27,000 with engineering discount)
 const tableConfigs = [
   {
     type: "VVIP",
     shape: "LONG",
-    // 4 long banquet tables holding 25 Platinum seats in total
-    capacities: [7, 6, 6, 6],
-    pricePerSeat: 27000,
+    // 10 VVIP tables, 10 seats each.
+    // Layout: first 5 render on the left (student tables), last 5 on the right.
+    // Right column: table 6 is a student table, tables 7-10 are auto-reserved/booked.
+    capacities: Array(10).fill(10),
+    pricePerSeat: 30000,
+    reservedTableNumbers: ["VVIP-7", "VVIP-8", "VVIP-9", "VVIP-10"],
   },
   {
     type: "VIP",
     shape: "ROUND",
-    // 16 Gold tables (one table seats 5, the rest seat 4)
-    capacities: [5, ...Array(15).fill(4)],
-    pricePerSeat: 22000,
+    // 6 Gold tables x 8 seats each
+    capacities: Array(6).fill(8),
+    pricePerSeat: 20000,
   },
   {
     type: "REGULAR",
     shape: "ROUND",
-    // 35 Bronze tables x 6 seats
-    capacities: Array(35).fill(6),
+    // 240 seats total, 6 per table = 40 tables
+    capacities: Array(40).fill(6),
     pricePerSeat: 12000,
   },
 ];
@@ -37,9 +40,12 @@ const initializeDatabase = async () => {
     }
 
     for (const config of tableConfigs) {
+      const reserved = new Set(config.reservedTableNumbers || []);
+
       for (let index = 0; index < config.capacities.length; index++) {
         const seatsPerTable = config.capacities[index];
         const tableNumber = `${config.type}-${index + 1}`;
+        const isReserved = reserved.has(tableNumber);
 
         const table = new Table({
           tableNumber,
@@ -50,7 +56,7 @@ const initializeDatabase = async () => {
         });
 
         const savedTable = await table.save();
-        console.log(`table ${tableNumber} saved`);
+        console.log(`table ${tableNumber} saved${isReserved ? " (reserved)" : ""}`);
 
         // Create the seats for this table
         const seats = [];
@@ -58,6 +64,7 @@ const initializeDatabase = async () => {
           const seat = new Seat({
             seatNumber: `${tableNumber}-S${j}`,
             table: savedTable._id,
+            isBooked: isReserved,
           });
 
           const savedSeat = await seat.save();
@@ -65,6 +72,9 @@ const initializeDatabase = async () => {
         }
 
         savedTable.seats = seats;
+        if (isReserved) {
+          savedTable.bookedSeats = seats.map((_, i) => `${tableNumber}-S${i + 1}`);
+        }
         await savedTable.save();
       }
     }
