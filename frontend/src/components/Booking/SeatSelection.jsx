@@ -221,15 +221,16 @@ const SeatSelection = ({
               {TIERS.map((tier) => {
                 const list = grouped[tier.key] || [];
                 const Icon = tier.icon;
-                const isBanquet = tier.key === 'VVIP';
+                const isBanquet = tier.key === 'VIP';
                 const mid = Math.ceil(list.length / 2);
                 const leftTables = list.slice(0, mid);
                 const rightTables = list.slice(mid);
-                const sideColumns = isBanquet
-                  ? 'grid-cols-2 gap-2 sm:gap-3'
-                  : tier.key === 'VIP'
-                  ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2'
-                  : 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-1.5 sm:gap-2';
+                const sideColumns =
+                  tier.key === 'VVIP'
+                    ? 'grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3'
+                    : tier.key === 'VIP'
+                    ? 'grid-cols-2 gap-2 sm:gap-3'
+                    : 'grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2';
 
                 const renderTable = (table) => {
                   const disabled =

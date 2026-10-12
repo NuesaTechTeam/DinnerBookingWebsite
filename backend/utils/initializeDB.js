@@ -5,18 +5,18 @@ import { Seat } from "../models/seatModel.js";
 const tableConfigs = [
   {
     type: "VVIP",
-    shape: "LONG",
-    // 10 VVIP tables, 10 seats each.
+    shape: "ROUND",
+    // 10 VVIP tables, 4 seats each (round).
     // Layout: first 5 render on the left (student tables), last 5 on the right.
     // Right column: table 6 is a student table, tables 7-10 are auto-reserved/booked.
-    capacities: Array(10).fill(10),
+    capacities: Array(10).fill(4),
     pricePerSeat: 30000,
     reservedTableNumbers: ["VVIP-7", "VVIP-8", "VVIP-9", "VVIP-10"],
   },
   {
     type: "VIP",
-    shape: "ROUND",
-    // 6 Gold tables x 8 seats each
+    shape: "LONG",
+    // 6 Gold tables x 8 seats each (long/banquet)
     capacities: Array(6).fill(8),
     pricePerSeat: 20000,
   },
