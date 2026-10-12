@@ -201,7 +201,7 @@ const SeatSelection = ({
       {/* Main Floorplan & Dynamic Sidebar */}
       <main className="max-w-[1500px] mx-auto w-full px-4 sm:px-8 py-8 sm:py-12 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         {/* Left Interactive Floorplan */}
-        <div className="lg:col-span-8 bg-[#0a0a0a] border border-gray-800/80 rounded-3xl p-4 sm:p-8 md:p-12 flex flex-col items-center shadow-[0_0_40px_rgba(0,0,0,0.9)]">
+        <div className="lg:col-span-8 bg-[#0a0a0a] border border-gray-800/80 rounded-3xl p-3 sm:p-8 md:p-12 flex flex-col items-center shadow-[0_0_40px_rgba(0,0,0,0.9)]">
           {/* Stage Banner */}
           <div className="w-full max-w-2xl bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] rounded-2xl py-3 sm:py-4 text-center mb-8 sm:mb-12 shadow-[0_0_25px_rgba(212,175,55,0.4)]">
             <span className="text-xs sm:text-sm font-extrabold tracking-[0.3em] sm:tracking-[0.4em] text-black uppercase">
@@ -217,7 +217,7 @@ const SeatSelection = ({
               </span>
             </div>
 
-            <div className="relative z-10 space-y-12">
+            <div className="relative z-10 space-y-8 sm:space-y-12">
               {TIERS.map((tier) => {
                 const list = grouped[tier.key] || [];
                 const Icon = tier.icon;
@@ -227,10 +227,10 @@ const SeatSelection = ({
                 const rightTables = list.slice(mid);
                 const sideColumns =
                   tier.key === 'VVIP'
-                    ? 'grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3'
+                    ? 'grid-cols-3 gap-1.5 sm:gap-3'
                     : tier.key === 'VIP'
                     ? 'grid-cols-2 gap-2 sm:gap-3'
-                    : 'grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2';
+                    : 'grid-cols-4 gap-1.5 sm:gap-2';
 
                 const renderTable = (table) => {
                   const disabled =
@@ -247,12 +247,12 @@ const SeatSelection = ({
                           ? 'Platinum booking is currently unavailable'
                           : undefined
                       }
-                      className={`w-full py-3 rounded-xl font-bold text-sm flex items-center justify-center gap-2 ${getTableStatusClass(
+                      className={`w-full py-2 sm:py-3 rounded-xl font-bold text-[11px] sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 ${getTableStatusClass(
                         table,
                         disabled
                       )}`}
                     >
-                      <Crown size={14} strokeWidth={2.5} />
+                      <Crown size={12} strokeWidth={2.5} />
                       Table {getTableLabel(table.tableNumber)}
                     </button>
                   ) : (
@@ -265,7 +265,7 @@ const SeatSelection = ({
                           ? 'Platinum booking is currently unavailable'
                           : `Table ${getTableLabel(table.tableNumber)} · ${table.capacity} seats`
                       }
-                      className={`w-full aspect-square rounded-full font-bold text-xs flex items-center justify-center ${getTableStatusClass(
+                      className={`w-full max-w-[42px] sm:max-w-[48px] md:max-w-none mx-auto aspect-square rounded-full font-bold text-[10px] sm:text-xs flex items-center justify-center ${getTableStatusClass(
                         table,
                         disabled
                       )}`}
@@ -297,7 +297,7 @@ const SeatSelection = ({
                     {list.length === 0 ? (
                       <p className="text-xs text-gray-500 font-light text-center">No tables available.</p>
                     ) : (
-                      <div className="grid grid-cols-2 gap-x-8 sm:gap-x-16 md:gap-x-24 gap-y-3">
+                      <div className="grid grid-cols-2 gap-x-5 sm:gap-x-16 md:gap-x-24 gap-y-3">
                         <div className={`grid ${sideColumns}`}>
                           {leftTables.map(renderTable)}
                         </div>

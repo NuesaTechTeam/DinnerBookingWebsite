@@ -26,7 +26,7 @@ const SeatArrangement = ({
         type="button"
         onClick={() => onSeatClick(seat)}
         disabled={booked || locked}
-        className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full font-bold text-xs sm:text-sm flex items-center justify-center transition-all ${getSeatStatusClass(
+        className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full font-bold text-[11px] sm:text-sm flex items-center justify-center transition-all ${getSeatStatusClass(
           seat
         )}`}
       >
@@ -45,9 +45,9 @@ const SeatArrangement = ({
     const radius = count <= 4 ? 34 : 37;
 
     return (
-      <div className="relative mx-auto w-60 h-60 sm:w-72 sm:h-72">
+      <div className="relative mx-auto w-48 h-48 sm:w-72 sm:h-72">
         {/* Round table */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 border-[#d4af37]/60 bg-gradient-to-br from-[#1a1508] to-[#0a0a0a] shadow-[0_0_25px_rgba(212,175,55,0.25)] flex items-center justify-center">
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 sm:w-28 sm:h-28 rounded-full border-2 border-[#d4af37]/60 bg-gradient-to-br from-[#1a1508] to-[#0a0a0a] shadow-[0_0_25px_rgba(212,175,55,0.25)] flex items-center justify-center">
           <span className="text-[9px] sm:text-[10px] font-semibold tracking-widest uppercase text-[#d4af37]/90 text-center px-2">
             {label}
           </span>
