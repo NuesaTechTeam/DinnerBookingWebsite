@@ -5,6 +5,23 @@ const generateEmailTemplate = (booking, seats) => {
   const seatNumbers = seats.map((seat) => seat.seatNumber).join(", ");
   const totalAmount = booking.amount.toLocaleString();
 
+  // Map each seat to the meal its guest picked at checkout.
+  const mealBySeat = new Map(
+    (booking.meals || []).map((m) => [String(m.seat), m.choice])
+  );
+  const hasMeals = (booking.meals || []).length > 0;
+  const mealRows = seats
+    .map((seat) => {
+      const choice = mealBySeat.get(String(seat._id));
+      if (!choice) return "";
+      return `
+                <div class="detail-row">
+                    <span class="detail-label">Seat ${seat.seatNumber}</span>
+                    <span class="detail-value">${choice}</span>
+                </div>`;
+    })
+    .join("");
+
   // URL encode the QR data for the QR code generator
   const encodedQRData = encodeURIComponent(
     JSON.stringify({
@@ -460,6 +477,17 @@ const generateEmailTemplate = (booking, seats) => {
                     ).toLocaleDateString()}</span>
                 </div>
             </div>
+
+            ${
+              hasMeals
+                ? `
+            <!-- Meal Choices -->
+            <div class="booking-details">
+                <h3>Your Meal Choices</h3>
+                ${mealRows}
+            </div>`
+                : ""
+            }
 
             <!-- Dress Code -->
             <div class="dress-code">

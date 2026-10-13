@@ -11,6 +11,7 @@ import { Student } from "../models/studentModel.js";
 import { sendConfirmationEmail } from "../utils/emailService.js";
 import { Table } from "../models/tableModel.js";
 import { logActivity } from "../utils/activity.js";
+import { getMealOptions } from "../utils/meals.js";
 
 // A short, human-typeable 6-digit entry code shown on the ticket email.
 // Falls back to 8 digits in the (very unlikely) event of a collision.
@@ -37,7 +38,7 @@ export const createBooking = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, tableType, reservedPassword } = req.body;
+    const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, tableType, reservedPassword, meals } = req.body;
 
     //Reject bad details BEFORE locking seats or creating anything -
     //an invalid email would otherwise only be caught by Paystack mid-payment
@@ -138,6 +139,22 @@ export const createBooking = async (req, res) => {
       }
     }
 
+    // Normalize meal choices: one choice per seat, restricted to the options
+    // valid for this tier (fall back to the first option when missing/invalid).
+    const mealOptions = getMealOptions(tableType);
+    const mealBySeat = new Map(
+      (Array.isArray(meals) ? meals : []).map((m) => [
+        String(m?.seatId || m?.seat || ""),
+        m?.meal || m?.choice,
+      ])
+    );
+    const bookingMeals = (seatIds || []).map((id) => ({
+      seat: id,
+      choice: mealOptions.includes(mealBySeat.get(String(id)))
+        ? mealBySeat.get(String(id))
+        : mealOptions[0],
+    }));
+
     // Create booking
     const bookingCode = await generateEntryCode(session);
     const booking = new Booking({
@@ -154,6 +171,7 @@ export const createBooking = async (req, res) => {
       engineeringStudentRef,
       isEngineering,
       seats: seatIds,
+      meals: bookingMeals,
       trxref: `pending_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`,

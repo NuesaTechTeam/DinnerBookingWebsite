@@ -82,6 +82,13 @@ const bookingSchema = new mongoose.Schema(
         ref: "Seat",
       },
     ],
+    // One meal choice per reserved seat (guest picks their own meal).
+    meals: [
+      {
+        seat: { type: mongoose.Schema.Types.ObjectId, ref: "Seat" },
+        choice: { type: String, trim: true },
+      },
+    ],
     paymentVerified: {
       type: Boolean,
       default: false,

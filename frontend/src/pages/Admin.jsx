@@ -15,6 +15,7 @@ import {
   ScanLine,
   Camera,
   X,
+  Download,
 } from "lucide-react";
 import AdminAPI from "../utils/endpoints/adminApi.js";
 import logo from "../assets/logo.png";
@@ -44,6 +45,12 @@ const seatLabel = (seatNumber) => {
   const match = String(seatNumber || "").match(/S(\d+)$/);
   return match ? match[1] : seatNumber;
 };
+
+// Short "T12·S3" label for a populated seat document.
+const seatLabelFor = (seat) =>
+  `T${
+    seat?.table?.tableNumber ? tableLabel(seat.table.tableNumber) : "?"
+  }·S${seatLabel(seat?.seatNumber)}`;
 
 const STATUS_STYLES = {
   confirmed: "bg-emerald-500/10 text-emerald-400 border-emerald-500/40",
@@ -823,6 +830,62 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
     });
   }, [bookings, query, statusFilter]);
 
+  // One CSV row per guest seat, so the kitchen can plate by name + table.
+  const exportMealsCsv = () => {
+    const header = [
+      "Guest",
+      "Email",
+      "Phone",
+      "Matric No",
+      "Table",
+      "Seat",
+      "Meal",
+      "Status",
+    ];
+    const rows = [header];
+    filtered.forEach((b) => {
+      const seatById = new Map(
+        (b.seats || []).map((s) => [String(s._id), s])
+      );
+      (b.meals || []).forEach((m) => {
+        const seat = seatById.get(String(m.seat));
+        if (!seat || !m.choice) return;
+        rows.push([
+          b.name || "",
+          b.email || "",
+          b.phone || "",
+          b.matricNo || "",
+          seat.table?.tableNumber ? tableLabel(seat.table.tableNumber) : "",
+          seat.seatNumber || "",
+          m.choice,
+          b.status || "",
+        ]);
+      });
+    });
+
+    const csv = rows
+      .map((row) =>
+        row
+          .map((cell) => `"${String(cell).replace(/"/g, '""')}"`)
+          .join(",")
+      )
+      .join("\r\n");
+
+    const blob = new Blob([`\uFEFF${csv}`], {
+      type: "text/csv;charset=utf-8;",
+    });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `faoji-lawa-meals-${new Date()
+      .toISOString()
+      .slice(0, 10)}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const checkInSeat = async (bookingId, seatId) => {
     setActionError("");
     setCheckingIn((prev) => ({ ...prev, [seatId]: true }));
@@ -1034,6 +1097,14 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                   <option value="pending">Pending</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
+                <button
+                  onClick={exportMealsCsv}
+                  title="Download every guest's meal choice as CSV"
+                  className="flex items-center gap-2 text-xs border border-gray-700 hover:border-[#d4af37] text-gray-300 hover:text-[#d4af37] px-3 py-2 rounded-lg transition-colors cursor-pointer"
+                >
+                  <Download size={13} />
+                  <span className="hidden sm:inline">Export meals</span>
+                </button>
               </div>
             </div>
 
@@ -1043,6 +1114,7 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                   <tr>
                     <th className="px-4 py-3">Guest</th>
                     <th className="px-4 py-3">Seats / Check-in</th>
+                    <th className="px-4 py-3">Meals</th>
                     <th className="px-4 py-3 text-right">Amount</th>
                     <th className="px-4 py-3">Status</th>
                     <th className="px-4 py-3">Booked At</th>
@@ -1052,7 +1124,7 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                   {filtered.length === 0 && (
                     <tr>
                       <td
-                        colSpan={5}
+                        colSpan={6}
                         className="px-4 py-8 text-center text-gray-500"
                       >
                         No reservations found.
@@ -1131,6 +1203,37 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                               </button>
                             )}
                         </div>
+                      </td>
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const byId = new Map(
+                            (b.meals || []).map((m) => [
+                              String(m.seat),
+                              m.choice,
+                            ])
+                          );
+                          const mealRows = (b.seats || [])
+                            .map((seat) => ({
+                              label: seatLabelFor(seat),
+                              choice: byId.get(String(seat._id)),
+                            }))
+                            .filter((r) => r.choice);
+                          if (mealRows.length === 0) {
+                            return <span className="text-gray-500">—</span>;
+                          }
+                          return (
+                            <div className="space-y-0.5">
+                              {mealRows.map((r, i) => (
+                                <p key={i} className="text-[10px] text-gray-300">
+                                  <span className="text-gray-500">
+                                    {r.label}:
+                                  </span>{" "}
+                                  {r.choice}
+                                </p>
+                              ))}
+                            </div>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 py-3 text-right text-[#d4af37] font-semibold">
                         {naira(b.totalAmount)}

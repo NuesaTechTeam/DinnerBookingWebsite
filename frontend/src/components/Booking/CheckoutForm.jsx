@@ -9,6 +9,7 @@ import {
   Shield,
   CheckCircle,
   Receipt,
+  UtensilsCrossed,
 } from "lucide-react";
 import { usePaystackPayment } from "react-paystack";
 import { useCreateBooking } from "../../hooks/bookingHooks";
@@ -17,6 +18,7 @@ import { useToast } from "../../context/modal/useToast";
 import { useQueryClient } from "@tanstack/react-query";
 import { useVerifyEngineeringStudent } from "../../hooks/discountHooks";
 import BookingAPI from "../../utils/endpoints/bookingApi.js";
+import { getMealOptions } from "../../lib/meals.js";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[A-Za-z]{2,}$/;
 
@@ -65,6 +67,8 @@ const CheckoutForm = ({
 
   const [discountApplied, setDiscountApplied] = useState(false);
   const [verifyingDiscount, setVerifyingDiscount] = useState(false);
+  // Per-seat meal choice, keyed by seat id (defaults live below).
+  const [mealSelections, setMealSelections] = useState({});
 
   const pendingBookingIdRef = useRef(null);
   const paymentSucceededRef = useRef(false);
@@ -77,6 +81,13 @@ const CheckoutForm = ({
     ? ENGINEERING_DISCOUNT_PER_SEAT * selectedSeats.length
     : 0;
   const finalAmount = Math.max(0, baseAmount - discountAmount);
+
+  // Meal options for this tier; each seat keeps its own (validated) choice.
+  const mealOptions = getMealOptions(selectedTable?.type);
+  const mealForSeat = (seatId) =>
+    mealOptions.includes(mealSelections[seatId])
+      ? mealSelections[seatId]
+      : mealOptions[0];
 
   const applyDiscount = async () => {
     if (!formData.invoiceNumber.trim()) {
@@ -279,6 +290,10 @@ const CheckoutForm = ({
       tableId: selectedTable?._id,
       tableType: selectedTable?.type,
       reservedPassword: reservedPassword || undefined,
+      meals: selectedSeats.map((seatId) => ({
+        seatId,
+        meal: mealForSeat(seatId),
+      })),
     };
 
     // Guard against launching Paystack with a config it will reject
@@ -419,6 +434,53 @@ const CheckoutForm = ({
                 </div>
               </div>
             </Motion.div>
+
+            {/* Meal Selection - one choice per seat */}
+            {selectedSeats.length > 0 && (
+              <Motion.div
+                className="bg-[#121212] border border-[#d4af37]/30 rounded-lg p-4 space-y-3"
+                {...fadeInUp}
+                transition={{ duration: 0.5, delay: 0.35 }}
+              >
+                <p className="text-[#d4af37] text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+                  <UtensilsCrossed size={14} /> Choose Your Meal
+                </p>
+                <p className="text-[11px] text-gray-400 -mt-1">
+                  Each seat picks its own meal from the{" "}
+                  {selectedTable?.type || "selected"} tier.
+                </p>
+                <div className="space-y-2.5">
+                  {selectedSeats.map((seatId, index) => (
+                    <div key={seatId} className="space-y-1">
+                      <label className="text-gray-400 text-[10px] font-medium uppercase tracking-wider">
+                        Seat {seatNames[index] || index + 1}
+                      </label>
+                      <select
+                        value={mealForSeat(seatId)}
+                        onChange={(e) =>
+                          setMealSelections((prev) => ({
+                            ...prev,
+                            [seatId]: e.target.value,
+                          }))
+                        }
+                        disabled={isProcessing}
+                        className="w-full bg-black/60 border border-gray-800 rounded-lg px-3 py-2 text-white text-xs focus:border-[#d4af37] outline-none"
+                      >
+                        {mealOptions.map((option) => (
+                          <option
+                            key={option}
+                            value={option}
+                            className="bg-black"
+                          >
+                            {option}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+              </Motion.div>
+            )}
 
             {/* Name Field */}
             <Motion.div
