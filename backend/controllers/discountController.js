@@ -42,7 +42,7 @@ export const verifyEngineeringStudent = async (req, res) => {
       discount: {
         amount: ENGINEERING_DISCOUNT_AMOUNT,
         type: "fixed",
-        applicableTo: "REGULAR tables only",
+        applicableTo: "all tiers",
       },
       student: {
         fullName: student.fullName,

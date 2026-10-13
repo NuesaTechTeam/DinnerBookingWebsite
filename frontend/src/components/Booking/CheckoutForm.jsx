@@ -75,8 +75,6 @@ const CheckoutForm = ({
 
   // Calculate Amount - engineering discount is ₦2,000 off EACH seat
   const ENGINEERING_DISCOUNT_PER_SEAT = 2000;
-  const isDiscountEligible =
-    selectedTable?.type === "REGULAR" || selectedTable?.type === "VIP";
   const discountAmount = discountApplied
     ? ENGINEERING_DISCOUNT_PER_SEAT * selectedSeats.length
     : 0;
@@ -92,10 +90,6 @@ const CheckoutForm = ({
   const applyDiscount = async () => {
     if (!formData.invoiceNumber.trim()) {
       showToast("Please enter an invoice number", TOAST_TYPES.INFO);
-      return;
-    }
-    if (!isDiscountEligible) {
-      showToast("Discounts apply only to Bronze and Gold tables", TOAST_TYPES.INFO);
       return;
     }
     setVerifyingDiscount(true);
@@ -598,7 +592,7 @@ const CheckoutForm = ({
               </label>
 
               {/* Discount Section */}
-              {formData.isEngineering && isDiscountEligible && (
+              {formData.isEngineering && (
                 <Motion.div
                   className="space-y-3 mt-3 pt-3 border-t border-gray-800"
                   initial={{ opacity: 0, height: 0 }}
