@@ -37,7 +37,7 @@ export const createBooking = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, tableType,  } = req.body;
+    const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, tableType, reservedPassword } = req.body;
 
     //Reject bad details BEFORE locking seats or creating anything -
     //an invalid email would otherwise only be caught by Paystack mid-payment
@@ -77,8 +77,17 @@ export const createBooking = async (req, res) => {
 
     //Check if any seat is already booked or locked
     const now = new Date();
+    // Reserved executive seats can only be booked by someone holding the
+    // shared reserved-seat access code; everyone else sees them as taken.
+    const reservedAccess =
+      !!reservedPassword &&
+      reservedPassword === (process.env.RESERVED_SEATS_PASSWORD || "");
+
     const unavailableSeats = seats.filter(
-      (seat) => seat.isBooked || (seat.lockedUntil && seat.lockedUntil > now)
+      (seat) =>
+        seat.isBooked ||
+        (seat.lockedUntil && seat.lockedUntil > now) ||
+        (seat.isReserved && !reservedAccess)
     );
     if (unavailableSeats.length > 0) {
       await session.abortTransaction();
@@ -97,7 +106,6 @@ export const createBooking = async (req, res) => {
       { lockedUntil: lockExpiry },
       { session }
     );
-
     // Calculate total amount
     const seatPrices = await Seat.find({ _id: { $in: seatIds } })
       .populate("table")
@@ -385,13 +393,20 @@ export const createBooking = async (req, res) => {
 //Check seat availablity
 export const checkSeatAvailability = async (req, res) => {
   try {
-    const { seatIds } = req.body;
+    const { seatIds, reservedPassword } = req.body;
     const now = new Date();
 
     const seats = await Seat.find({ _id: { $in: seatIds } });
 
+    const reservedAccess =
+      !!reservedPassword &&
+      reservedPassword === (process.env.RESERVED_SEATS_PASSWORD || "");
+
     const unavailableSeats = seats.filter(
-      (seat) => seat.isBooked || (seat.lockedUntil && seat.lockedUntil > now)
+      (seat) =>
+        seat.isBooked ||
+        (seat.lockedUntil && seat.lockedUntil > now) ||
+        (seat.isReserved && !reservedAccess)
     );
 
     res.status(200).json({
@@ -824,6 +839,23 @@ export const markSeatAttendance = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to mark seat attendance",
+    });
+  }
+};
+
+// Verify the shared executive access code used to unlock reserved seats
+export const verifyReservedAccess = async (req, res) => {
+  try {
+    const { password } = req.body;
+    const configured = process.env.RESERVED_SEATS_PASSWORD || "";
+    const valid = !!configured && password === configured;
+
+    res.status(200).json({ success: true, valid });
+  } catch (error) {
+    console.error("Reserved access verification error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to verify access code",
     });
   }
 };

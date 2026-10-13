@@ -12,6 +12,7 @@ const SeatArrangement = ({
   lockedSeats = [],
   onSeatClick,
   getSeatStatusClass,
+  reservedUnlocked = false,
 }) => {
   const seats = Array.isArray(table?.seats) ? table.seats : [];
   const label = formatTierText(table?.tableNumber);
@@ -19,13 +20,16 @@ const SeatArrangement = ({
 
   const renderSeat = (seat) => {
     const booked = seat.isBooked || bookedSeats.includes(seat._id);
-    const locked = !booked && lockedSeats.includes(seat._id);
+    const reserved = !booked && !!seat.isReserved && !reservedUnlocked;
+    const locked = !booked && !reserved && lockedSeats.includes(seat._id);
+    const disabled = booked || reserved || locked;
     return (
       <button
         key={seat._id}
         type="button"
         onClick={() => onSeatClick(seat)}
-        disabled={booked || locked}
+        disabled={disabled}
+        title={reserved ? 'Reserved' : undefined}
         className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full font-bold text-[11px] sm:text-sm flex items-center justify-center transition-all ${getSeatStatusClass(
           seat
         )}`}

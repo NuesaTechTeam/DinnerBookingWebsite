@@ -46,6 +46,7 @@ const CheckoutForm = ({
   baseAmount = 0,
   selectedTable,
   seatNames,
+  reservedPassword = "",
 }) => {
   const createBookingMutation = useCreateBooking();
   const verifyPaymentMutation = useVerifyPayment();
@@ -277,6 +278,7 @@ const CheckoutForm = ({
       totalAmount: totalAmount,
       tableId: selectedTable?._id,
       tableType: selectedTable?.type,
+      reservedPassword: reservedPassword || undefined,
     };
 
     // Guard against launching Paystack with a config it will reject

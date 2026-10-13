@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../Hero/Footer.jsx';
 import logo from '../../assets/logo.png';
 import { getSectionPrice, formatTierText } from '../../lib/helpers.jsx';
-import { Crown, Star, User, BadgePercent } from 'lucide-react';
+import { Crown, Star, User, BadgePercent, Lock } from 'lucide-react';
 import SeatArrangement from './SeatArrangement.jsx';
+import { useVerifyReservedPassword } from '../../hooks/bookingHooks.js';
 
 const naira = (value) => `₦${Number(value || 0).toLocaleString()}`;
 
@@ -13,9 +14,12 @@ const PLATINUM_DISABLED = false;
 
 const getSeats = (table) => (Array.isArray(table?.seats) ? table.seats : []);
 
-const isTableSoldOut = (table) => {
+const isTableSoldOut = (table, reservedUnlocked = false) => {
   const seats = getSeats(table);
-  return seats.length > 0 && seats.every((seat) => seat.isBooked);
+  return (
+    seats.length > 0 &&
+    seats.every((seat) => seat.isBooked || (seat.isReserved && !reservedUnlocked))
+  );
 };
 
 const getTableLabel = (tableNumber) => {
@@ -77,8 +81,33 @@ const SeatSelection = ({
   lockedSeats = [],
   selectedTable,
   setSeatNames,
+  reservedUnlocked = false,
+  onReservedUnlock = () => {},
 }) => {
   const navigate = useNavigate();
+  const verifyReserved = useVerifyReservedPassword();
+  const [reservedInput, setReservedInput] = useState('');
+  const [reservedError, setReservedError] = useState('');
+
+  const handleReservedUnlock = (e) => {
+    e.preventDefault();
+    const code = reservedInput.trim();
+    if (!code) return;
+    verifyReserved.mutate(code, {
+      onSuccess: (data) => {
+        if (data?.valid) {
+          setReservedError('');
+          onReservedUnlock(code);
+        } else {
+          setReservedError('Invalid access code. Please check and try again.');
+        }
+      },
+      onError: () => {
+        setReservedError('Could not verify the code. Please try again.');
+      },
+    });
+  };
+
   const grouped = useMemo(() => groupByTier(tablesData), [tablesData]);
 
   const seatUnitPrice =
@@ -113,6 +142,7 @@ const SeatSelection = ({
 
   const toggleSeat = (seat) => {
     if (seat.isBooked) return;
+    if (seat.isReserved && !reservedUnlocked) return;
     if (selectedSeats.includes(seat._id)) {
       setSelectedSeats(selectedSeats.filter((s) => s !== seat._id));
     } else {
@@ -126,7 +156,7 @@ const SeatSelection = ({
     }
 
     const isSelected = selectedTable?._id === table._id;
-    const soldOut = isTableSoldOut(table);
+    const soldOut = isTableSoldOut(table, reservedUnlocked);
 
     if (isSelected) {
       return 'bg-[#d4af37] text-black border-[#d4af37] ring-4 ring-[#d4af37]/30 shadow-[0_0_20px_rgba(212,175,55,0.7)]';
@@ -139,11 +169,15 @@ const SeatSelection = ({
 
   const getSeatStatusClass = (seat) => {
     const booked = seat.isBooked || bookedSeats.includes(seat._id);
-    const locked = !booked && lockedSeats.includes(seat._id);
+    const reserved = !booked && !!seat.isReserved && !reservedUnlocked;
+    const locked = !booked && !reserved && lockedSeats.includes(seat._id);
     const selected = selectedSeats.includes(seat._id);
 
     if (booked) {
       return 'bg-amber-950/60 text-amber-500/60 border-amber-800/50 cursor-not-allowed';
+    }
+    if (reserved) {
+      return 'bg-indigo-950/70 text-indigo-300 border border-indigo-700/60 cursor-not-allowed';
     }
     if (locked) {
       return 'bg-yellow-900/50 text-yellow-500/60 border-yellow-800/50 cursor-not-allowed';
@@ -209,6 +243,47 @@ const SeatSelection = ({
             </span>
           </div>
 
+          {/* Reserved seat access */}
+          <div className="w-full max-w-2xl mb-8 sm:mb-12">
+            {reservedUnlocked ? (
+              <div className="flex items-center justify-center gap-2 rounded-xl border border-[#d4af37]/40 bg-[#d4af37]/10 px-4 py-3 text-xs sm:text-sm text-[#fcf6ba]">
+                <Lock className="w-4 h-4 shrink-0" strokeWidth={2.5} />
+                Reserved seats unlocked — select your seat(s) below to continue.
+              </div>
+            ) : (
+              <form
+                onSubmit={handleReservedUnlock}
+                className="bg-[#050505] border border-gray-800 rounded-2xl p-3 sm:p-4"
+              >
+                <p className="text-[11px] sm:text-xs text-gray-400 font-light mb-2.5 text-center">
+                  Reserved an executive seat? Enter your access code to unlock and pay for it.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="password"
+                    value={reservedInput}
+                    onChange={(e) => {
+                      setReservedInput(e.target.value);
+                      if (reservedError) setReservedError('');
+                    }}
+                    placeholder="Access code"
+                    className="flex-1 min-w-0 bg-black/60 border border-gray-800 rounded-lg px-3 py-2.5 text-white text-sm placeholder-gray-600 focus:border-[#d4af37] focus:outline-none"
+                  />
+                  <button
+                    type="submit"
+                    disabled={verifyReserved.isPending}
+                    className="shrink-0 bg-[#d4af37] text-black font-extrabold text-xs tracking-widest uppercase px-4 rounded-lg hover:brightness-110 transition-all disabled:opacity-60"
+                  >
+                    {verifyReserved.isPending ? '...' : 'Unlock'}
+                  </button>
+                </div>
+                {reservedError && (
+                  <p className="text-red-400 text-xs mt-2 text-center">{reservedError}</p>
+                )}
+              </form>
+            )}
+          </div>
+
           <div className="relative w-full">
             {/* Gold Carpet running through the middle */}
             <div className="pointer-events-none absolute left-1/2 top-0 bottom-0 -translate-x-1/2 w-4 sm:w-6 md:w-8 flex items-center justify-center z-0 rounded-full bg-gradient-to-b from-[#b38728] via-[#fcf6ba] to-[#aa7c11] shadow-[0_0_25px_rgba(212,175,55,0.45)]">
@@ -234,7 +309,7 @@ const SeatSelection = ({
 
                 const renderTable = (table) => {
                   const disabled =
-                    isTableSoldOut(table) ||
+                    isTableSoldOut(table, reservedUnlocked) ||
                     (tier.key === 'VVIP' && PLATINUM_DISABLED);
 
                   return isBanquet ? (
@@ -321,6 +396,10 @@ const SeatSelection = ({
             <div className="flex items-center gap-3">
               <span className="w-4 h-4 rounded-full bg-amber-500" />
               <span>Booked</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="w-4 h-4 rounded-full bg-indigo-500" />
+              <span>Reserved</span>
             </div>
             <div className="flex items-center gap-3">
               <span className="w-4 h-4 rounded-full bg-yellow-600" />
@@ -446,13 +525,14 @@ const SeatSelection = ({
                     </span>
                   </div>
                   <div className="bg-[#050505] border border-gray-800/80 rounded-2xl p-4 sm:p-6 flex flex-col items-center">
-                    <SeatArrangement
-                      table={selectedTable}
-                      bookedSeats={bookedSeats}
-                      lockedSeats={lockedSeats}
-                      onSeatClick={toggleSeat}
-                      getSeatStatusClass={getSeatStatusClass}
-                    />
+                  <SeatArrangement
+                    table={selectedTable}
+                    bookedSeats={bookedSeats}
+                    lockedSeats={lockedSeats}
+                    onSeatClick={toggleSeat}
+                    getSeatStatusClass={getSeatStatusClass}
+                    reservedUnlocked={reservedUnlocked}
+                  />
                   </div>
                 </div>
 

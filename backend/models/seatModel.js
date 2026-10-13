@@ -18,6 +18,14 @@ const seatSchema = new mongoose.Schema({
     type: Boolean,
     default: false,
   },
+  isReserved: {
+    type: Boolean,
+    default: false,
+  },
+  reservedFor: {
+    type: String,
+    default: "",
+  },
   bookedBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Booking",

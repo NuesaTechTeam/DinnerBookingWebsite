@@ -16,6 +16,7 @@ const Booking = () => {
   const [showCheckout, setShowCheckout] = useState(false);
   const [seatNames, setSeatNames] = useState([]);
   const [totalAmount, setTotalAmount] = useState(0);
+  const [reservedPassword, setReservedPassword] = useState("");
 
   const { data: tables, isLoading, error, refetch } = useTables();
   const { seatStatus, checkAvailability, isChecking } = useSeatManagement(
@@ -76,6 +77,8 @@ const Booking = () => {
           totalAmount={totalAmount}
           setSeatNames={setSeatNames}
           selectedTable={selectedTable}
+          reservedUnlocked={!!reservedPassword}
+          onReservedUnlock={setReservedPassword}
         />
       )}
       {showCheckout && (
@@ -85,6 +88,7 @@ const Booking = () => {
           selectedSeats={selectedSeats}
           selectedTable={selectedTable}
           seatNames={seatNames}
+          reservedPassword={reservedPassword}
         />
       )}
     </div>

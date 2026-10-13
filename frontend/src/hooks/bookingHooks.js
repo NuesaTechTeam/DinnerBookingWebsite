@@ -15,6 +15,12 @@ export const useCheckAvailability = () => {
     })
 }
 
+export const useVerifyReservedPassword = () => {
+    return useMutation({
+        mutationFn: BookingAPI.verifyReservedPassword,
+    })
+}
+
 export const useCreateBooking = () => {
     const { showToast, TOAST_TYPES } = useToast();
     const queryClient = useQueryClient();
