@@ -8,23 +8,23 @@ const Faqs = () => {
   const faqData = [
     {
       question: "What is the dress code?",
-      answer: "The dress code for the evening is Black Tie or High-Fashion African Black-Tie Couture. We encourage guests to embrace rich textures, traditional royal attire, or modern black-tie formalwear."
-    },
-    {
-      question: "Can I make dietary requests?",
-      answer: "Yes, our master chefs accommodate all dietary restrictions, including halal, vegan, vegetarian, and allergy-specific preparations. Please specify your requirements during checkout or via the contact inquiry form."
-    },
-    {
-      question: "Is parking available?",
-      answer: "Complimentary valet parking is available at the venue entrance for all ticket holders. Secure, guarded parking facilities are provided throughout the duration of the gala."
+      answer: "FÀÁJÍ LAWA is a celebration of African royalty and heritage, so we invite you to dress in elegant cultural or traditional attire rather than strict black tie. Think regal aso-oke, agbada, gele, babariga, Ankara and richly embroidered African prints — or modern couture inspired by the continent. Dress to honour the culture and the grandeur of the evening."
     },
     {
       question: "What is the cancellation policy?",
       answer: "Tickets are non-refundable due to limited seating availability, but they are fully transferable up to 48 hours prior to the event date by contacting our support team."
     },
     {
-      question: "Are children allowed?",
-      answer: "FÀÁJÍ LAWA is an exclusive adult-only gala experience designed for guests aged 18 and above."
+      question: "Who is eligible for the discount, and which tables does it apply to?",
+      answer: "The discount is exclusive to engineering students who have paid their NUESA dues, and it applies to every table tier — Bronze, Gold and Platinum. Bronze and Gold tables get ₦2,000 off per seat, while Platinum tables get ₦3,000 off per seat. To claim it, enter the invoice number on your NUESA receipt (after submitting it through the official Google Form) as your coupon code at checkout."
+    },
+    {
+      question: "Can I attend if I'm not an engineering student?",
+      answer: "Absolutely — the gala is open to everyone, engineering and non-engineering students alike. The ₦2,000/₦3,000 discount is a NUESA engineering-student benefit, but any guest can book any table at the regular price."
+    },
+    {
+      question: "I have an issue with my seat — can I swap or upgrade?",
+      answer: "If you'd like to swap or upgrade your seat, please visit the NUESA office and file a complaint. Our team will review your request and assist you with the next steps."
     }
   ];
 

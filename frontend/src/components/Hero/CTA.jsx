@@ -16,8 +16,15 @@ const CTA = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Inquiry submitted:', formData);
-    // Handle inquiry submission state or toast notification
+    const whatsappNumber = "2348102841732";
+    const message = encodeURIComponent(
+      `Hello NUESA FÀÁJÍ LAWA!\n` +
+        `Name: ${formData.fullName}\n` +
+        `Email: ${formData.email}\n` +
+        `Phone: ${formData.phone}\n` +
+        `Request: ${formData.specialRequests}`
+    );
+    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
   };
 
   return (
