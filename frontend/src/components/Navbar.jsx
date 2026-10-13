@@ -70,7 +70,7 @@ const Navbar = () => {
         </Link>
 
         {/* Desktop Navigation Links */}
-        <div className="hidden lg:flex items-center gap-x-8">
+        <div className="hidden lg:flex flex-1 items-center justify-center gap-x-8">
           {navLinks.map((link) => {
             const isActive = hovered
               ? hovered === link.title
@@ -92,16 +92,6 @@ const Navbar = () => {
               </a>
             );
           })}
-        </div>
-
-        {/* Action Button Section */}
-        <div className="hidden lg:flex items-center gap-4">
-          <div className="h-6 w-[1px] bg-[#d4af37]/30" />
-          <Link to="/book">
-            <button className="bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] text-black font-extrabold text-xs tracking-wider px-6 py-2.5 rounded-lg shadow-[0_0_15px_rgba(212,175,55,0.3)] hover:brightness-110 transition-all cursor-pointer uppercase">
-              SECURE YOUR SEAT
-            </button>
-          </Link>
         </div>
 
         {/* Mobile Hamburger Button */}
@@ -129,11 +119,6 @@ const Navbar = () => {
                 {link.title}
               </a>
             ))}
-            <Link to="/book" onClick={() => setIsOpen(false)}>
-              <button className="mt-4 bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] text-black font-extrabold text-sm tracking-wider px-8 py-3 rounded-lg shadow-lg uppercase">
-                SECURE YOUR SEAT
-              </button>
-            </Link>
           </Motion.div>
         )}
       </AnimatePresence>
