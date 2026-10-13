@@ -73,10 +73,13 @@ const CheckoutForm = ({
   const pendingBookingIdRef = useRef(null);
   const paymentSucceededRef = useRef(false);
 
-  // Calculate Amount - engineering discount is ₦2,000 off EACH seat
-  const ENGINEERING_DISCOUNT_PER_SEAT = 2000;
+  // Calculate Amount - engineering discount is per seat and tier-based:
+  // Bronze/Gold take ₦2,000 off each seat, Platinum takes ₦3,000 off each seat.
+  const DISCOUNT_PER_SEAT_BY_TIER = { REGULAR: 2000, VIP: 2000, VVIP: 3000 };
+  const discountPerSeat =
+    DISCOUNT_PER_SEAT_BY_TIER[selectedTable?.type] ?? 2000;
   const discountAmount = discountApplied
-    ? ENGINEERING_DISCOUNT_PER_SEAT * selectedSeats.length
+    ? discountPerSeat * selectedSeats.length
     : 0;
   const finalAmount = Math.max(0, baseAmount - discountAmount);
 
@@ -95,15 +98,16 @@ const CheckoutForm = ({
     setVerifyingDiscount(true);
 
     try {
-      const result = await verifyEngineeringStudent.mutateAsync(
-        formData.invoiceNumber.trim()
-      );
+      const result = await verifyEngineeringStudent.mutateAsync({
+        invoiceNumber: formData.invoiceNumber.trim(),
+        tableType: selectedTable?.type,
+      });
 
       if (result.success) {
         setDiscountApplied(true);
         showToast(
           `Engineering Discount Applied - ₦${(
-            ENGINEERING_DISCOUNT_PER_SEAT * selectedSeats.length
+            discountPerSeat * selectedSeats.length
           ).toLocaleString()} off`,
           TOAST_TYPES.SUCCESS
         );
@@ -660,8 +664,8 @@ const CheckoutForm = ({
                       <div className="flex items-center gap-2">
                         <CheckCircle size={14} />
                         <span>
-                          Verified! ₦2,000 off each seat (₦
-                          {discountAmount.toLocaleString()} total).
+                          Verified! ₦{discountPerSeat.toLocaleString()} off each
+                          seat (₦{discountAmount.toLocaleString()} total).
                         </span>
                       </div>
                       <button

@@ -5,7 +5,7 @@ import { Booking } from "../models/bookingModel.js";
 import { Seat } from "../models/seatModel.js";
 import {
   markDiscountUsed,
-  ENGINEERING_DISCOUNT_AMOUNT,
+  getEngineeringDiscountPerSeat,
 } from "./discountController.js";
 import { Student } from "../models/studentModel.js";
 import { sendConfirmationEmail } from "../utils/emailService.js";
@@ -133,8 +133,9 @@ export const createBooking = async (req, res) => {
 
       if(student) {
         discountApplied = true
-        // ₦2,000 off EACH seat (not a flat amount for the whole booking)
-        discountAmount = ENGINEERING_DISCOUNT_AMOUNT * (seatIds?.length || 0)
+        // Tier-based discount off EACH seat (not a flat amount for the booking)
+        discountAmount =
+          getEngineeringDiscountPerSeat(tableType) * (seatIds?.length || 0)
         finalAmount = Math.max(0, baseAmount - discountAmount)
         engineeringStudentRef = student._id
       }

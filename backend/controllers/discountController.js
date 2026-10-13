@@ -1,11 +1,24 @@
 import { Student } from "../models/studentModel.js";
 
-//fixed discount amount
+//fixed discount amount (default / Bronze + Gold)
 export const ENGINEERING_DISCOUNT_AMOUNT = 2000;
+
+// Engineering students get a tier-based discount per seat:
+// Bronze and Gold take ₦2,000 off; Platinum takes ₦3,000 off.
+const ENGINEERING_DISCOUNT_BY_TIER = {
+  REGULAR: 2000,
+  VIP: 2000,
+  VVIP: 3000,
+};
+
+export const getEngineeringDiscountPerSeat = (tableType) =>
+  ENGINEERING_DISCOUNT_BY_TIER[String(tableType || "").toUpperCase()] ??
+  ENGINEERING_DISCOUNT_AMOUNT;
 
 export const verifyEngineeringStudent = async (req, res) => {
   try {
-    const { invoiceNumber } = req.body;
+    const { invoiceNumber, tableType } = req.body;
+    const perSeat = getEngineeringDiscountPerSeat(tableType);
 
     if (!invoiceNumber) {
       return res.status(400).json({
@@ -37,10 +50,9 @@ export const verifyEngineeringStudent = async (req, res) => {
     // Return success with student info and discount amount
     res.json({
       success: true,
-      message:
-        "Engineering student verified successfully. ₦2,000 off per seat!",
+      message: `Engineering student verified successfully. ₦${perSeat.toLocaleString()} off per seat!`,
       discount: {
-        amount: ENGINEERING_DISCOUNT_AMOUNT,
+        amount: perSeat,
         type: "fixed",
         applicableTo: "all tiers",
       },

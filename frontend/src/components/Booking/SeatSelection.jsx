@@ -480,7 +480,7 @@ const SeatSelection = ({
                     <span className="text-[#d4af37] font-semibold">
                       Engineering students who have paid their dues
                     </span>{' '}
-                    enjoy <span className="text-[#fcf6ba] font-semibold">₦2,000 off each seat</span>.
+                    enjoy <span className="text-[#fcf6ba] font-semibold">₦{(selectedTable?.type === 'VVIP' ? 3000 : 2000).toLocaleString()} off each seat</span>.
                     Simply enter your invoice number at checkout to apply the discount.
                   </p>
                 </div>

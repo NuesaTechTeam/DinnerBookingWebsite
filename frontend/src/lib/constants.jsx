@@ -66,12 +66,12 @@ export const faqs = [
   {
     question: "Is there a special discount for engineering students?",
     answer:
-      "Yes, engineering students enjoy a special discount of ₦2,000 per seat on every table type (Bronze, Gold and Platinum). Use the invoice number on your NUESA receipt as the coupon code when making reservations for your seats.",
+      "Yes, engineering students enjoy a special discount of ₦2,000 per seat on Bronze and Gold tables, and ₦3,000 per seat on Platinum tables. Use the invoice number on your NUESA receipt as the coupon code when making reservations for your seats.",
   },
   {
     question: "How can I avail the engineering student discount?",
     answer:
-      "To get the ₦2,000 engineering student discount, you must have: 1) Paid your NUESA fees and received a receipt, 2) Submitted your invoice number and details through the official Google Form sent by NUESA. Once submitted and verified, enter your invoice number during checkout for automatic discount application. This discount is available on every table type.",
+      "To get the engineering student discount (₦2,000 per seat on Bronze and Gold, ₦3,000 per seat on Platinum), you must have: 1) Paid your NUESA fees and received a receipt, 2) Submitted your invoice number and details through the official Google Form sent by NUESA. Once submitted and verified, enter your invoice number during checkout for automatic discount application. This discount is available on every table type.",
   },
   {
     question: "How many types of seats are available?",
@@ -111,7 +111,7 @@ export const faqs = [
   {
     question: "Can I get the discount for Platinum tables?",
     answer:
-      "Yes, the engineering student discount is available on all table bookings, including Platinum.",
+      "Yes, the engineering student discount is available on all table bookings, including Platinum. Platinum seats get ₦3,000 off per seat, while Bronze and Gold get ₦2,000 off per seat.",
   },
   {
     question:

@@ -11,17 +11,19 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 // Executive reservation plan (password-gated, payable).
 // VVIP: 12 round tables x 4 seats = 48 seats; reserve 42, leave 6 free.
-// VIP:  reserve 11 seats from the first tables, plus 6 seats on VIP-5.
+// VIP (Gold): reserve the whole of VIP-2, plus the first seats of VIP-1, plus 6 seats on VIP-5.
 const VVIP_TABLES = 12;
 const VVIP_SEATS_PER_TABLE = 4;
 const VVIP_PRICE = 30000;
 
-const CONTIGUOUS = [
-  { type: "VVIP", reserve: 42 },
-  { type: "VIP", reserve: 11 },
-];
+const CONTIGUOUS = [{ type: "VVIP", reserve: 42 }];
 
-const EXTRA_TABLES = [{ tableNumber: "VIP-5", seats: 6 }];
+// VIP (Gold) reservations: full table on VIP-2, partial on VIP-1, plus VIP-5.
+const VIP_TABLES = [
+  { tableNumber: "VIP-2", seats: 8 },
+  { tableNumber: "VIP-1", seats: 3 },
+  { tableNumber: "VIP-5", seats: 6 },
+];
 
 const tableNum = (table) => Number(String(table.tableNumber).split("-").pop());
 
@@ -115,8 +117,9 @@ const run = async () => {
 
     await ensureVvipTables();
     for (const { type } of CONTIGUOUS) await resetType(type);
+    await resetType("VIP");
     for (const { type, reserve } of CONTIGUOUS) await reserveContiguous(type, reserve);
-    for (const { tableNumber, seats } of EXTRA_TABLES) await reserveTableSeats(tableNumber, seats);
+    for (const { tableNumber, seats } of VIP_TABLES) await reserveTableSeats(tableNumber, seats);
 
     for (const type of ["VVIP", "VIP"]) {
       const tables = await Table.find({ type }).lean();
