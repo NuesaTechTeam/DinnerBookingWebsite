@@ -6,12 +6,11 @@ const tableConfigs = [
   {
     type: "VVIP",
     shape: "ROUND",
-    // 10 VVIP tables, 4 seats each (round).
-    // Layout: first 5 render on the left (student tables), last 5 on the right.
-    // Right column: table 6 is a student table, tables 7-10 are auto-reserved/booked.
-    capacities: Array(10).fill(4),
+    // 12 VVIP tables, 4 seats each (round).
+    // Layout: first 6 render on the left, last 6 on the right.
+    // Executive seats are password-gated via utils/reserveExecutiveSeats.js.
+    capacities: Array(12).fill(4),
     pricePerSeat: 30000,
-    reservedTableNumbers: ["VVIP-7", "VVIP-8", "VVIP-9", "VVIP-10"],
   },
   {
     type: "VIP",
