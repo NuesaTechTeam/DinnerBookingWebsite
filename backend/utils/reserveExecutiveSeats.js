@@ -11,12 +11,17 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 // Executive reservation plan (password-gated, payable).
 // VVIP: 12 round tables x 4 seats = 48 seats; reserve 42, leave 6 free.
-// VIP:  6 long tables x 8 seats; reserve 11 seats.
+// VIP:  reserve 11 seats from the first tables, plus 6 seats on VIP-5.
 const VVIP_TABLES = 12;
 const VVIP_SEATS_PER_TABLE = 4;
 const VVIP_PRICE = 30000;
-const VVIP_RESERVE = 42;
-const VIP_RESERVE = 11;
+
+const CONTIGUOUS = [
+  { type: "VVIP", reserve: 42 },
+  { type: "VIP", reserve: 11 },
+];
+
+const EXTRA_TABLES = [{ tableNumber: "VIP-5", seats: 6 }];
 
 const tableNum = (table) => Number(String(table.tableNumber).split("-").pop());
 
@@ -50,18 +55,19 @@ const ensureVvipTables = async () => {
   }
 };
 
-const reserveType = async (type, count) => {
-  const tables = (await Table.find({ type })).sort((a, b) => tableNum(a) - tableNum(b));
+const resetType = async (type) => {
+  const tables = await Table.find({ type }).lean();
   const tableIds = tables.map((t) => t._id);
-
-  // Reset any previous reservation / seeded hold for this tier.
   await Seat.updateMany(
     { table: { $in: tableIds } },
     { isBooked: false, isReserved: false, reservedFor: "" }
   );
   await Table.updateMany({ _id: { $in: tableIds } }, { bookedSeats: [] });
+};
 
-  const seats = await Seat.find({ table: { $in: tableIds } });
+const reserveContiguous = async (type, count) => {
+  const tables = (await Table.find({ type })).sort((a, b) => tableNum(a) - tableNum(b));
+  const seats = await Seat.find({ table: { $in: tables.map((t) => t._id) } });
   seats.sort(
     (a, b) =>
       Number(String(a.seatNumber).split("-")[1]) - Number(String(b.seatNumber).split("-")[1]) ||
@@ -73,10 +79,23 @@ const reserveType = async (type, count) => {
     { _id: { $in: chosen.map((s) => s._id) } },
     { isReserved: true, reservedFor: "Executive" }
   );
+  console.log(`Reserved ${chosen.length}/${count} ${type} seat(s) (contiguous)`);
+  console.log(`  ${chosen.map((s) => s.seatNumber).join(", ")}`);
+};
 
-  console.log(
-    `Reserved ${chosen.length}/${count} ${type} seat(s) across ${tables.length} table(s)`
+const reserveTableSeats = async (tableNumber, count) => {
+  const table = await Table.findOne({ tableNumber });
+  if (!table) {
+    console.warn(`Table ${tableNumber} not found`);
+    return;
+  }
+  const seats = (await Seat.find({ table: table._id })).sort((a, b) => seatIndex(a) - seatIndex(b));
+  const chosen = seats.slice(0, count);
+  await Seat.updateMany(
+    { _id: { $in: chosen.map((s) => s._id) } },
+    { isReserved: true, reservedFor: "Executive" }
   );
+  console.log(`Reserved ${chosen.length}/${count} seat(s) on ${tableNumber}`);
   console.log(`  ${chosen.map((s) => s.seatNumber).join(", ")}`);
 };
 
@@ -95,12 +114,18 @@ const run = async () => {
     }
 
     await ensureVvipTables();
-    await reserveType("VVIP", VVIP_RESERVE);
-    await reserveType("VIP", VIP_RESERVE);
+    for (const { type } of CONTIGUOUS) await resetType(type);
+    for (const { type, reserve } of CONTIGUOUS) await reserveContiguous(type, reserve);
+    for (const { tableNumber, seats } of EXTRA_TABLES) await reserveTableSeats(tableNumber, seats);
 
-    const reserved = await Seat.countDocuments({ isReserved: true });
-    const booked = await Seat.countDocuments({ isBooked: true });
-    console.log(`Totals -> reserved: ${reserved}, booked: ${booked}`);
+    for (const type of ["VVIP", "VIP"]) {
+      const tables = await Table.find({ type }).lean();
+      const c = await Seat.countDocuments({
+        table: { $in: tables.map((t) => t._id) },
+        isReserved: true,
+      });
+      console.log(`${type} reserved now: ${c}`);
+    }
     console.log("Done.");
   } catch (error) {
     console.error("Error applying reservations:", error);

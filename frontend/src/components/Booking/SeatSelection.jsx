@@ -256,7 +256,7 @@ const SeatSelection = ({
                 className="bg-[#050505] border border-gray-800 rounded-2xl p-3 sm:p-4"
               >
                 <p className="text-[11px] sm:text-xs text-gray-400 font-light mb-2.5 text-center">
-                  Reserved an executive seat? Enter your access code to unlock and pay for it.
+                  Have a pre-reserved seat? Enter your access code to unlock it and pay.
                 </p>
                 <div className="flex gap-2">
                   <input
