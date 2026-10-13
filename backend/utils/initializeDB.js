@@ -13,11 +13,12 @@ const tableConfigs = [
     pricePerSeat: 30000,
   },
   {
-    type: "VIP",
-    shape: "LONG",
-    // 6 Gold tables x 8 seats each (long/banquet)
-    capacities: Array(6).fill(8),
-    pricePerSeat: 20000,
+    type: "VVIP",
+    shape: "ROUND",
+    // 14 Platinum tables x 4 seats each (round)
+    // 7 per side: front row of 4 and back row of 3.
+    capacities: Array(14).fill(4),
+    pricePerSeat: 30000,
   },
   {
     type: "REGULAR",

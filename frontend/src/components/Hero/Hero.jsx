@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { motion as Motion } from 'framer-motion';
 import heroBg from '../../assets/hero background.png';
 
@@ -119,16 +118,6 @@ const Hero = () => {
           variants={item}
           className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 mb-12 w-full justify-center"
         >
-          <Link to="/book" className="w-full sm:w-auto">
-            <Motion.button
-              whileHover={{ scale: 1.04, y: -2 }}
-              whileTap={{ scale: 0.97 }}
-              className="w-full sm:w-auto bg-gradient-to-r from-[#b38728] via-[#fcf6ba] to-[#aa7c11] text-black font-extrabold text-xs sm:text-sm tracking-widest px-8 py-3.5 rounded-lg shadow-[0_0_20px_rgba(212,175,55,0.35)] hover:brightness-110 transition-all cursor-pointer uppercase"
-            >
-              RESERVE YOUR TABLE
-            </Motion.button>
-          </Link>
-
           <a href="#packages" className="w-full sm:w-auto">
             <Motion.button
               whileHover={{ scale: 1.04, y: -2 }}

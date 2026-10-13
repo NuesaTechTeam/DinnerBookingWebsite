@@ -32,14 +32,25 @@ const getSeatLabel = (seatNumber) => {
   return match ? match[1] : seatNumber;
 };
 
+const tableNumberValue = (tableNumber) => {
+  const parts = String(tableNumber || '').split('-');
+  return Number(parts[parts.length - 1]) || 0;
+};
+
 const groupByTier = (tablesData) => {
   if (Array.isArray(tablesData)) {
-    return tablesData.reduce((acc, table) => {
+    const groups = tablesData.reduce((acc, table) => {
       const key = table?.type || 'OTHER';
       if (!acc[key]) acc[key] = [];
       acc[key].push(table);
       return acc;
     }, {});
+    Object.values(groups).forEach((list) =>
+      list.sort(
+        (a, b) => tableNumberValue(a.tableNumber) - tableNumberValue(b.tableNumber)
+      )
+    );
+    return groups;
   }
   return tablesData || {};
 };
@@ -302,7 +313,7 @@ const SeatSelection = ({
                 const rightTables = list.slice(mid);
                 const sideColumns =
                   tier.key === 'VVIP'
-                    ? 'grid-cols-3 gap-1.5 sm:gap-3'
+                    ? 'grid-cols-4 gap-1.5 sm:gap-3'
                     : tier.key === 'VIP'
                     ? 'grid-cols-2 gap-2 sm:gap-3'
                     : 'grid-cols-4 gap-1.5 sm:gap-2';
