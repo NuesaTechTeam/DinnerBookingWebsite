@@ -10,20 +10,20 @@ dotenv.config();
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 // Executive reservation plan (password-gated, payable).
-// VVIP: 14 round tables x 4 seats = 56 seats; reserve 42, leave 14 free.
-// VIP (Gold): reserve the whole of VIP-2, plus the first seats of VIP-1, plus 6 seats on VIP-4.
+// VVIP: 14 round tables x 4 seats = 56 seats; reserve 44, leave 12 free.
+// VIP (Gold): reserve the whole of VIP-2, the first 4 seats of VIP-1, plus 6 seats on VIP-4.
 const VVIP_TABLES = 14;
 const VVIP_SEATS_PER_TABLE = 4;
 const VVIP_PRICE = 30000;
 
-const CONTIGUOUS = [{ type: "VVIP", reserve: 42 }];
+const CONTIGUOUS = [{ type: "VVIP", reserve: 44 }];
 
-// VIP (Gold) reservations: full table on VIP-2, partial on VIP-1, plus VIP-4.
+// VIP (Gold) reservations: full table on VIP-2, first 4 seats on VIP-1, plus VIP-4.
 // On VIP-4 the four seats in the bottom row (S5-S8) face the stage, so the
 // majority of reserved seats face the stage; the other two (S1-S2) do not.
 const VIP_TABLES = [
   { tableNumber: "VIP-2", seats: 8 },
-  { tableNumber: "VIP-1", seats: 3 },
+  { tableNumber: "VIP-1", seats: 4 },
   { tableNumber: "VIP-4", seatNumbers: [1, 2, 5, 6, 7, 8] },
 ];
 
