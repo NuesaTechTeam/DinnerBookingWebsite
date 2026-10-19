@@ -21,6 +21,8 @@ export const apiLimiter = rateLimit({
   skip: (req) =>
     req.method === "OPTIONS" ||
     req.path.startsWith("/student") ||
+    // Payment confirmation must never be blocked - money has already moved
+    req.path.startsWith("/payment") ||
     req.path.startsWith("/admin"),
   message: {
     success: false,

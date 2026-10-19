@@ -204,15 +204,18 @@ const CheckoutForm = ({
         );
       }
     } catch (error) {
-      const networkIssue =
+      const status = error.response?.status;
+      const retryable =
         !error.response ||
         error.code === "ECONNABORTED" ||
-        error.message === "Network Error";
+        error.message === "Network Error" ||
+        status === 429 ||
+        status >= 500;
 
       // The money is safe - just retry confirming before worrying the user
-      if (networkIssue && attempt < 3) {
+      if (retryable && attempt < 5) {
         showToast(
-          `Payment received. Confirming... (attempt ${attempt}/3)`,
+          `Payment received. Confirming... (attempt ${attempt}/5)`,
           TOAST_TYPES.INFO
         );
         setTimeout(
@@ -223,7 +226,7 @@ const CheckoutForm = ({
       }
 
       showToast(
-        `Could not confirm your payment automatically. Your payment reference is ${reference}. Please keep it and contact support - do not pay again.`,
+        `We're still confirming your payment - your ticket will be emailed once it's confirmed. Your payment reference is ${reference}; keep it and contact support if no email arrives within an hour. Do not pay again.`,
         TOAST_TYPES.ERROR
       );
     }
@@ -321,6 +324,12 @@ const CheckoutForm = ({
               ...paystackConfig,
               email: cleaned.email,
               amount: amountForPaystack,
+              // Server-issued reference so the backend can always look this
+              // payment up on Paystack, even if this tab never reports back
+              // (older backends issue "pending_..." refs Paystack would reject)
+              ...(String(bookingResponse.booking.paystackRef || "").startsWith("nd-")
+                ? { reference: bookingResponse.booking.paystackRef }
+                : {}),
               metadata: {
                 ...paystackConfig.metadata,
                 bookingId: bookingId,

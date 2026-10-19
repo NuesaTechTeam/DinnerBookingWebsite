@@ -12,6 +12,15 @@ import { sendConfirmationEmail } from "../utils/emailService.js";
 import { Table } from "../models/tableModel.js";
 import { logActivity } from "../utils/activity.js";
 import { getMealOptions } from "../utils/meals.js";
+import { checkPendingBooking } from "./paymentController.js";
+
+// How long an unpaid reservation holds its seats. The seat lock and the
+// booking expiry must match, or a seat can be resold while its first buyer is
+// still paying.
+const HOLD_MINUTES = 30;
+// Bank transfers can take a while to land - keep holding seats this long while
+// Paystack still reports the payment as in progress.
+const MAX_IN_FLIGHT_MINUTES = 6 * 60;
 
 // A short, human-typeable 6-digit entry code shown on the ticket email.
 // Falls back to 8 digits in the (very unlikely) event of a collision.
@@ -34,28 +43,43 @@ export const createBooking = async (req, res) => {
     });
   }
 
+  const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, tableType, reservedPassword, meals } = req.body;
+
+  //Reject bad details BEFORE locking seats or creating anything -
+  //an invalid email would otherwise only be caught by Paystack mid-payment
+  const cleanEmail = String(email || "").trim().toLowerCase();
+  if (!validator.isEmail(cleanEmail)) {
+    return res.status(400).json({
+      success: false,
+      message: "Please enter a valid email address",
+    });
+  }
+
+  // Ask Paystack about this guest's earlier unpaid holds before releasing
+  // them: a "pending" hold may actually be paid (callback never reached us)
+  // or a transfer still on its way. Only truly unpaid ones are released.
+  const releasableIds = [];
+  try {
+    const earlierHolds = await Booking.find({
+      email: cleanEmail,
+      status: "pending",
+      paymentVerified: { $ne: true },
+    });
+    for (const hold of earlierHolds) {
+      if ((await checkPendingBooking(hold)) === "unpaid") releasableIds.push(hold._id);
+    }
+  } catch (error) {
+    console.error("Could not check earlier holds:", error);
+  }
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, tableType, reservedPassword, meals } = req.body;
-
-    //Reject bad details BEFORE locking seats or creating anything -
-    //an invalid email would otherwise only be caught by Paystack mid-payment
-    const cleanEmail = String(email || "").trim().toLowerCase();
-    if (!validator.isEmail(cleanEmail)) {
-      await session.abortTransaction();
-      session.endSession();
-      return res.status(400).json({
-        success: false,
-        message: "Please enter a valid email address",
-      });
-    }
-
     // Release this guest's own earlier unpaid holds so an abandoned attempt
     // (closed Paystack popup, refresh, etc.) never blocks their retry
     const staleHolds = await Booking.find({
-      email: cleanEmail,
+      _id: { $in: releasableIds },
       status: "pending",
       paymentVerified: { $ne: true },
     }).session(session);
@@ -100,8 +124,8 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    //Lock seats for 15 minutes to allow payment
-    const lockExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    //Lock seats for the whole hold window to allow payment
+    const lockExpiry = new Date(Date.now() + HOLD_MINUTES * 60 * 1000);
     await Seat.updateMany(
       { _id: { $in: seatIds } },
       { lockedUntil: lockExpiry },
@@ -177,9 +201,10 @@ export const createBooking = async (req, res) => {
       trxref: `pending_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`,
-      paystackRef: `pending_${Date.now()}_${Math.random()
-        .toString(36)
-        .substr(2, 9)}`,
+      // Real Paystack reference, handed to the popup, so the server can always
+      // ask Paystack whether this reservation was paid (Paystack allows only
+      // letters, digits, "-", "." and "=")
+      paystackRef: `nd-${Date.now()}-${crypto.randomBytes(5).toString("hex")}`,
       status: "pending",
     });
 
@@ -464,16 +489,36 @@ export const cleanupExpiredLocks = async () => {
       } expired seat locks`
     );
 
-    //Remove reservations that were never paid for
-    const expiredBookings = await Booking.find({
+    //Remove reservations that were never paid for - but only after Paystack
+    //confirms they were not paid. Paid ones are confirmed instead, and ones
+    //with a payment still in progress keep holding their seats.
+    const candidates = await Booking.find({
       status: "pending",
-      createdAt: { $lte: new Date(Date.now() - 30 * 60 * 1000) },
+      createdAt: { $lte: new Date(Date.now() - HOLD_MINUTES * 60 * 1000) },
     });
 
+    const expiredBookings = [];
+    for (const booking of candidates) {
+      const state = await checkPendingBooking(booking);
+      const ageMinutes = (Date.now() - booking.createdAt.getTime()) / 60000;
+      if (state === "unpaid" || (state === "in_flight" && ageMinutes > MAX_IN_FLIGHT_MINUTES)) {
+        expiredBookings.push(booking);
+      } else if (state === "in_flight") {
+        await Seat.updateMany(
+          { _id: { $in: booking.seats }, isBooked: false },
+          { lockedUntil: new Date(Date.now() + 15 * 60 * 1000) }
+        );
+      }
+    }
+
     for (const booking of expiredBookings) {
-      //Update seats associated with this expired booking
+      //Update seats associated with this expired booking (never touch a seat
+      //another booking has since paid for)
       await Seat.updateMany(
-        { _id: { $in: booking.seats } },
+        {
+          _id: { $in: booking.seats },
+          $or: [{ isBooked: false }, { bookedBy: booking._id }],
+        },
         {
           lockedUntil: null,
           isBooked: false,
@@ -577,6 +622,26 @@ export const getBookingsByEmail = async (req, res) => {
 
 // Remove an unpaid reservation (only reachable before payment succeeds)
 export const cancelBooking = async (req, res) => {
+  // The popup's close event also fires when a guest closes it while a bank
+  // transfer is still landing - ask Paystack before removing anything.
+  try {
+    const pending = await Booking.findById(req.params.id);
+    if (pending && pending.status === "pending") {
+      const state = await checkPendingBooking(pending);
+      if (state !== "unpaid") {
+        return res.status(400).json({
+          success: false,
+          message:
+            state === "paid"
+              ? "Payment received - your reservation is confirmed"
+              : "Your payment is still being processed - your seats are held",
+        });
+      }
+    }
+  } catch (error) {
+    console.error("Cancel booking pre-check error:", error);
+  }
+
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -604,9 +669,12 @@ export const cancelBooking = async (req, res) => {
       });
     }
 
-    // Release the seats it was holding
+    // Release the seats it was holding (not ones another booking paid for)
     await Seat.updateMany(
-      { _id: { $in: booking.seats } },
+      {
+        _id: { $in: booking.seats },
+        $or: [{ isBooked: false }, { bookedBy: booking._id }],
+      },
       {
         isBooked: false,
         bookedBy: null,

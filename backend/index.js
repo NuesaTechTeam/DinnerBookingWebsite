@@ -77,7 +77,8 @@ const corsOptions = {
 // Otherwise the browser reports a misleading "No Access-Control-Allow-Origin".
 app.use(cors(corsOptions));
 app.use(apiLimiter);
-app.use(express.json({ strict: false }));
+// Keep the raw body so the Paystack webhook signature can be checked
+app.use(express.json({ strict: false, verify: (req, res, buf) => { req.rawBody = buf; } }));
 app.use(logger);
 
 //api creation
