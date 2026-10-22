@@ -95,8 +95,16 @@ export const getEmailOverview = async ({ force = false } = {}) => {
     else if ([...kinds].some((k) => FAILED.includes(k))) status = "failed";
     else if (kinds.size > 0 && status === "not_sent") status = "sent";
 
-    if (status !== b.emailStatus) {
-      await Booking.updateOne({ _id: b._id }, { emailStatus: status });
+    // Only trust Brevo's view when it was actually read. Bookings made before
+    // tracking existed have no stored status yet - store Brevo's verdict so the
+    // ticket retry job can pick up any that never reached the guest.
+    const unstored = b.$isDefault("emailStatus");
+    if (brevoInfo.ok && (status !== b.emailStatus || unstored)) {
+      await Booking.updateOne(
+        { _id: b._id },
+        { emailStatus: status },
+        { timestamps: false }
+      );
     }
 
     list.push({

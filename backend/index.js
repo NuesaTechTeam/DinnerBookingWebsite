@@ -14,6 +14,7 @@ import discountRoute from "./routes/discountRoute.js"
 import studentRoute from "./routes/studentRoute.js"
 import adminRoute from "./routes/adminRoute.js"
 import { cleanupExpiredLocks } from "./controllers/bookingController.js";
+import { retryUnsentTickets } from "./utils/ticketRetry.js";
 import initializeDatabase from "./utils/initializeDB.js";
 import syncExistingTables from "./utils/syncExistingTables.js";
 import { ensureBootstrapAdmin } from "./utils/bootstrapAdmin.js";
@@ -120,6 +121,11 @@ cleanupExpiredLocks()
 //Then run every 10 minutes
 setInterval(cleanupExpiredLocks, 10 * 60 * 1000);
 console.log("Seat lock cleanup scheduled to run every 10 minutes");
+
+// Make sure every paid booking's ticket reaches the guest (retries failures)
+setTimeout(retryUnsentTickets, 60 * 1000);
+setInterval(retryUnsentTickets, 10 * 60 * 1000);
+console.log("Ticket email retry scheduled to run every 10 minutes");
 
 process.on("unhandledRejection", (reason, promise) => {
   console.log(`Unhandled Rejection at: ${promise}, reason: ${reason}`);
