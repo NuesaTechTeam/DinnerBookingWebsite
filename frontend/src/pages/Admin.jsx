@@ -16,6 +16,9 @@ import {
   Camera,
   X,
   Download,
+  Mail,
+  Send,
+  MailWarning,
 } from "lucide-react";
 import AdminAPI from "../utils/endpoints/adminApi.js";
 import logo from "../assets/logo.png";
@@ -167,6 +170,278 @@ const StatCard = ({ icon: Icon, label, value, sub }) => (
     </div>
   </div>
 );
+
+const EMAIL_STYLES = {
+  delivered: "bg-emerald-500/10 text-emerald-400 border-emerald-500/40",
+  sent: "bg-sky-500/10 text-sky-400 border-sky-500/40",
+  failed: "bg-red-500/10 text-red-400 border-red-500/40",
+  not_sent: "bg-amber-500/10 text-amber-400 border-amber-500/40",
+};
+const EMAIL_LABELS = {
+  delivered: "delivered",
+  sent: "sent",
+  failed: "failed",
+  not_sent: "not sent",
+};
+
+// Who has booked, whether their ticket email reached them, and how many
+// sends are left on the Brevo plan.
+const TicketsPanel = ({ token, onLogout }) => {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState("");
+  const [msg, setMsg] = useState(null);
+  const [filter, setFilter] = useState("all");
+
+  const load = useCallback(
+    async (refresh = false) => {
+      setError("");
+      try {
+        const res = await AdminAPI.getEmailOverview(token, refresh);
+        setData(res.data);
+      } catch (err) {
+        if (err.response?.status === 401) return onLogout();
+        setError(err.response?.data?.message || err.message || "Failed to load");
+      } finally {
+        setLoading(false);
+      }
+    },
+    [token, onLogout]
+  );
+
+  useEffect(() => {
+    load();
+    const interval = setInterval(() => load(), 120000);
+    return () => clearInterval(interval);
+  }, [load]);
+
+  const s = data?.summary;
+  const outstanding = (s?.notSent ?? 0) + (s?.failed ?? 0);
+  const plan = data?.brevo?.plan;
+
+  const sendRemaining = async () => {
+    if (
+      !window.confirm(
+        `Email tickets to ${outstanding} guest(s) who have not received one?`
+      )
+    )
+      return;
+    setBusy("all");
+    setMsg(null);
+    try {
+      const res = await AdminAPI.sendRemainingTickets(token);
+      setMsg({ type: "success", text: res.message });
+    } catch (err) {
+      if (err.response?.status === 401) return onLogout();
+      setMsg({ type: "error", text: err.response?.data?.message || err.message });
+    } finally {
+      setBusy("");
+      load(true);
+    }
+  };
+
+  const resendOne = async (row) => {
+    if (!window.confirm(`Email the ticket to ${row.email} again?`)) return;
+    setBusy(row._id);
+    setMsg(null);
+    try {
+      const res = await AdminAPI.resendTicket(token, row._id);
+      setMsg({ type: "success", text: res.message });
+    } catch (err) {
+      if (err.response?.status === 401) return onLogout();
+      setMsg({ type: "error", text: err.response?.data?.message || err.message });
+    } finally {
+      setBusy("");
+      load(true);
+    }
+  };
+
+  const rows = (data?.list || []).filter(
+    (r) => filter === "all" || r.emailStatus === filter
+  );
+
+  return (
+    <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden">
+      <div className="p-4 sm:p-5 border-b border-gray-800 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-sm font-bold tracking-widest text-[#d4af37] uppercase">
+          Guests & Ticket Emails
+        </h2>
+        <div className="flex flex-wrap items-center gap-2">
+          {data?.syncedAt && (
+            <span className="text-[10px] text-gray-500">
+              Brevo synced {fmtDate(data.syncedAt)}
+            </span>
+          )}
+          <button
+            onClick={() => load(true)}
+            className="flex items-center gap-2 text-xs border border-gray-700 hover:border-[#d4af37] text-gray-300 hover:text-[#d4af37] px-3 py-2 rounded-lg transition-colors cursor-pointer"
+          >
+            <RefreshCw size={13} /> Sync
+          </button>
+          <button
+            onClick={sendRemaining}
+            disabled={!!busy || outstanding === 0 || !data?.brevo?.ok}
+            className="flex items-center gap-2 text-xs bg-[#d4af37]/10 border border-[#d4af37]/40 text-[#d4af37] px-3 py-2 rounded-lg hover:bg-[#d4af37]/20 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer"
+          >
+            <Send size={13} />
+            {busy === "all" ? "Sending..." : `Send ${outstanding} outstanding`}
+          </button>
+        </div>
+      </div>
+
+      {loading ? (
+        <p className="px-4 py-8 text-center text-gray-500 text-xs">Loading...</p>
+      ) : (
+        <div className="p-4 sm:p-5 space-y-4">
+          {error && (
+            <div className="bg-red-950/40 border border-red-800 text-red-300 p-3 rounded-lg text-xs">
+              {error}
+            </div>
+          )}
+          {data && !data.brevo.ok && (
+            <div className="bg-amber-950/40 border border-amber-800 text-amber-300 p-3 rounded-lg text-xs">
+              Could not reach Brevo ({data.brevo.error}). Showing the last
+              recorded status for each ticket.
+            </div>
+          )}
+          {msg && (
+            <div
+              className={`p-3 rounded-lg text-xs ${
+                msg.type === "success"
+                  ? "bg-emerald-950/40 border border-emerald-800 text-emerald-300"
+                  : "bg-red-950/40 border border-red-800 text-red-300"
+              }`}
+            >
+              {msg.text}
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <StatCard
+              icon={Users}
+              label="People Booked"
+              value={s?.people ?? 0}
+              sub={`${s?.seats ?? 0} seats paid for`}
+            />
+            <StatCard
+              icon={Mail}
+              label="Tickets Delivered"
+              value={`${s?.delivered ?? 0} / ${s?.people ?? 0}`}
+              sub={`${s?.sent ?? 0} sent, awaiting delivery`}
+            />
+            <StatCard
+              icon={MailWarning}
+              label="Not Received"
+              value={outstanding}
+              sub={`${s?.notSent ?? 0} never sent · ${s?.failed ?? 0} failed`}
+            />
+            <StatCard
+              icon={Send}
+              label="Brevo Emails Left"
+              value={
+                plan?.creditsLeft != null
+                  ? plan.creditsLeft.toLocaleString()
+                  : "—"
+              }
+              sub={
+                plan
+                  ? `${plan.type} plan · resets ${plan.resets}${
+                      data?.brevo?.sentThisMonth != null
+                        ? ` · ${data.brevo.sentThisMonth} sent this month`
+                        : ""
+                    }`
+                  : "plan unavailable"
+              }
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="bg-black/60 border border-gray-800 rounded-lg px-2 py-2 text-xs text-white focus:border-[#d4af37] outline-none"
+            >
+              <option value="all">All guests</option>
+              <option value="delivered">Delivered</option>
+              <option value="sent">Sent</option>
+              <option value="not_sent">Not sent</option>
+              <option value="failed">Failed</option>
+            </select>
+            <span className="text-[10px] text-gray-500">
+              {rows.length} shown
+            </span>
+          </div>
+
+          <div className="overflow-x-auto max-h-[50vh] overflow-y-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="sticky top-0 bg-[#0d0d0d] text-gray-400 uppercase text-[10px] tracking-widest">
+                <tr>
+                  <th className="px-3 py-2">Guest</th>
+                  <th className="px-3 py-2">Seats</th>
+                  <th className="px-3 py-2">Ticket email</th>
+                  <th className="px-3 py-2"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={4} className="px-3 py-6 text-center text-gray-500">
+                      No guests in this view.
+                    </td>
+                  </tr>
+                )}
+                {rows.map((r) => (
+                  <tr key={r._id} className="border-t border-gray-800/70">
+                    <td className="px-3 py-2">
+                      <p className="text-white font-semibold">{r.name}</p>
+                      <p className="text-gray-400 text-[11px]">{r.email}</p>
+                      <p className="text-gray-500 text-[10px]">
+                        #{r.code} · booked {fmtDate(r.createdAt)}
+                      </p>
+                    </td>
+                    <td className="px-3 py-2 text-gray-300 text-[11px]">
+                      {r.seats.length} · {r.seats.join(", ")}
+                    </td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`inline-block px-2 py-1 rounded-full text-[10px] font-bold uppercase border ${
+                          EMAIL_STYLES[r.emailStatus] || EMAIL_STYLES.not_sent
+                        }`}
+                      >
+                        {EMAIL_LABELS[r.emailStatus] || r.emailStatus}
+                      </span>
+                      {r.emailSentAt && (
+                        <span className="block text-[10px] text-gray-500 mt-1">
+                          {fmtDate(r.emailSentAt)}
+                        </span>
+                      )}
+                      {(r.lastEvent || r.emailError) &&
+                        r.emailStatus !== "delivered" && (
+                          <span className="block text-[10px] text-gray-500 break-words">
+                            {r.emailError || r.lastEvent}
+                          </span>
+                        )}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      <button
+                        onClick={() => resendOne(r)}
+                        disabled={!!busy}
+                        className="text-[10px] border border-gray-700 hover:border-[#d4af37] text-gray-300 hover:text-[#d4af37] px-2 py-1 rounded-lg disabled:opacity-40 transition-colors cursor-pointer"
+                      >
+                        {busy === r._id ? "..." : "Resend"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const TeamAccess = ({ token, onLogout }) => {
   const [users, setUsers] = useState([]);
@@ -1065,6 +1340,9 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
             sub={`${stats?.students ?? 0} students verified`}
           />
         </div>
+
+        {/* Guests + ticket email delivery + Brevo allowance */}
+        <TicketsPanel token={token} onLogout={onLogout} />
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
           {/* Bookings table */}

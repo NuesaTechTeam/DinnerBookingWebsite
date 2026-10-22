@@ -119,6 +119,13 @@ const run = async () => {
       amount: base,
       totalAmount: amountPaid,
     });
+    if (!existing && amountPaid + 1 < expected) {
+      // Paid less than full price: they used the engineering discount. Back out
+      // the 3% + ₦100 fee to get the discounted seat total.
+      const paidBase = Math.round((amountPaid - 100) / 1.03);
+      booking.discountApplied = true;
+      booking.discountAmount = Math.max(0, base - paidBase);
+    }
     booking.seats = seatIds;
     booking.meals = meals;
     booking.status = "confirmed";

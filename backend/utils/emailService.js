@@ -1,4 +1,6 @@
 import axios from "axios";
+import mongoose from "mongoose";
+import { Booking } from "../models/bookingModel.js";
 import generateEmailTemplate from "./emailTemplate.js";
 import generateEmailTemplatePresident from "./presidentTemplate.js";
 
@@ -84,21 +86,50 @@ export const sendConfirmationEmail = async (booking) => {
       },
     });
 
-    await sendHtmlEmail({
+    // Always the address the guest typed at checkout - never any other list
+    const result = await sendHtmlEmail({
       to: booking.email,
       subject: confirmationSubject(booking),
       html: generateEmailTemplate(booking, booking.seats),
     });
 
+    await recordEmail(booking, {
+      $set: {
+        emailStatus: "sent",
+        emailSentAt: new Date(),
+        emailMessageId: result?.messageId || "",
+        emailError: "",
+      },
+    });
     return true;
   } catch (error) {
-    console.error(
-      "Error sending confirmation email:",
-      error?.response?.data || error.message
-    );
+    const reason = error?.response?.data || error.message;
+    console.error("Error sending confirmation email:", reason);
+    await recordEmail(booking, {
+      $set: {
+        emailStatus: "failed",
+        emailError: String(
+          typeof reason === "string" ? reason : JSON.stringify(reason)
+        ).slice(0, 300),
+      },
+    });
     return false;
   }
 };
+
+// Persist the ticket email outcome on the booking (never breaks sending)
+const recordEmail = async (booking, update) => {
+  if (!booking?._id || !mongoose.isValidObjectId(booking._id)) return;
+  try {
+    await Booking.updateOne(
+      { _id: booking._id },
+      { ...update, $inc: { emailAttempts: 1 } }
+    );
+  } catch (error) {
+    console.error("Could not record email status:", error.message);
+  }
+};
+
 
 // Send feedback/admin notification
 export const sendFeedbackNotification = async (booking) => {

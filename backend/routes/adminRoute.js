@@ -8,6 +8,8 @@ import {
   getActivity,
   lookupBooking,
   resendConfirmation,
+  getEmailOverview,
+  sendRemainingTickets,
   listUsers,
   createUser,
   updateUser,
@@ -27,6 +29,8 @@ router.get("/stats", getStats);
 router.get("/activity", getActivity);
 router.get("/lookup", lookupBooking);
 router.post("/resend/:bookingId", resendConfirmation);
+router.get("/emails", getEmailOverview);
+router.post("/emails/send-remaining", sendRemainingTickets);
 
 // Admin account management - super admin only
 router.get("/users", requireSuperAdmin, listUsers);

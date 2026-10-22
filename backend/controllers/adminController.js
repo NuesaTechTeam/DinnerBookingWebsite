@@ -8,6 +8,10 @@ import { ActivityLog } from "../models/activityLogModel.js";
 import { logActivity } from "../utils/activity.js";
 import { sendConfirmationEmail } from "../utils/emailService.js";
 import { signAdminToken } from "../middlewares/adminAuth.js";
+import {
+  getEmailOverview as loadEmailOverview,
+  clearEmailOverviewCache,
+} from "../utils/brevoStatus.js";
 
 const USERNAME_RE = /^[a-z0-9_.-]{3,24}$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -149,6 +153,7 @@ export const resendConfirmation = async (req, res) => {
     }
 
     const sent = await sendConfirmationEmail(booking);
+    clearEmailOverviewCache();
     if (!sent) {
       return res.status(502).json({
         success: false,
@@ -168,6 +173,68 @@ export const resendConfirmation = async (req, res) => {
   } catch (error) {
     console.error("Admin resend confirmation error:", error);
     res.status(500).json({ success: false, message: "Failed to resend ticket" });
+  }
+};
+
+// GET /admin/emails  - who has booked and whether their ticket reached them,
+// plus how many sends are left on the Brevo plan. ?refresh=1 skips the cache.
+export const getEmailOverview = async (req, res) => {
+  try {
+    const data = await loadEmailOverview({ force: req.query.refresh === "1" });
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error("Admin email overview error:", error);
+    res.status(500).json({ success: false, message: "Failed to load email status" });
+  }
+};
+
+// POST /admin/emails/send-remaining  - email every confirmed guest whose
+// ticket was never sent or failed. Delivered/sent tickets are never re-sent.
+export const sendRemainingTickets = async (req, res) => {
+  try {
+    const overview = await loadEmailOverview({ force: true });
+    if (!overview.brevo.ok) {
+      return res.status(502).json({
+        success: false,
+        message: `Brevo is unreachable (${overview.brevo.error}) - nothing was sent`,
+      });
+    }
+
+    const targets = overview.list.filter((r) =>
+      ["not_sent", "failed"].includes(r.emailStatus)
+    );
+    const left = overview.brevo.plan?.creditsLeft;
+    if (typeof left === "number" && left < targets.length) {
+      return res.status(400).json({
+        success: false,
+        message: `Only ${left} Brevo sends left but ${targets.length} tickets are outstanding - nothing was sent`,
+      });
+    }
+
+    const results = [];
+    for (const row of targets) {
+      const booking = await Booking.findById(row._id);
+      const ok = booking ? await sendConfirmationEmail(booking) : false;
+      results.push({ email: row.email, ok });
+    }
+    clearEmailOverviewCache();
+
+    const sent = results.filter((r) => r.ok).length;
+    await logActivity(
+      "tickets_sent_bulk",
+      `${req.admin?.sub || "admin"} sent ${sent}/${targets.length} outstanding ticket(s)`
+    );
+
+    res.json({
+      success: true,
+      message: targets.length
+        ? `Sent ${sent} of ${targets.length} outstanding ticket(s)`
+        : "Every confirmed guest already has their ticket",
+      results,
+    });
+  } catch (error) {
+    console.error("Admin send remaining tickets error:", error);
+    res.status(500).json({ success: false, message: "Failed to send tickets" });
   }
 };
 

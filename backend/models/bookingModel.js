@@ -93,6 +93,17 @@ const bookingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Ticket email tracking. "sent" = Brevo accepted it, "delivered" = Brevo
+    // reports it reached the inbox (synced from Brevo's event log).
+    emailStatus: {
+      type: String,
+      enum: ["not_sent", "sent", "delivered", "failed"],
+      default: "not_sent",
+    },
+    emailSentAt: { type: Date },
+    emailMessageId: { type: String },
+    emailError: { type: String },
+    emailAttempts: { type: Number, default: 0 },
   },
   { timestamps: true }
 );

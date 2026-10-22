@@ -52,6 +52,29 @@ const AdminAPI = {
     );
     return response.data;
   },
+  getEmailOverview: async (token, refresh = false) => {
+    const response = await axios.get(
+      `/admin/emails${refresh ? "?refresh=1" : ""}`,
+      authHeaders(token)
+    );
+    return response.data;
+  },
+  sendRemainingTickets: async (token) => {
+    const response = await axios.post(
+      "/admin/emails/send-remaining",
+      {},
+      authHeaders(token)
+    );
+    return response.data;
+  },
+  resendTicket: async (token, bookingId) => {
+    const response = await axios.post(
+      `/admin/resend/${bookingId}`,
+      {},
+      authHeaders(token)
+    );
+    return response.data;
+  },
   // Check-in (mark attendance) - admin only
   markSeat: async (token, bookingId, seatId) => {
     const response = await axios.post(
