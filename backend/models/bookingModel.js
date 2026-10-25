@@ -40,6 +40,9 @@ const bookingSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
     },
+    // Every engineering discount code used - one per discounted seat.
+    // couponCode keeps the first one for older screens and scripts.
+    couponCodes: [{ type: String, trim: true, uppercase: true }],
     code: {
       type: String,
       unique: true,

@@ -16,7 +16,7 @@ const Faqs = () => {
     },
     {
       question: "Who is eligible for the discount, and which tables does it apply to?",
-      answer: "The discount is exclusive to engineering students who have paid their NUESA dues, and it applies to every table tier — Bronze, Gold and Platinum. Bronze and Gold tables get ₦2,000 off per seat, while Platinum tables get ₦3,000 off per seat. To claim it, enter the invoice number on your NUESA receipt (after submitting it through the official Google Form) as your coupon code at checkout."
+      answer: "The discount is exclusive to engineering students who have paid their NUESA dues, and it applies to every table tier — Bronze, Gold and Platinum. Bronze and Gold tables get ₦2,000 off per seat, while Platinum tables get ₦3,000 off per seat. To claim it, enter the invoice number on your NUESA receipt (after submitting it through the official Google Form) as your coupon code at checkout. Each invoice number covers one seat, so booking several discounted seats needs a different invoice number for each seat."
     },
     {
       question: "Can I attend if I'm not an engineering student?",

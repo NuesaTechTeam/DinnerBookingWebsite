@@ -50,7 +50,7 @@ export const verifyEngineeringStudent = async (req, res) => {
     // Return success with student info and discount amount
     res.json({
       success: true,
-      message: `Engineering student verified successfully. ₦${perSeat.toLocaleString()} off per seat!`,
+      message: `Engineering student verified successfully. ₦${perSeat.toLocaleString()} off this seat!`,
       discount: {
         amount: perSeat,
         type: "fixed",

@@ -493,11 +493,6 @@ const generateEmailTemplate = (booking, seats) => {
             <div class="dress-code">
                 <h4>Dress Code</h4>
                 <p>Present yourself in your finest—black tie or high-fashion African couture.</p>
-                <div class="dress-colors">
-                    <div class="color-swatch color-black" title="Black"></div>
-                    <div class="color-swatch color-gold" title="Gold"></div>
-                </div>
-                <p style="margin-top: 15px; font-size: 16px;"><strong>Black • Gold</strong></p>
             </div>
 
             <!-- Quote -->

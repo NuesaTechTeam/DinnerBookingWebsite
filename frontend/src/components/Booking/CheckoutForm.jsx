@@ -62,11 +62,12 @@ const CheckoutForm = ({
     email: "",
     phone: "",
     isEngineering: false,
-    invoiceNumber: "",
   });
 
-  const [discountApplied, setDiscountApplied] = useState(false);
-  const [verifyingDiscount, setVerifyingDiscount] = useState(false);
+  // One engineering discount code (invoice number) per seat:
+  // { [seatId]: { code, verified } }. Each code discounts exactly one seat.
+  const [seatCodes, setSeatCodes] = useState({});
+  const [verifyingSeat, setVerifyingSeat] = useState("");
   // Per-seat meal choice, keyed by seat id (defaults live below).
   const [mealSelections, setMealSelections] = useState({});
 
@@ -74,13 +75,16 @@ const CheckoutForm = ({
   const paymentSucceededRef = useRef(false);
 
   // Calculate Amount - engineering discount is per seat and tier-based:
-  // Bronze/Gold take ₦2,000 off each seat, Platinum takes ₦3,000 off each seat.
+  // Bronze/Gold take ₦2,000 off a seat, Platinum takes ₦3,000 off a seat.
+  // Every discounted seat needs its own verified code.
   const DISCOUNT_PER_SEAT_BY_TIER = { REGULAR: 2000, VIP: 2000, VVIP: 3000 };
   const discountPerSeat =
     DISCOUNT_PER_SEAT_BY_TIER[selectedTable?.type] ?? 2000;
-  const discountAmount = discountApplied
-    ? discountPerSeat * selectedSeats.length
-    : 0;
+  const verifiedCodes = selectedSeats
+    .filter((seatId) => seatCodes[seatId]?.verified)
+    .map((seatId) => ({ seatId, code: seatCodes[seatId].code }));
+  const discountApplied = verifiedCodes.length > 0;
+  const discountAmount = discountPerSeat * verifiedCodes.length;
   const finalAmount = Math.max(0, baseAmount - discountAmount);
 
   // Meal options for this tier; each seat keeps its own (validated) choice.
@@ -90,25 +94,43 @@ const CheckoutForm = ({
       ? mealSelections[seatId]
       : mealOptions[0];
 
-  const applyDiscount = async () => {
-    if (!formData.invoiceNumber.trim()) {
+  const normalizeCode = (code) => String(code || "").trim().toUpperCase();
+
+  const setSeatCode = (seatId, code) =>
+    setSeatCodes((prev) => ({ ...prev, [seatId]: { code, verified: false } }));
+
+  const applyDiscount = async (seatId) => {
+    const code = normalizeCode(seatCodes[seatId]?.code);
+    if (!code) {
       showToast("Please enter an invoice number", TOAST_TYPES.INFO);
       return;
     }
-    setVerifyingDiscount(true);
+    // A code can only ever cover one seat
+    const usedElsewhere = selectedSeats.some(
+      (other) =>
+        other !== seatId &&
+        seatCodes[other]?.verified &&
+        normalizeCode(seatCodes[other].code) === code
+    );
+    if (usedElsewhere) {
+      showToast(
+        "That code is already applied to another seat. Each seat needs its own code.",
+        TOAST_TYPES.ERROR
+      );
+      return;
+    }
 
+    setVerifyingSeat(seatId);
     try {
       const result = await verifyEngineeringStudent.mutateAsync({
-        invoiceNumber: formData.invoiceNumber.trim(),
+        invoiceNumber: code,
         tableType: selectedTable?.type,
       });
 
       if (result.success) {
-        setDiscountApplied(true);
+        setSeatCodes((prev) => ({ ...prev, [seatId]: { code, verified: true } }));
         showToast(
-          `Engineering Discount Applied - ₦${(
-            discountPerSeat * selectedSeats.length
-          ).toLocaleString()} off`,
+          `Engineering discount applied - ₦${discountPerSeat.toLocaleString()} off this seat`,
           TOAST_TYPES.SUCCESS
         );
       } else {
@@ -123,14 +145,12 @@ const CheckoutForm = ({
         TOAST_TYPES.ERROR
       );
     } finally {
-      setVerifyingDiscount(false);
+      setVerifyingSeat("");
     }
   };
 
-  const removeDiscount = () => {
-    setDiscountApplied(false);
-    setFormData((prev) => ({ ...prev, invoiceNumber: "" }));
-  };
+  const removeDiscount = (seatId) =>
+    setSeatCodes((prev) => ({ ...prev, [seatId]: { code: "", verified: false } }));
 
   const isProcessing =
     createBookingMutation.isPending || verifyPaymentMutation.isPending;
@@ -262,7 +282,6 @@ const CheckoutForm = ({
       matricNo: formData.matricNo.trim(),
       email: formData.email.trim(),
       phone: formData.phone.trim(),
-      invoiceNumber: formData.invoiceNumber.trim(),
     };
 
     if (!cleaned.name || !cleaned.matricNo || !cleaned.email || !cleaned.phone) {
@@ -284,7 +303,10 @@ const CheckoutForm = ({
 
     const bookingData = {
       ...cleaned,
-      invoiceNumber: discountApplied ? cleaned.invoiceNumber : undefined,
+      // One verified code per discounted seat
+      invoiceNumbers: verifiedCodes,
+      // Older backends only read a single code (the list wins when present)
+      invoiceNumber: verifiedCodes[0]?.code,
       seatIds: selectedSeats,
       baseAmount: baseAmount,
       totalAmount: totalAmount,
@@ -613,78 +635,97 @@ const CheckoutForm = ({
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.4 }}
                 >
-                  {!discountApplied ? (
-                    <Motion.div
-                      className="space-y-2"
-                      {...fadeInUp}
-                      transition={{ duration: 0.5, delay: 0.7 }}
-                    >
-                      <label className="text-gray-300 text-xs font-medium flex items-center gap-2">
-                        <Receipt size={14} className="text-[#d4af37]" />
-                        Engineering Discount Code / Invoice
-                      </label>
-                      <div className="flex gap-2">
-                        <Motion.input
-                          type="text"
-                          name="invoiceNumber"
-                          value={formData.invoiceNumber}
-                          onChange={handleInputChange}
-                          disabled={verifyingDiscount || isProcessing}
-                          inputMode="numeric"
-                          placeholder="Enter invoice number"
-                          className="flex-1 bg-black/60 border border-gray-800 rounded-lg px-3 py-2 text-white text-xs placeholder-gray-600 focus:border-[#d4af37] focus:outline-none"
-                          whileFocus={{ scale: 1.01 }}
-                        />
-                        <Motion.button
-                          type="button"
-                          onClick={applyDiscount}
-                          disabled={
-                            verifyingDiscount ||
-                            isProcessing ||
-                            !formData.invoiceNumber.trim()
-                          }
-                          className="bg-[#d4af37] hover:bg-[#b38728] disabled:bg-gray-800 text-black font-semibold px-3 py-2 rounded-lg transition-colors text-xs uppercase tracking-wider"
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
+                  <div className="space-y-1">
+                    <label className="text-gray-300 text-xs font-medium flex items-center gap-2">
+                      <Receipt size={14} className="text-[#d4af37]" />
+                      Engineering Discount Code / Invoice
+                    </label>
+                    <p className="text-[11px] text-gray-500">
+                      Each seat needs its own invoice number - one code takes
+                      ₦{discountPerSeat.toLocaleString()} off one seat. Leave a
+                      seat blank to pay full price for it.
+                    </p>
+                  </div>
+
+                  {selectedSeats.map((seatId, index) => {
+                    const entry = seatCodes[seatId] || { code: "", verified: false };
+                    const seatName = seatNames[index] || `Seat ${index + 1}`;
+                    const busy = verifyingSeat === seatId;
+
+                    if (entry.verified) {
+                      return (
+                        <Motion.div
+                          key={seatId}
+                          className="flex items-center justify-between text-emerald-400 text-xs bg-emerald-950/30 border border-emerald-800/40 p-2.5 rounded-lg"
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3 }}
                         >
-                          {verifyingDiscount ? (
-                            <Motion.div
-                              className="rounded-full h-3.5 w-3.5 border-b-2 border-black"
-                              animate={{ rotate: 360 }}
-                              transition={{
-                                duration: 1,
-                                repeat: Infinity,
-                                ease: "linear",
-                              }}
-                            />
-                          ) : (
-                            "Apply"
-                          )}
-                        </Motion.button>
-                      </div>
-                    </Motion.div>
-                  ) : (
-                    <Motion.div
-                      className="flex items-center justify-between text-emerald-400 text-xs bg-emerald-950/30 border border-emerald-800/40 p-2.5 rounded-lg"
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.4 }}
-                    >
-                      <div className="flex items-center gap-2">
-                        <CheckCircle size={14} />
-                        <span>
-                          Verified! ₦{discountPerSeat.toLocaleString()} off each
-                          seat (₦{discountAmount.toLocaleString()} total).
+                          <div className="flex items-center gap-2 min-w-0">
+                            <CheckCircle size={14} className="shrink-0" />
+                            <span className="truncate">
+                              {seatName}: {entry.code} - ₦
+                              {discountPerSeat.toLocaleString()} off
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeDiscount(seatId)}
+                            disabled={isProcessing}
+                            className="text-gray-400 hover:text-white underline text-[11px] shrink-0 ml-2"
+                          >
+                            Remove
+                          </button>
+                        </Motion.div>
+                      );
+                    }
+
+                    return (
+                      <div key={seatId} className="space-y-1">
+                        <span className="text-gray-400 text-[10px] font-medium uppercase tracking-wider">
+                          {seatName}
                         </span>
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={entry.code}
+                            onChange={(e) => setSeatCode(seatId, e.target.value)}
+                            disabled={busy || isProcessing}
+                            placeholder="Invoice number for this seat"
+                            className="flex-1 min-w-0 bg-black/60 border border-gray-800 rounded-lg px-3 py-2 text-white text-xs placeholder-gray-600 focus:border-[#d4af37] focus:outline-none"
+                          />
+                          <Motion.button
+                            type="button"
+                            onClick={() => applyDiscount(seatId)}
+                            disabled={busy || isProcessing || !entry.code.trim()}
+                            className="bg-[#d4af37] hover:bg-[#b38728] disabled:bg-gray-800 text-black font-semibold px-3 py-2 rounded-lg transition-colors text-xs uppercase tracking-wider"
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            {busy ? (
+                              <Motion.div
+                                className="rounded-full h-3.5 w-3.5 border-b-2 border-black"
+                                animate={{ rotate: 360 }}
+                                transition={{
+                                  duration: 1,
+                                  repeat: Infinity,
+                                  ease: "linear",
+                                }}
+                              />
+                            ) : (
+                              "Apply"
+                            )}
+                          </Motion.button>
+                        </div>
                       </div>
-                      <button
-                        type="button"
-                        onClick={removeDiscount}
-                        className="text-gray-400 hover:text-white underline text-[11px]"
-                      >
-                        Remove
-                      </button>
-                    </Motion.div>
+                    );
+                  })}
+
+                  {discountApplied && (
+                    <p className="text-[11px] text-emerald-400">
+                      {verifiedCodes.length} of {selectedSeats.length} seat(s)
+                      discounted - ₦{discountAmount.toLocaleString()} off in total.
+                    </p>
                   )}
                 </Motion.div>
               )}

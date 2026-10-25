@@ -43,7 +43,7 @@ export const createBooking = async (req, res) => {
     });
   }
 
-  const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, tableType, reservedPassword, meals } = req.body;
+  const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, invoiceNumbers, tableType, reservedPassword, meals } = req.body;
 
   //Reject bad details BEFORE locking seats or creating anything -
   //an invalid email would otherwise only be caught by Paystack mid-payment
@@ -146,23 +146,56 @@ export const createBooking = async (req, res) => {
     let discountAmount = 0
     let engineeringStudentRef = null
 
-    // Apply the engineering discount whenever a valid NUESA invoice is supplied
-    // (available on every tier, including Platinum).
-    if (invoiceNumber) {
-      // Verify the invoice number is valid and not used
-      const student = await Student.findOne({
-        invoiceNumber: invoiceNumber.toUpperCase().trim(),
-        discountUsed: false
-      }).session(session)
+    // Engineering discount: every discounted seat needs its OWN valid, unused
+    // invoice number - one code takes the tier discount off exactly one seat.
+    // (Older clients send a single invoiceNumber, which now covers one seat.)
+    const rawCodes = Array.isArray(invoiceNumbers)
+      ? invoiceNumbers.map((c) => (typeof c === "string" ? c : c?.code))
+      : invoiceNumber
+      ? [invoiceNumber]
+      : [];
+    const codes = rawCodes
+      .map((c) => String(c || "").toUpperCase().trim())
+      .filter(Boolean);
 
-      if(student) {
-        discountApplied = true
-        // Tier-based discount off EACH seat (not a flat amount for the booking)
-        discountAmount =
-          getEngineeringDiscountPerSeat(tableType) * (seatIds?.length || 0)
-        finalAmount = Math.max(0, baseAmount - discountAmount)
-        engineeringStudentRef = student._id
+    if (codes.length > 0) {
+      const codeError = async (message) => {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ success: false, message });
+      };
+
+      if (new Set(codes).size !== codes.length) {
+        return codeError("Each seat needs a different discount code - a code can only be used once");
       }
+      if (codes.length > (seatIds?.length || 0)) {
+        return codeError("You entered more discount codes than seats");
+      }
+
+      const students = await Student.find({
+        invoiceNumber: { $in: codes },
+        discountUsed: false,
+      }).session(session);
+      const validCodes = new Set(students.map((s) => s.invoiceNumber));
+      const invalid = codes.filter((c) => !validCodes.has(c));
+      if (invalid.length > 0) {
+        return codeError(`Invalid or already used discount code(s): ${invalid.join(", ")}`);
+      }
+
+      // Not already riding on someone else's unpaid or paid reservation
+      const taken = await Booking.findOne({
+        couponCodes: { $in: codes },
+        status: { $in: ["pending", "confirmed"] },
+      }).session(session);
+      if (taken) {
+        const clash = codes.filter((c) => taken.couponCodes.includes(c));
+        return codeError(`Discount code(s) already in use on another reservation: ${clash.join(", ")}`);
+      }
+
+      discountApplied = true
+      discountAmount = getEngineeringDiscountPerSeat(tableType) * codes.length
+      finalAmount = Math.max(0, baseAmount - discountAmount)
+      engineeringStudentRef = students[0]._id
     }
 
     // Normalize meal choices: one choice per seat, restricted to the options
@@ -193,7 +226,8 @@ export const createBooking = async (req, res) => {
       totalAmount: totalAmount,
       discountApplied,
       discountAmount,
-      couponCode: invoiceNumber,
+      couponCode: codes[0],
+      couponCodes: codes,
       engineeringStudentRef,
       isEngineering,
       seats: seatIds,

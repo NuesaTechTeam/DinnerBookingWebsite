@@ -110,11 +110,19 @@ export const confirmPaidBooking = async (bookingId, tx) => {
 
   if (!booking || alreadyConfirmed) return { booking, alreadyConfirmed };
 
-  if (booking.discountApplied && booking.couponCode) {
-    try {
-      await markDiscountUsed(booking.couponCode, booking._id);
-    } catch (error) {
-      console.error("Could not mark discount used:", error.message);
+  // One code per discounted seat - mark every one of them used
+  const usedCodes = booking.couponCodes?.length
+    ? booking.couponCodes
+    : booking.couponCode
+    ? [booking.couponCode]
+    : [];
+  if (booking.discountApplied) {
+    for (const code of usedCodes) {
+      try {
+        await markDiscountUsed(code, booking._id);
+      } catch (error) {
+        console.error(`Could not mark discount ${code} used:`, error.message);
+      }
     }
   }
 

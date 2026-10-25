@@ -47,15 +47,18 @@ const run = async () => {
     console.log(`Freed ${seat.seatNumber}`);
   }
 
-  if (restoreDiscount && booking.couponCode) {
+  const codes = booking.couponCodes?.length
+    ? booking.couponCodes
+    : booking.couponCode
+    ? [booking.couponCode]
+    : [];
+  for (const code of restoreDiscount ? codes : []) {
     const student = await Student.findOneAndUpdate(
-      { invoiceNumber: booking.couponCode.toUpperCase().trim() },
+      { invoiceNumber: code.toUpperCase().trim() },
       { discountUsed: false, $unset: { discountUsedOn: "", discountUsedForBooking: "" } },
       { new: true }
     );
-    console.log(
-      `Discount ${booking.couponCode}: ${student ? "restored" : "student not found"}`
-    );
+    console.log(`Discount ${code}: ${student ? "restored" : "student not found"}`);
   }
 
   await Booking.deleteOne({ _id: booking._id });
