@@ -36,7 +36,8 @@ export const useCreateBooking = () => {
             showToast(errorMessage, TOAST_TYPES.ERROR);
             // Seats may have been taken/locked since the map loaded - refresh
             // availability so the guest can pick again
-            if (error.response?.status === 400) {
+            // (409 = the price changed since the page loaded)
+            if ([400, 409].includes(error.response?.status)) {
               queryClient.invalidateQueries({ queryKey: ["tables"] });
               queryClient.invalidateQueries({ queryKey: ["seatStatus"] });
             }

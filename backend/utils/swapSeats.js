@@ -10,37 +10,46 @@ import { logActivity } from "./activity.js";
 dotenv.config();
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
-// Swaps who sits where on one table, e.g. seats 3,4 <-> 7,8 on VIP-3.
+// Swaps who sits where, e.g. seats 3,4 <-> 7,8 on VIP-3.
 // Whoever holds seat A moves to seat B and vice versa (an empty seat just
 // stays empty on the other side). Bookings, meal choices, seat flags and the
-// table's bookedSeats list all follow. Reserved-for-exec flags stay with the
+// tables' bookedSeats lists all follow. Reserved-for-exec flags stay with the
 // physical seat. DRY RUN unless --apply; --email re-sends each moved guest
 // their ticket with the new seat.
 //
 //   node utils/swapSeats.js VIP-3 3:7,4:8 [--apply] [--email]
+//
+// Across tables, give full seat names. With --move every target (right-hand)
+// seat must be empty, so nobody else is displaced:
+//   node utils/swapSeats.js VVIP-14-S2:VVIP-6-S3,VVIP-12-S4:VVIP-6-S4 --move [--apply] [--email]
 
-const [tableNumber, pairsArg] = process.argv.slice(2);
+const args = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const fullNames = (args[0] || "").includes(":");
+const tableNumber = fullNames ? null : args[0];
+const pairsArg = fullNames ? args[0] : args[1];
 const apply = process.argv.includes("--apply");
 const sendEmail = process.argv.includes("--email");
+const moveOnly = process.argv.includes("--move");
+const verb = moveOnly ? "move" : "swap";
 
 const run = async () => {
-  if (!tableNumber || !pairsArg || pairsArg.startsWith("--")) {
-    console.error("Usage: node utils/swapSeats.js <tableNumber> <a:b,c:d> [--apply] [--email]");
+  if (!pairsArg) {
+    console.error(
+      "Usage: node utils/swapSeats.js <tableNumber> <a:b,c:d> | <SEAT:SEAT,...> [--move] [--apply] [--email]"
+    );
     process.exit(1);
   }
   const uri = process.env.PROD_MONGO_URI || process.env.MONGO_URI;
   await mongoose.connect(uri);
   console.log(`Connected ${uri.includes("mongodb+srv") ? "(PROD)" : "(local)"} - ${apply ? "APPLY" : "DRY RUN"}`);
 
-  const table = await Table.findOne({ tableNumber });
-  if (!table) throw new Error(`Table ${tableNumber} not found`);
-
-  const seatName = (n) => `${tableNumber}-S${n}`;
+  const seatName = (n) => (fullNames ? n.toUpperCase() : `${tableNumber}-S${n}`);
+  const label = (n) => (fullNames ? seatName(n) : `Seat ${n}`);
   const pairs = pairsArg.split(",").map((p) => p.split(":").map((n) => n.trim()));
   const names = pairs.flat().map(seatName);
-  if (new Set(names).size !== names.length) throw new Error("A seat appears twice in the swap list");
+  if (new Set(names).size !== names.length) throw new Error("A seat appears twice in the list");
 
-  const seats = await Seat.find({ table: table._id, seatNumber: { $in: names } });
+  const seats = await Seat.find({ seatNumber: { $in: names } }).populate("table");
   const byName = new Map(seats.map((s) => [s.seatNumber, s]));
   const missing = names.filter((n) => !byName.has(n));
   if (missing.length) throw new Error(`Seat(s) not found: ${missing.join(", ")}`);
@@ -62,20 +71,33 @@ const run = async () => {
     return b ? `${b.name} <${b.email}> #${b.code} [${b.status}]` : `booked by missing booking ${s.bookedBy}`;
   };
 
-  console.log(`\nTable ${tableNumber} - planned swap:`);
+  console.log(`\n${tableNumber ? `Table ${tableNumber}` : "Seats"} - planned ${verb}:`);
   for (const [a, b] of pairs) {
     const A = byName.get(seatName(a));
     const B = byName.get(seatName(b));
-    console.log(`  Seat ${a}: ${who(A)}`);
-    console.log(`     <->  Seat ${b}: ${who(B)}`);
+    console.log(`  ${label(a)}: ${who(A)}`);
+    console.log(`     ${moveOnly ? " ->" : "<->"}  ${label(b)}: ${who(B)}`);
+    if (moveOnly && B.isBooked) {
+      throw new Error(`${B.seatNumber} is already taken by ${who(B)} - --move never displaces anyone`);
+    }
+    if (A.table?.type !== B.table?.type) {
+      console.log(`     NOTE: different tiers (${A.table?.type} -> ${B.table?.type}); price and meal options differ`);
+    }
     if (A.isReserved !== B.isReserved) {
-      console.log(`     NOTE: reserved flag differs (seat ${a} reserved=${A.isReserved}, seat ${b} reserved=${B.isReserved}); it stays with the physical seat`);
+      console.log(
+        `     NOTE: reserved flag differs (${A.seatNumber} reserved=${A.isReserved}, ${B.seatNumber} reserved=${B.isReserved}); it stays with the physical seat`
+      );
     }
   }
-  console.log("\nAfter the swap:");
+  // Seat `seat` after the swap holds `other`'s guest but keeps its own reserved flag
+  const whoAfter = (seat, other) =>
+    other.isBooked ? who(other) : `empty${seat.isReserved ? " (reserved for execs)" : ""}`;
+  console.log(`\nAfter the ${verb}:`);
   for (const [a, b] of pairs) {
-    console.log(`  Seat ${a}: ${who(byName.get(seatName(b)))}`);
-    console.log(`  Seat ${b}: ${who(byName.get(seatName(a)))}`);
+    const A = byName.get(seatName(a));
+    const B = byName.get(seatName(b));
+    console.log(`  ${label(a)}: ${whoAfter(A, B)}`);
+    console.log(`  ${label(b)}: ${whoAfter(B, A)}`);
   }
   const affected = [...owners.values()].filter(Boolean);
   console.log(`\nGuests whose seat changes: ${affected.map((b) => `${b.name} <${b.email}>`).join("; ") || "none"}`);
@@ -109,9 +131,12 @@ const run = async () => {
       await b.save({ session });
     }
 
-    // Rebuild the table's bookedSeats list from the seats themselves
-    const booked = await Seat.find({ table: table._id, isBooked: true }, "seatNumber", { session });
-    await Table.updateOne({ _id: table._id }, { bookedSeats: booked.map((s) => s.seatNumber) }, { session });
+    // Rebuild each involved table's bookedSeats list from the seats themselves
+    const tableIds = [...new Set(seats.map((s) => String(s.table._id)))];
+    for (const tableId of tableIds) {
+      const booked = await Seat.find({ table: tableId, isBooked: true }, "seatNumber", { session });
+      await Table.updateOne({ _id: tableId }, { bookedSeats: booked.map((s) => s.seatNumber) }, { session });
+    }
   };
 
   // Atlas runs this atomically. A standalone local MongoDB has no transactions,
@@ -124,13 +149,15 @@ const run = async () => {
     await session.withTransaction(() => doSwap(session));
     session.endSession();
   }
-  console.log("\nSwap applied.");
+  console.log(`\n${moveOnly ? "Move" : "Swap"} applied.`);
 
   for (const booking of affected) {
     const fresh = await Booking.findById(booking._id).populate("seats");
     await logActivity(
       "seats_swapped",
-      `${fresh.name} moved to ${fresh.seats.map((s) => s.seatNumber).join(", ")} (table ${tableNumber} swap ${pairsArg})`,
+      `${fresh.name} moved to ${fresh.seats.map((s) => s.seatNumber).join(", ")} (${
+        tableNumber ? `table ${tableNumber} ` : ""
+      }${verb} ${pairsArg})`,
       { bookingId: String(fresh._id) }
     );
     console.log(`  ${fresh.name}: now ${fresh.seats.map((s) => s.seatNumber).join(", ")}`);

@@ -3,16 +3,14 @@ import crypto from "crypto";
 import validator from "validator";
 import { Booking } from "../models/bookingModel.js";
 import { Seat } from "../models/seatModel.js";
-import {
-  markDiscountUsed,
-  getEngineeringDiscountPerSeat,
-} from "./discountController.js";
+import { markDiscountUsed } from "./discountController.js";
 import { Student } from "../models/studentModel.js";
 import { sendConfirmationEmail } from "../utils/emailService.js";
 import { Table } from "../models/tableModel.js";
 import { logActivity } from "../utils/activity.js";
 import { getMealOptions } from "../utils/meals.js";
 import { checkPendingBooking } from "./paymentController.js";
+import { priceSeats } from "../utils/pricing.js";
 
 // How long an unpaid reservation holds its seats. The seat lock and the
 // booking expiry must match, or a seat can be resold while its first buyer is
@@ -43,7 +41,7 @@ export const createBooking = async (req, res) => {
     });
   }
 
-  const { email, name, matricNo, phone, seatIds, baseAmount,totalAmount, isEngineering, invoiceNumber, invoiceNumbers, tableType, reservedPassword, meals } = req.body;
+  const { email, name, matricNo, phone, seatIds, totalAmount, isEngineering, invoiceNumber, invoiceNumbers, tableType, reservedPassword, meals } = req.body;
 
   //Reject bad details BEFORE locking seats or creating anything -
   //an invalid email would otherwise only be caught by Paystack mid-payment
@@ -131,17 +129,27 @@ export const createBooking = async (req, res) => {
       { lockedUntil: lockExpiry },
       { session }
     );
-    // Calculate total amount
+    // The price comes from the seats themselves, never from the browser
     const seatPrices = await Seat.find({ _id: { $in: seatIds } })
       .populate("table")
       .session(session);
 
-    // const amount = seatPrices.reduce(
-    //   (total, seat) => total + seat.table.pricePerSeat,
-    //   0
-    // );
+    if (
+      !Array.isArray(seatIds) ||
+      seatIds.length === 0 ||
+      seatPrices.length !== new Set(seatIds.map(String)).size ||
+      seatPrices.length !== seatIds.length
+    ) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        message: "Please choose your seats again - some could not be found",
+      });
+    }
+    // Tier (meals, discount) also comes from the seats, not the request
+    const seatTier = seatPrices[0].table?.type || tableType;
 
-    let finalAmount = baseAmount
     let discountApplied = false
     let discountAmount = 0
     let engineeringStudentRef = null
@@ -193,14 +201,41 @@ export const createBooking = async (req, res) => {
       }
 
       discountApplied = true
-      discountAmount = getEngineeringDiscountPerSeat(tableType) * codes.length
-      finalAmount = Math.max(0, baseAmount - discountAmount)
       engineeringStudentRef = students[0]._id
+    }
+
+    const codeSeatIds = Array.isArray(invoiceNumbers)
+      ? invoiceNumbers.map((c) => c?.seatId).filter(Boolean)
+      : [];
+    const price = priceSeats(seatPrices, codes.length, codeSeatIds);
+    discountAmount = price.discount;
+
+    // The browser shows the guest a total before we get here. If it does not
+    // match the real price (stale page or a tampered request), stop now rather
+    // than create a reservation the payment can't honestly settle.
+    if (
+      totalAmount !== undefined &&
+      Math.abs(Number(totalAmount) - price.total) > 1
+    ) {
+      await session.abortTransaction();
+      session.endSession();
+      logActivity(
+        "price_mismatch",
+        `Rejected a reservation for ${cleanEmail}: browser total ₦${Number(
+          totalAmount
+        ).toLocaleString()} vs real price ₦${price.total.toLocaleString()}`,
+        { email: cleanEmail, clientTotal: totalAmount, serverTotal: price.total }
+      );
+      return res.status(409).json({
+        success: false,
+        message: `The price has changed to ₦${price.total.toLocaleString()}. Please refresh the page and try again.`,
+        totalAmount: price.total,
+      });
     }
 
     // Normalize meal choices: one choice per seat, restricted to the options
     // valid for this tier (fall back to the first option when missing/invalid).
-    const mealOptions = getMealOptions(tableType);
+    const mealOptions = getMealOptions(seatTier);
     const mealBySeat = new Map(
       (Array.isArray(meals) ? meals : []).map((m) => [
         String(m?.seatId || m?.seat || ""),
@@ -222,8 +257,8 @@ export const createBooking = async (req, res) => {
       name,
       matricNo,
       phone,
-      amount: baseAmount,
-      totalAmount: totalAmount,
+      amount: price.base,
+      totalAmount: price.total,
       discountApplied,
       discountAmount,
       couponCode: codes[0],

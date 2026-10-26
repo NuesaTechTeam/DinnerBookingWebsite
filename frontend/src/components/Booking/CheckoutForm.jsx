@@ -340,12 +340,17 @@ const CheckoutForm = ({
           const bookingId = bookingResponse.booking._id;
           pendingBookingIdRef.current = bookingId;
           paymentSucceededRef.current = false;
+          // Charge exactly the price the server worked out for this booking
+          const serverTotal = Number(bookingResponse.booking.totalAmount);
+          const chargeAmount = Number.isFinite(serverTotal) && serverTotal > 0
+            ? Math.round(serverTotal * 100)
+            : amountForPaystack;
           // react-paystack v6 expects { config, onSuccess, onClose }
           initializePayment({
             config: {
               ...paystackConfig,
               email: cleaned.email,
-              amount: amountForPaystack,
+              amount: chargeAmount,
               // Server-issued reference so the backend can always look this
               // payment up on Paystack, even if this tab never reports back
               // (older backends issue "pending_..." refs Paystack would reject)
