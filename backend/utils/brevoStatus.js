@@ -82,10 +82,17 @@ export const getEmailOverview = async ({ force = false } = {}) => {
   for (const b of bookings) {
     // Ticket subjects end in "(#<entry code>)" - see confirmationSubject
     const ref = b.code || String(b._id).slice(-8).toUpperCase();
+    // A re-sent ticket (e.g. after a seat move) has the same subject as the
+    // old one, so only count events from the latest attempt onwards - an old
+    // delivery must never hide a newer send that failed.
+    const since = b.emailLastAttemptAt
+      ? b.emailLastAttemptAt.getTime() - 2 * 60 * 1000
+      : 0;
     const mine = events.filter(
       (ev) =>
         (ev.email || "").toLowerCase() === b.email &&
-        (ev.subject || "").includes(`(#${ref})`)
+        (ev.subject || "").includes(`(#${ref})`) &&
+        new Date(ev.date).getTime() >= since
     );
     const kinds = new Set(mine.map((ev) => ev.event));
     const last = mine[0];

@@ -121,9 +121,15 @@ export const sendConfirmationEmail = async (booking) => {
 const recordEmail = async (booking, update) => {
   if (!booking?._id || !mongoose.isValidObjectId(booking._id)) return;
   try {
+    // emailLastAttemptAt lets the Brevo sync ignore delivery events from an
+    // older ticket (e.g. before a seat move) when judging the latest send
     await Booking.updateOne(
       { _id: booking._id },
-      { ...update, $inc: { emailAttempts: 1 } }
+      {
+        ...update,
+        $set: { ...update.$set, emailLastAttemptAt: new Date() },
+        $inc: { emailAttempts: 1 },
+      }
     );
   } catch (error) {
     console.error("Could not record email status:", error.message);

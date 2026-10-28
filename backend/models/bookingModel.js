@@ -104,6 +104,7 @@ const bookingSchema = new mongoose.Schema(
       default: "not_sent",
     },
     emailSentAt: { type: Date },
+    emailLastAttemptAt: { type: Date },
     emailMessageId: { type: String },
     emailError: { type: String },
     emailAttempts: { type: Number, default: 0 },
