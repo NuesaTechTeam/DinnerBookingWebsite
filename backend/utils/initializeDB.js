@@ -23,8 +23,8 @@ const tableConfigs = [
   {
     type: "REGULAR",
     shape: "ROUND",
-    // 34 Bronze tables x 6 seats each = 204 seats
-    capacities: Array(34).fill(6),
+    // 28 Bronze tables x 6 seats each = 168 seats
+    capacities: Array(28).fill(6),
     pricePerSeat: 12000,
   },
 ];
