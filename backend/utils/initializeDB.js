@@ -3,28 +3,28 @@ import { Seat } from "../models/seatModel.js";
 
 // Prices: Bronze (REGULAR) = ₦12,000 (₦10,000 with engineering invoice discount) | Gold (VIP) = ₦20,000 (₦18,000 with discount) | Platinum (VVIP) = ₦30,000 (₦27,000 with engineering discount)
 const tableConfigs = [
+  // Current layout. Production was adjusted in place with
+  // utils/adjustTables.js; this list only seeds an empty database.
   {
     type: "VVIP",
     shape: "ROUND",
-    // 12 VVIP tables, 4 seats each (round).
-    // Layout: first 6 render on the left, last 6 on the right.
+    // 16 Platinum tables x 4 seats each (round); half render on each side.
     // Executive seats are password-gated via utils/reserveExecutiveSeats.js.
-    capacities: Array(12).fill(4),
+    capacities: Array(16).fill(4),
     pricePerSeat: 30000,
   },
   {
-    type: "VVIP",
-    shape: "ROUND",
-    // 14 Platinum tables x 4 seats each (round)
-    // 7 per side: front row of 4 and back row of 3.
-    capacities: Array(14).fill(4),
-    pricePerSeat: 30000,
+    type: "VIP",
+    shape: "LONG",
+    // 10 Gold tables x 8 seats each (long/banquet)
+    capacities: Array(10).fill(8),
+    pricePerSeat: 20000,
   },
   {
     type: "REGULAR",
     shape: "ROUND",
-    // 240 seats total, 6 per table = 40 tables
-    capacities: Array(40).fill(6),
+    // 34 Bronze tables x 6 seats each = 204 seats
+    capacities: Array(34).fill(6),
     pricePerSeat: 12000,
   },
 ];
