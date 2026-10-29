@@ -24,12 +24,17 @@ export const retryUnsentTickets = async () => {
 
     const due = await Booking.find({
       status: "confirmed",
-      paymentVerified: true,
       emailStatus: { $in: ["not_sent", "failed"] },
-      // Older bookings have no attempt counter yet
-      $or: [
-        { emailAttempts: { $lt: MAX_ATTEMPTS } },
-        { emailAttempts: { $exists: false } },
+      $and: [
+        // Paid, or a complimentary seat (no payment, still gets a ticket)
+        { $or: [{ paymentVerified: true }, { complimentary: true }] },
+        // Older bookings have no attempt counter yet
+        {
+          $or: [
+            { emailAttempts: { $lt: MAX_ATTEMPTS } },
+            { emailAttempts: { $exists: false } },
+          ],
+        },
       ],
       updatedAt: { $lte: new Date(Date.now() - SETTLE_MS) },
     })

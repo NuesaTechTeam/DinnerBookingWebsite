@@ -126,14 +126,22 @@ export const getEmailOverview = async ({ force = false } = {}) => {
       emailSentAt: b.emailSentAt || last?.date || null,
       lastEvent: last ? `${last.event}${last.reason ? `: ${last.reason}` : ""}` : "",
       emailError: b.emailError || "",
+      complimentary: !!b.complimentary,
     });
   }
 
+  // Everyone with a ticket is listed and tracked; "people"/"seats" count
+  // paid bookings only, complimentary ones are counted separately.
   const count = (s) => list.filter((r) => r.emailStatus === s).length;
+  const paid = list.filter((r) => !r.complimentary);
+  const comp = list.filter((r) => r.complimentary);
   const data = {
     summary: {
-      people: list.length,
-      seats: list.reduce((n, r) => n + r.seats.length, 0),
+      people: paid.length,
+      seats: paid.reduce((n, r) => n + r.seats.length, 0),
+      compPeople: comp.length,
+      compSeats: comp.reduce((n, r) => n + r.seats.length, 0),
+      tickets: list.length,
       delivered: count("delivered"),
       sent: count("sent"),
       failed: count("failed"),

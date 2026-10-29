@@ -96,6 +96,13 @@ const bookingSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // Free (comp) seat given out by the organisers - no payment was taken.
+    // Kept out of revenue / seats-sold figures and shown separately.
+    complimentary: {
+      type: Boolean,
+      default: false,
+    },
+    compApprovedBy: { type: String, trim: true },
     // Ticket email tracking. "sent" = Brevo accepted it, "delivered" = Brevo
     // reports it reached the inbox (synced from Brevo's event log).
     emailStatus: {

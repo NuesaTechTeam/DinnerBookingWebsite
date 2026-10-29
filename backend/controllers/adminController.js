@@ -405,8 +405,17 @@ export const getBookings = async (req, res) => {
 };
 
 // GET /admin/stats  (read-only)
+// Sales figures (bookings, confirmed, revenue, seats sold, discounts) count
+// paid reservations only; complimentary seats are reported separately.
 export const getStats = async (req, res) => {
   try {
+    const PAID = { complimentary: { $ne: true } };
+    const comps = await Booking.find(
+      { complimentary: true, status: "confirmed" },
+      "seats"
+    ).lean();
+    const compSeatIds = comps.flatMap((b) => b.seats || []);
+
     const [
       totalBookings,
       confirmed,
@@ -419,20 +428,21 @@ export const getStats = async (req, res) => {
       revenueAgg,
       seatsByTier,
     ] = await Promise.all([
-      Booking.countDocuments(),
-      Booking.countDocuments({ status: "confirmed" }),
-      Booking.countDocuments({ status: "pending" }),
-      Booking.countDocuments({ status: "cancelled" }),
+      Booking.countDocuments(PAID),
+      Booking.countDocuments({ ...PAID, status: "confirmed" }),
+      Booking.countDocuments({ ...PAID, status: "pending" }),
+      Booking.countDocuments({ ...PAID, status: "cancelled" }),
+      // Attendance is about who is in the hall, so comps count here
       Booking.countDocuments({ status: "confirmed", attendanceVerified: true }),
       Student.countDocuments(),
-      Booking.countDocuments({ status: "confirmed", discountApplied: true }),
-      Seat.countDocuments({ isBooked: true }),
+      Booking.countDocuments({ ...PAID, status: "confirmed", discountApplied: true }),
+      Seat.countDocuments({ isBooked: true, _id: { $nin: compSeatIds } }),
       Booking.aggregate([
-        { $match: { status: "confirmed" } },
+        { $match: { ...PAID, status: "confirmed" } },
         { $group: { _id: null, total: { $sum: "$totalAmount" } } },
       ]),
       Seat.aggregate([
-        { $match: { isBooked: true } },
+        { $match: { isBooked: true, _id: { $nin: compSeatIds } } },
         {
           $lookup: {
             from: "tables",
@@ -473,6 +483,7 @@ export const getStats = async (req, res) => {
         discountsUsed,
         seatsSold,
         revenue,
+        complimentary: { bookings: comps.length, seats: compSeatIds.length },
         seatsByTier: {
           PLATINUM: tierMap.PLATINUM,
           VIP: tierMap.VIP,

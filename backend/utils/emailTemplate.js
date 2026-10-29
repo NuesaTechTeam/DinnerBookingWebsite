@@ -3,7 +3,9 @@ const generateEmailTemplate = (booking, seats) => {
     ...new Set(seats.map((seat) => seat.table.tableNumber)),
   ];
   const seatNumbers = seats.map((seat) => seat.seatNumber).join(", ");
-  const totalAmount = booking.amount.toLocaleString();
+  const totalAmount = booking.complimentary
+    ? "Complimentary"
+    : `₦${booking.amount.toLocaleString()}`;
 
   // Map each seat to the meal its guest picked at checkout.
   const mealBySeat = new Map(
@@ -458,7 +460,7 @@ const generateEmailTemplate = (booking, seats) => {
                 </div>
                 <div class="detail-row">
                     <span class="detail-label">Total Amount</span>
-                    <span class="detail-value">₦${totalAmount}</span>
+                    <span class="detail-value">${totalAmount}</span>
                 </div>
 
                 <div class="detail-row">

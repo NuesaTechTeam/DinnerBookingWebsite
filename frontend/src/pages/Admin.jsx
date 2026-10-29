@@ -19,6 +19,7 @@ import {
   Mail,
   Send,
   MailWarning,
+  Gift,
 } from "lucide-react";
 import AdminAPI from "../utils/endpoints/adminApi.js";
 import logo from "../assets/logo.png";
@@ -322,12 +323,16 @@ const TicketsPanel = ({ token, onLogout }) => {
               icon={Users}
               label="People Booked"
               value={s?.people ?? 0}
-              sub={`${s?.seats ?? 0} seats paid for`}
+              sub={`${s?.seats ?? 0} seats paid for${
+                s?.compPeople
+                  ? ` · +${s.compPeople} complimentary (${s.compSeats} seats)`
+                  : ""
+              }`}
             />
             <StatCard
               icon={Mail}
               label="Tickets Delivered"
-              value={`${s?.delivered ?? 0} / ${s?.people ?? 0}`}
+              value={`${s?.delivered ?? 0} / ${s?.tickets ?? s?.people ?? 0}`}
               sub={`${s?.sent ?? 0} sent, awaiting delivery`}
             />
             <StatCard
@@ -394,7 +399,14 @@ const TicketsPanel = ({ token, onLogout }) => {
                 {rows.map((r) => (
                   <tr key={r._id} className="border-t border-gray-800/70">
                     <td className="px-3 py-2">
-                      <p className="text-white font-semibold">{r.name}</p>
+                      <p className="text-white font-semibold">
+                        {r.name}
+                        {r.complimentary && (
+                          <span className="ml-2 inline-block px-1.5 py-0.5 rounded-full text-[9px] font-bold uppercase border bg-purple-500/10 text-purple-300 border-purple-500/40">
+                            complimentary
+                          </span>
+                        )}
+                      </p>
                       <p className="text-gray-400 text-[11px]">{r.email}</p>
                       <p className="text-gray-500 text-[10px]">
                         #{r.code} · booked {fmtDate(r.createdAt)}
@@ -1300,7 +1312,7 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
         />
 
         {/* Stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
           <StatCard
             icon={Users}
             label="Bookings"
@@ -1338,6 +1350,12 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
             label="Discounts"
             value={stats?.discountsUsed ?? 0}
             sub={`${stats?.students ?? 0} students verified`}
+          />
+          <StatCard
+            icon={Gift}
+            label="Complimentary"
+            value={stats?.complimentary?.seats ?? 0}
+            sub={`${stats?.complimentary?.bookings ?? 0} free booking(s) · not in sales`}
           />
         </div>
 
@@ -1514,7 +1532,16 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                         })()}
                       </td>
                       <td className="px-4 py-3 text-right text-[#d4af37] font-semibold">
-                        {naira(b.totalAmount)}
+                        {b.complimentary ? (
+                          <span className="text-purple-300">Complimentary</span>
+                        ) : (
+                          naira(b.totalAmount)
+                        )}
+                        {b.complimentary && b.compApprovedBy && (
+                          <span className="block text-[10px] text-gray-500">
+                            approved by {b.compApprovedBy}
+                          </span>
+                        )}
                         {b.discountApplied && (
                           <span className="block text-[10px] text-emerald-400">
                             discount applied
