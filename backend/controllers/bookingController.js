@@ -12,6 +12,10 @@ import { getMealOptions } from "../utils/meals.js";
 import { checkPendingBooking } from "./paymentController.js";
 import { priceSeats } from "../utils/pricing.js";
 
+// Seats reserved for this group can never be booked online, not even with
+// the executive access code (organisers seat them with utils/createComp.js).
+const LECTURER_ONLY = "Lecturers";
+
 // How long an unpaid reservation holds its seats. The seat lock and the
 // booking expiry must match, or a seat can be resold while its first buyer is
 // still paying.
@@ -110,7 +114,7 @@ export const createBooking = async (req, res) => {
       (seat) =>
         seat.isBooked ||
         (seat.lockedUntil && seat.lockedUntil > now) ||
-        (seat.isReserved && !reservedAccess)
+        (seat.isReserved && (!reservedAccess || seat.reservedFor === LECTURER_ONLY))
     );
     if (unavailableSeats.length > 0) {
       await session.abortTransaction();
@@ -520,7 +524,7 @@ export const checkSeatAvailability = async (req, res) => {
       (seat) =>
         seat.isBooked ||
         (seat.lockedUntil && seat.lockedUntil > now) ||
-        (seat.isReserved && !reservedAccess)
+        (seat.isReserved && (!reservedAccess || seat.reservedFor === LECTURER_ONLY))
     );
 
     res.status(200).json({

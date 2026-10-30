@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatTierText } from '../../lib/helpers.jsx';
+import { formatTierText, isReservedFor } from '../../lib/helpers.jsx';
 
 const getSeatLabel = (seatNumber) => {
   const match = String(seatNumber || '').match(/S(\d+)$/);
@@ -20,7 +20,7 @@ const SeatArrangement = ({
 
   const renderSeat = (seat) => {
     const booked = seat.isBooked || bookedSeats.includes(seat._id);
-    const reserved = !booked && !!seat.isReserved && !reservedUnlocked;
+    const reserved = !booked && isReservedFor(seat, reservedUnlocked);
     const locked = !booked && !reserved && lockedSeats.includes(seat._id);
     const disabled = booked || reserved || locked;
     return (

@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Footer from '../Hero/Footer.jsx';
 import logo from '../../assets/logo.png';
-import { getSectionPrice, formatTierText } from '../../lib/helpers.jsx';
+import { getSectionPrice, formatTierText, isReservedFor } from '../../lib/helpers.jsx';
 import { Crown, Star, User, BadgePercent, Lock } from 'lucide-react';
 import SeatArrangement from './SeatArrangement.jsx';
 import { useVerifyReservedPassword } from '../../hooks/bookingHooks.js';
@@ -18,7 +18,7 @@ const isTableSoldOut = (table, reservedUnlocked = false) => {
   const seats = getSeats(table);
   return (
     seats.length > 0 &&
-    seats.every((seat) => seat.isBooked || (seat.isReserved && !reservedUnlocked))
+    seats.every((seat) => seat.isBooked || isReservedFor(seat, reservedUnlocked))
   );
 };
 
@@ -153,7 +153,7 @@ const SeatSelection = ({
 
   const toggleSeat = (seat) => {
     if (seat.isBooked) return;
-    if (seat.isReserved && !reservedUnlocked) return;
+    if (isReservedFor(seat, reservedUnlocked)) return;
     if (selectedSeats.includes(seat._id)) {
       setSelectedSeats(selectedSeats.filter((s) => s !== seat._id));
     } else {
@@ -180,7 +180,7 @@ const SeatSelection = ({
 
   const getSeatStatusClass = (seat) => {
     const booked = seat.isBooked || bookedSeats.includes(seat._id);
-    const reserved = !booked && !!seat.isReserved && !reservedUnlocked;
+    const reserved = !booked && isReservedFor(seat, reservedUnlocked);
     const locked = !booked && !reserved && lockedSeats.includes(seat._id);
     const selected = selectedSeats.includes(seat._id);
 

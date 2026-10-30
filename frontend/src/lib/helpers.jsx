@@ -121,3 +121,7 @@ export const getSectionIcon = (type) => {
 
       return sortedTables;
     };
+// Reserved seats open up with the executive access code - except lecturer
+// seats, which are never bookable online.
+export const isReservedFor = (seat, reservedUnlocked = false) =>
+  !!seat?.isReserved && (!reservedUnlocked || seat.reservedFor === 'Lecturers');
