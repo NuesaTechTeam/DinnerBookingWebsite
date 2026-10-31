@@ -1,4 +1,6 @@
 const generateEmailTemplate = (booking, seats) => {
+  const isPass = !!booking.entryPass;
+  const passText = `Entry pass for ${booking.passCount || 1} guest${(booking.passCount || 1) === 1 ? "" : "s"} - no assigned seat`;
   const tableNumbers = [
     ...new Set(seats.map((seat) => seat.table.tableNumber)),
   ];
@@ -380,8 +382,7 @@ const generateEmailTemplate = (booking, seats) => {
                 <p class="welcome-text">
                     Congratulations, <strong style="color: #d4af37; text-transform: capitalize;">${
                       booking.name
-                    }</strong>. Your seat at Fàájí Lawa
-                    has been secured.
+                    }</strong>. ${isPass ? "Your entry pass to Fàájí Lawa is ready." : "Your seat at Fàájí Lawa has been secured."}
                     You have been granted access to an evening of culture, couture, and legendary hospitality.
                 </p>
             </div>
@@ -419,7 +420,7 @@ const generateEmailTemplate = (booking, seats) => {
                     <li>Save this email and present it at the entrance of the event</li>
                     <li>Have your QR code ready when approaching the entrance</li>
                     <li>Ensure your phone brightness is at maximum for easy scanning</li>
-                    <li>If you booked multiple seats, all guests must arrive together</li>
+                    <li>${isPass ? "All guests on this pass must arrive together" : "If you booked multiple seats, all guests must arrive together"}</li>
                     <li>Keep a valid ID card ready for additional verification</li>
                 </ul>
             </div>
@@ -443,7 +444,7 @@ const generateEmailTemplate = (booking, seats) => {
                     <span class="detail-value">${booking.phone}</span>
                 </div>
 
-                <div class="detail-row">
+                ${isPass ? `<div class="detail-row"><span class="detail-label">Admission</span><span class="detail-value">${passText}</span></div>` : `<div class="detail-row">
                     <span class="detail-label">Table Assignment</span>
                     <span class="detail-value">Table ${tableNumbers.join(
                       ", "
@@ -453,7 +454,7 @@ const generateEmailTemplate = (booking, seats) => {
                 <div class="detail-row">
                     <span class="detail-label">Seat(s) Reserved</span>
                     <span class="detail-value">${seatNumbers}</span>
-                </div>
+                </div>`}
                 <div class="detail-row">
                     <span class="detail-label">Entry Code</span>
                     <span class="detail-value" style="color: #d4af37; font-weight: 700; letter-spacing: 3px;">${booking.code || "------"}</span>

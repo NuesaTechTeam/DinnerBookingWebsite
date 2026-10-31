@@ -192,7 +192,19 @@ const VerifyBooking = () => {
                 </div>
               </div>
 
-              {/* Seating Assignment */}
+              {/* Seating Assignment (or admission, for a seat-less entry pass) */}
+              {booking.entryPass ? (
+                <div className="bg-gradient-to-r from-zinc-900 via-zinc-900/80 to-zinc-900 border border-[#d4af37]/30 p-5 rounded-xl">
+                  <h3 className="text-xs font-bold text-white tracking-wider uppercase font-mono mb-2">ENTRY PASS</h3>
+                  <p className="text-white font-semibold text-sm">
+                    Admits {booking.passCount || 1} guest{(booking.passCount || 1) === 1 ? "" : "s"}
+                  </p>
+                  <p className="text-xs text-zinc-500 mt-1">No assigned seat or table</p>
+                  <p className={`text-xs font-semibold mt-3 ${booking.attendanceVerified ? "text-emerald-400" : "text-amber-300"}`}>
+                    {booking.attendanceVerified ? "Checked in" : "Not yet checked in - completed by an administrator at the door"}
+                  </p>
+                </div>
+              ) : (
               <div className="bg-gradient-to-r from-zinc-900 via-zinc-900/80 to-zinc-900 border border-[#d4af37]/30 p-5 rounded-xl">
                 <div className="flex items-center mb-3">
                   <MapPin className="w-4 h-4 text-[#d4af37] mr-2" />
@@ -215,6 +227,7 @@ const VerifyBooking = () => {
                   </div>
                 </div>
               </div>
+              )}
 
               {/* Discount Badge */}
               {booking.discountApplied && (

@@ -413,7 +413,9 @@ const TicketsPanel = ({ token, onLogout }) => {
                       </p>
                     </td>
                     <td className="px-3 py-2 text-gray-300 text-[11px]">
-                      {r.seats.length} · {r.seats.join(", ")}
+                      {r.entryPass
+                        ? `Entry pass · ${r.passCount || 1} guest${(r.passCount || 1) === 1 ? "" : "s"}`
+                        : `${r.seats.length} · ${r.seats.join(", ")}`}
                     </td>
                     <td className="px-3 py-2">
                       <span
@@ -881,7 +883,11 @@ const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
   };
 
   const seats = booking?.seats || [];
-  const remaining = seats.filter((s) => !s.isGivenTicket);
+  const isPass = !!booking?.entryPass;
+  // A seat-less entry pass is checked in once, as a whole
+  const remaining = isPass
+    ? booking.attendanceVerified ? [] : [true]
+    : seats.filter((s) => !s.isGivenTicket);
 
   return (
     <div className="bg-[#0a0a0a] border border-gray-800 rounded-2xl overflow-hidden">
@@ -1019,7 +1025,12 @@ const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
                     </button>
                   );
                 })}
-                {seats.length === 0 && (
+                {isPass && (
+                  <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] text-[10px] font-bold uppercase">
+                    Entry pass · {booking.passCount || 1} guest{(booking.passCount || 1) === 1 ? "" : "s"} · no seat
+                  </span>
+                )}
+                {!isPass && seats.length === 0 && (
                   <span className="text-gray-500 text-xs">No seats</span>
                 )}
               </div>
@@ -1030,13 +1041,13 @@ const CheckInStation = ({ token, onLogout, onCheckedIn }) => {
                   disabled={busySeat.ALL}
                   className="w-full inline-flex items-center justify-center px-3 py-2 rounded-lg border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] text-[10px] font-bold uppercase tracking-wider hover:bg-[#d4af37]/20 disabled:opacity-50 transition-colors cursor-pointer"
                 >
-                  {busySeat.ALL ? "Checking in..." : "Check in all seats"}
+                  {busySeat.ALL ? "Checking in..." : isPass ? "Check in entry pass" : "Check in all seats"}
                 </button>
               )}
 
               {booking.status === "confirmed" && remaining.length === 0 && (
                 <p className="text-emerald-400 text-[11px] font-semibold flex items-center gap-1.5">
-                  <CheckCircle size={13} /> All seats checked in
+                  <CheckCircle size={13} /> {isPass ? "Entry pass checked in" : "All seats checked in"}
                 </p>
               )}
             </div>
@@ -1485,8 +1496,24 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                             );
                           })}
 
-                          {(b.seats || []).length === 0 && (
+                          {b.entryPass && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-lg border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] text-[10px] font-bold uppercase">
+                              Entry pass ×{b.passCount || 1}
+                            </span>
+                          )}
+                          {!b.entryPass && (b.seats || []).length === 0 && (
                             <span className="text-gray-500">—</span>
+                          )}
+
+                          {b.entryPass && b.status === "confirmed" && !b.attendanceVerified && (
+                            <button
+                              onClick={() => checkInAll(b._id)}
+                              disabled={checkingIn[b._id]}
+                              title="Check in this entry pass"
+                              className="inline-flex items-center px-2 py-1 rounded-lg border border-[#d4af37]/40 bg-[#d4af37]/10 text-[#d4af37] text-[10px] font-bold uppercase tracking-wider hover:bg-[#d4af37]/20 disabled:opacity-50 transition-colors cursor-pointer"
+                            >
+                              {checkingIn[b._id] ? "Checking in..." : "Check in pass"}
+                            </button>
                           )}
 
                           {b.status === "confirmed" &&
@@ -1567,6 +1594,17 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                         </span>
                         {(() => {
                           const seats = b.seats || [];
+                          if (b.entryPass) {
+                            return b.attendanceVerified ? (
+                              <span className="ml-1 inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold uppercase border bg-emerald-500/10 text-emerald-400 border-emerald-500/40">
+                                <CheckCircle size={10} /> checked in
+                              </span>
+                            ) : (
+                              <span className="ml-1 inline-block px-2 py-1 rounded-full text-[10px] font-bold uppercase border bg-gray-500/10 text-gray-400 border-gray-600/40">
+                                not checked in
+                              </span>
+                            );
+                          }
                           if (seats.length === 0) return null;
                           const attended = seats.filter(
                             (s) => s.isGivenTicket

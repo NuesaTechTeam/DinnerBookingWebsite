@@ -106,6 +106,12 @@ const bookingSchema = new mongoose.Schema(
       default: false,
     },
     compApprovedBy: { type: String, trim: true },
+    // Paid on Paystack but the booking failed, so it was recorded by hand (see utils/createComp.js --paid)
+    manualPayment: { type: Boolean, default: false },
+    manualNote: { type: String, trim: true },
+    // Seat-less entry pass (e.g. performers): admits passCount guests, no seat or table
+    entryPass: { type: Boolean, default: false },
+    passCount: { type: Number, default: 0 },
     // Ticket email tracking. "sent" = Brevo accepted it, "delivered" = Brevo
     // reports it reached the inbox (synced from Brevo's event log).
     emailStatus: {

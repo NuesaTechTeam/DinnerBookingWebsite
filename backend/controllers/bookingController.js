@@ -842,7 +842,7 @@ export const getBookingInfo = async (req, res) => {
         },
       })
       .select(
-        "name email matricNo phone amount status discountApplied discountAmount attendanceVerified attendanceVerifiedAt createdAt seats"
+        "name email matricNo phone amount status discountApplied discountAmount attendanceVerified attendanceVerifiedAt createdAt seats entryPass passCount"
       );
 
     if (!booking) {
@@ -866,9 +866,9 @@ export const getBookingInfo = async (req, res) => {
         }));
 
 
-         const allSeatsAttended = booking.seats.every(
-           (seat) => seat.isGivenTicket
-         );
+         const allSeatsAttended = booking.entryPass
+           ? !!booking.attendanceVerified
+           : booking.seats.every((seat) => seat.isGivenTicket);
 
     res.json({
       success: true,
@@ -883,6 +883,8 @@ export const getBookingInfo = async (req, res) => {
         discountApplied: booking.discountApplied,
         discountAmount: booking.discountAmount,
         attendanceVerified: allSeatsAttended,
+        entryPass: !!booking.entryPass,
+        passCount: booking.passCount || 0,
         attendanceVerifiedAt: booking.attendanceVerifiedAt,
         createdAt: booking.createdAt,
         tables: tables,

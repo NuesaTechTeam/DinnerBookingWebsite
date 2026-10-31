@@ -9,6 +9,7 @@ import { Table } from "../models/tableModel.js";
 import { getMealOptions } from "./meals.js";
 import { sendConfirmationEmail } from "./emailService.js";
 import { logActivity } from "./activity.js";
+import { customerTotal } from "./pricing.js";
 
 dotenv.config();
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
@@ -23,6 +24,13 @@ dns.setServers(["8.8.8.8", "8.8.4.4"]);
 //     --approved-by "Technical Director" [--matric 22/ENG05/076] [--meal 1]
 //     [--apply] [--send-ticket]
 //
+// --pass N issues a seat-less ENTRY PASS for N guests (e.g. performers): complimentary, no seat or
+// table, one QR code, checked in once at the door. Use it instead of --seat / --table.
+//
+// --paid records a guest who ALREADY PAID but whose booking failed: a normal confirmed
+// ticket that counts in revenue and seats sold (not complimentary). The amount is the
+// seat price unless --amount is given; --phone sets the guest's phone number.
+//
 // Several seats: --seat VIP-3-S1,VIP-3-S2   or let it pick free seats from a
 // table: --table REGULAR-10 --count 3 (lowest-numbered free seats first).
 // --meal takes the option number (1, 2, ...) or the exact option text and is
@@ -35,6 +43,8 @@ const arg = (name) => {
 };
 const apply = process.argv.includes("--apply");
 const sendTicket = process.argv.includes("--send-ticket");
+const paid = process.argv.includes("--paid");
+const passCount = Number(arg("pass") || 0);
 
 const seatIndex = (s) => Number(String(s.seatNumber).split("-S").pop());
 
@@ -47,8 +57,10 @@ const run = async () => {
   const approvedBy = String(arg("approved-by") || "").trim();
   const matricNo = String(arg("matric") || "N/A").trim().toUpperCase();
   const mealArg = arg("meal") || "1";
+  const phone = String(arg("phone") || "N/A").trim();
+  const amountArg = Number(arg("amount"));
 
-  if ((!seatArg && !(tableArg && count > 0)) || !name || !validator.isEmail(email) || !approvedBy) {
+  if ((!seatArg && !(tableArg && count > 0) && !(passCount > 0)) || !name || !validator.isEmail(email) || !approvedBy) {
     console.error(
       'Usage: node utils/createComp.js (--seat A,B | --table TABLE --count N) --name "Full Name" --email a@b.com --approved-by "Role" [--matric X] [--meal 1] [--apply] [--send-ticket]'
     );
@@ -58,8 +70,10 @@ const run = async () => {
   const uri = process.env.PROD_MONGO_URI || process.env.MONGO_URI;
   await mongoose.connect(uri);
 
-  let seats;
-  if (seatArg) {
+  let seats = [];
+  if (passCount > 0) {
+    // seat-less entry pass: no seats to look up
+  } else if (seatArg) {
     const wanted = seatArg.split(",").map((s) => s.trim()).filter(Boolean);
     if (new Set(wanted).size !== wanted.length) throw new Error("A seat is listed twice");
     seats = await Seat.find({ seatNumber: { $in: wanted } }).populate("table");
@@ -85,18 +99,25 @@ const run = async () => {
     }
   }
   const tiers = [...new Set(seats.map((s) => s.table.type))];
-  if (tiers.length > 1) throw new Error(`Seats are in different tiers (${tiers.join(", ")}); book each tier separately`);
+  if (passCount === 0 && tiers.length > 1) throw new Error(`Seats are in different tiers (${tiers.join(", ")}); book each tier separately`);
 
-  const options = getMealOptions(tiers[0]);
-  const meal = /^\d+$/.test(mealArg) ? options[Number(mealArg) - 1] : options.find((o) => o === mealArg);
-  if (!meal) throw new Error(`Meal "${mealArg}" is not an option for ${tiers[0]}: ${options.join(" | ")}`);
+  const options = passCount > 0 ? [] : getMealOptions(tiers[0]);
+  const meal = passCount > 0 ? "" : /^\d+$/.test(mealArg) ? options[Number(mealArg) - 1] : options.find((o) => o === mealArg);
+  if (passCount === 0 && !meal) throw new Error(`Meal "${mealArg}" is not an option for ${tiers[0]}: ${options.join(" | ")}`);
 
-  console.log(
-    `${apply ? "APPLY" : "DRY RUN"} (${uri.includes("mongodb+srv") ? "PROD" : "local"}): COMPLIMENTARY ${seats.length} seat(s) ` +
-      `${seats.map((s) => s.seatNumber).join(", ")} (${tiers[0]}${seats.some((s) => s.isReserved) ? ", some reserved" : ""})` +
-      ` -> ${name} <${email}> | matric ${matricNo} | meal (each seat): ${meal} | approved by ${approvedBy}`
-  );
+  const mode = `${apply ? "APPLY" : "DRY RUN"} (${uri.includes("mongodb+srv") ? "PROD" : "local"})`;
+  if (passCount > 0) {
+    console.log(`${mode}: COMPLIMENTARY ENTRY PASS for ${passCount} guest(s), no seat or table -> ${name} <${email}> | approved by ${approvedBy}`);
+  } else {
+    console.log(
+      `${mode}: ${paid ? "PAID (recorded manually)" : "COMPLIMENTARY"} ${seats.length} seat(s) ` +
+        `${seats.map((s) => s.seatNumber).join(", ")} (${tiers[0]}${seats.some((s) => s.isReserved) ? ", some reserved" : ""})` +
+        ` -> ${name} <${email}> | matric ${matricNo} | meal (each seat): ${meal} | approved by ${approvedBy}`
+    );
+  }
 
+  const paidAmount = paid ? (amountArg > 0 ? amountArg : seats.reduce((n, s) => n + (s.table.pricePerSeat || 0), 0)) : 0;
+  if (paid) console.log(`  Recorded as paid: seat price ₦${paidAmount.toLocaleString()}, total with fee ₦${customerTotal(paidAmount).toLocaleString()}`);
   if (!apply) return mongoose.disconnect();
 
   let code;
@@ -112,13 +133,17 @@ const run = async () => {
         email,
         name,
         matricNo,
-        phone: "N/A",
-        amount: 0,
-        totalAmount: 0,
+        phone,
+        amount: paid ? paidAmount : 0,
+        totalAmount: paid ? customerTotal(paidAmount) : 0,
         status: "confirmed",
-        paymentVerified: false, // no payment was taken
-        complimentary: true,
+        paymentVerified: paid, // complimentary seats take no payment
+        complimentary: !paid,
         compApprovedBy: approvedBy,
+        manualPayment: paid,
+        entryPass: passCount > 0,
+        passCount: passCount > 0 ? passCount : 0,
+        manualNote: paid ? `Paid on Paystack but the booking failed; recorded manually (${approvedBy})` : undefined,
         seats: seats.map((s) => s._id),
         meals: seats.map((s) => ({ seat: s._id, choice: meal })),
       }],
@@ -147,11 +172,11 @@ const run = async () => {
   }
 
   await logActivity(
-    "complimentary_booking",
-    `Complimentary ${seats.map((s) => s.seatNumber).join(", ")} for ${name} <${email}>, approved by ${approvedBy} [${booking._id}]`,
+    paid ? "manual_paid_booking" : "complimentary_booking",
+    `${paid ? "Paid booking recorded manually" : passCount > 0 ? `Entry pass (${passCount} guests, no seat)` : "Complimentary"} ${seats.map((s) => s.seatNumber).join(", ")} for ${name} <${email}>, approved by ${approvedBy} [${booking._id}]`,
     { bookingId: String(booking._id), approvedBy }
   );
-  console.log(`  Created complimentary booking #${booking.code} for ${name}: ${seats.map((s) => s.seatNumber).join(", ")}`);
+  console.log(`  Created ${paid ? "paid" : passCount > 0 ? "entry pass" : "complimentary"} booking #${booking.code} for ${name}${passCount > 0 ? ` (${passCount} guests, no seat)` : `: ${seats.map((s) => s.seatNumber).join(", ")}`}`);
 
   if (sendTicket) {
     const fresh = await Booking.findById(booking._id);

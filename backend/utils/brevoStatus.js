@@ -127,6 +127,8 @@ export const getEmailOverview = async ({ force = false } = {}) => {
       lastEvent: last ? `${last.event}${last.reason ? `: ${last.reason}` : ""}` : "",
       emailError: b.emailError || "",
       complimentary: !!b.complimentary,
+      entryPass: !!b.entryPass,
+      passCount: b.passCount || 0,
     });
   }
 
