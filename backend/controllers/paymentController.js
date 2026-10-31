@@ -215,6 +215,13 @@ export const paystackWebhook = async (req, res) => {
     const tx = await fetchPaystackTransaction(data.reference);
     if (tx?.status !== "success") return;
 
+    // Extra (top-up) payments are not tied to a booking
+    if (String(tx.reference).startsWith("tu-")) {
+      const { settleTopUp } = await import("./topUpController.js");
+      await settleTopUp(tx);
+      return;
+    }
+
     let meta = tx.metadata;
     if (typeof meta === "string") {
       try { meta = JSON.parse(meta); } catch { meta = {}; }

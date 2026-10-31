@@ -1329,7 +1329,11 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
             icon={Wallet}
             label="Revenue"
             value={naira(stats?.revenue ?? 0)}
-            sub="paid bookings"
+            sub={
+              stats?.topups?.total
+                ? `paid bookings + ₦${stats.topups.total.toLocaleString()} extra`
+                : "paid bookings"
+            }
           />
           <StatCard
             icon={Armchair}

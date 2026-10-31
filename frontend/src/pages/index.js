@@ -4,5 +4,6 @@ import Gallery from "./Gallery";
 import Landing from "./Landing";
 import Voting from "./Voting";
 import VerifyBooking from "./VerifyBooking";
+import TopUp from "./TopUp";
 
-export { Admin, Booking, Gallery, Landing, Voting, VerifyBooking }
+export { Admin, Booking, Gallery, Landing, Voting, VerifyBooking, TopUp }

@@ -5,6 +5,7 @@ import { Seat } from "../models/seatModel.js";
 import { Student } from "../models/studentModel.js";
 import { AdminUser } from "../models/adminUserModel.js";
 import { ActivityLog } from "../models/activityLogModel.js";
+import { TopUp } from "../models/topUpModel.js";
 import { logActivity } from "../utils/activity.js";
 import { sendConfirmationEmail } from "../utils/emailService.js";
 import { signAdminToken } from "../middlewares/adminAuth.js";
@@ -461,7 +462,13 @@ export const getStats = async (req, res) => {
       ]),
     ]);
 
-    const revenue = revenueAgg[0]?.total || 0;
+    // Extra payments made outside a booking (e.g. settling a balance) count as revenue too
+    const topUpAgg = await TopUp.aggregate([
+      { $match: { status: "paid" } },
+      { $group: { _id: null, total: { $sum: "$amount" }, count: { $sum: 1 } } },
+    ]);
+    const topups = { total: topUpAgg[0]?.total || 0, count: topUpAgg[0]?.count || 0 };
+    const revenue = (revenueAgg[0]?.total || 0) + topups.total;
 
     const tierMap = { PLATINUM: 0, VIP: 0, REGULAR: 0 };
     seatsByTier.forEach((row) => {
@@ -483,6 +490,7 @@ export const getStats = async (req, res) => {
         discountsUsed,
         seatsSold,
         revenue,
+        topups,
         complimentary: { bookings: comps.length, seats: compSeatIds.length },
         seatsByTier: {
           PLATINUM: tierMap.PLATINUM,
