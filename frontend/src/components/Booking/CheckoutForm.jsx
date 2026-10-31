@@ -119,13 +119,6 @@ const CheckoutForm = ({
       showToast("Please enter a promo code", TOAST_TYPES.INFO);
       return;
     }
-    if (verifiedCodes.length > 0) {
-      showToast(
-        "A promo code can't be combined with engineering discount codes. Remove those first.",
-        TOAST_TYPES.ERROR
-      );
-      return;
-    }
     try {
       const result = await verifyPromoMutation.mutateAsync({
         code,
@@ -151,13 +144,6 @@ const CheckoutForm = ({
   };
 
   const applyDiscount = async (seatId) => {
-    if (promo) {
-      showToast(
-        "Remove the promo code first - it can't be combined with engineering discount codes.",
-        TOAST_TYPES.ERROR
-      );
-      return;
-    }
     const code = normalizeCode(seatCodes[seatId]?.code);
     if (!code) {
       showToast("Please enter an invoice number", TOAST_TYPES.INFO);

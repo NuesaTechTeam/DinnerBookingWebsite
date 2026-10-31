@@ -223,7 +223,9 @@ export const createBooking = async (req, res) => {
     }
 
     // Promo code (e.g. 50% off Bronze): priced by the server from the seats,
-    // capped overall and per booking, and not combinable with engineering codes
+    // capped overall and per booking. It stacks with engineering invoice codes: the
+    // promo % comes off the seat price, then each engineering code takes its fixed
+    // amount off its seat (see priceSeats).
     let promoUse = null;
     const promoInput = normalizePromo(promoCode);
     if (promoInput) {
@@ -232,9 +234,6 @@ export const createBooking = async (req, res) => {
         session.endSession();
         return res.status(400).json({ success: false, message });
       };
-      if (codes.length > 0) {
-        return promoFail("A promo code can't be combined with engineering discount codes.");
-      }
       const status = await getPromoStatus(promoInput, session);
       const problem = promoProblem(status, [...new Set(seatPrices.map((s) => s.table?.type))]);
       if (problem) return promoFail(problem);
