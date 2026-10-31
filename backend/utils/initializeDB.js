@@ -23,8 +23,9 @@ const tableConfigs = [
   {
     type: "REGULAR",
     shape: "ROUND",
-    // 28 Bronze tables x 6 seats each = 168 seats
-    capacities: Array(28).fill(6),
+    // 16 Bronze tables x 6 seats each = 96 seats. Live has gaps in the numbering
+    // (empty tables were removed in place), so this only seeds an empty database.
+    capacities: Array(16).fill(6),
     pricePerSeat: 12000,
   },
 ];

@@ -24,6 +24,9 @@ const TIER = {
 };
 
 const apply = process.argv.includes("--apply");
+// --empty-only: when removing, take the highest-numbered tables that nobody has
+// booked, held or had reserved (instead of just the last N), keeping any table in use
+const emptyOnly = process.argv.includes("--empty-only");
 const ops = [];
 process.argv.forEach((arg, i) => {
   if (arg === "--add" || arg === "--remove") {
@@ -67,7 +70,31 @@ const run = async () => {
       );
     } else {
       if (op.count >= tables.length) throw new Error(`Can't remove ${op.count} of ${tables.length} ${op.type} tables`);
-      const doomed = tables.slice(-op.count);
+      let doomed = tables.slice(-op.count);
+      if (emptyOnly) {
+        // Highest-numbered tables where nobody has booked, held or reserved a seat
+        const all = await Seat.find({ table: { $in: tables.map((t) => t._id) } });
+        const now0 = new Date();
+        const inUse = new Set(
+          all
+            .filter((s) => s.isBooked || s.bookedBy || s.isReserved || s.isGivenTicket || (s.lockedUntil && s.lockedUntil > now0))
+            .map((s) => String(s.table))
+        );
+        const onBookings = await Booking.find({ seats: { $in: all.map((s) => s._id) } }, "seats");
+        const bookedSeatIds = new Set(onBookings.flatMap((b) => b.seats.map(String)));
+        for (const s of all) if (bookedSeatIds.has(String(s._id))) inUse.add(String(s.table));
+        const free = tables.filter((t) => !inUse.has(String(t._id)));
+        if (free.length < op.count) {
+          throw new Error(`Only ${free.length} completely empty ${op.type} table(s) exist; can't remove ${op.count}`);
+        }
+        doomed = free.slice(-op.count);
+        const kept = before.filter((n) => !doomed.map(num).includes(n));
+        const gaps = kept.filter((n, i) => i > 0 && n !== kept[i - 1] + 1);
+        console.log(
+          `(empty-only) tables in use and kept: ${tables.filter((t) => inUse.has(String(t._id))).map(num).join(", ") || "none"}` +
+            (gaps.length ? ` | NOTE: numbering will skip some numbers (gap before table ${gaps.join(", ")})` : "")
+        );
+      }
       const seats = await Seat.find({ table: { $in: doomed.map((t) => t._id) } });
       const now = new Date();
       const problems = seats.filter(
@@ -83,7 +110,8 @@ const run = async () => {
         );
       }
       const reserved = seats.filter((s) => s.isReserved).length;
-      plan.push({ ...op, cfg, before, after: before.slice(0, -op.count), doomed, seats });
+      const doomedNums = doomed.map(num);
+      plan.push({ ...op, cfg, before, after: before.filter((n) => !doomedNums.includes(n)), doomed, seats });
       console.log(
         `REMOVE ${op.count} ${cfg.label} (${op.type}) table(s): ${doomed.map((t) => t.tableNumber).join(", ")}` +
           ` - ${seats.length} seats, all empty${reserved ? ` (${reserved} were reserved for execs)` : ""}`
