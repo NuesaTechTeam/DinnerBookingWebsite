@@ -6,11 +6,14 @@ import {
 import { useTables } from "../hooks/tableHooks";
 import { Error, LoadingScreen } from "../components";
 import { useSeatManagement } from "../hooks/seatHooks";
+import { useBookingGate } from "../hooks/useBookingGate";
+import BookingClosed from "../components/Booking/BookingClosed";
 import {
   getSectionPrice,
 } from "../lib/helpers.jsx";
 
 const Booking = () => {
+  const gate = useBookingGate();
   const [selectedTable, setSelectedTable] = useState(null);
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [showCheckout, setShowCheckout] = useState(false);
@@ -42,6 +45,9 @@ const Booking = () => {
 
     calculateAmount();
   }, [selectedSeats, selectedTable?.type]);
+
+  if (gate === "loading") return <LoadingScreen />;
+  if (gate === "closed") return <BookingClosed />;
 
   if (isLoading) {
     return <LoadingScreen />;

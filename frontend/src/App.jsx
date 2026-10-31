@@ -3,8 +3,10 @@ import { Admin, Booking, Gallery, Landing, VerifyBooking } from "./pages";
 import { ScrollToTop } from "./components";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import React from "react";
+import { useKeyPass } from "./hooks/useBookingGate";
 
 const App = () => {
+  useKeyPass();
   return (
     <Router>
       <ScrollToTop />

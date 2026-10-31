@@ -11,6 +11,7 @@ import { logActivity } from "../utils/activity.js";
 import { getMealOptions } from "../utils/meals.js";
 import { checkPendingBooking } from "./paymentController.js";
 import { priceSeats } from "../utils/pricing.js";
+import { blockIfClosed } from "../middlewares/bookingGate.js";
 import { isTierClosed, TIER_LABEL } from "../config/closedTiers.js";
 import { PromoCode } from "../models/promoCodeModel.js";
 import { getPromoStatus, promoProblem, promoDiscountFor, normalizePromo } from "../utils/promo.js";
@@ -40,6 +41,9 @@ const generateEntryCode = async (session) => {
 
 //Create a new booking with seat locking
 export const createBooking = async (req, res) => {
+  // Closed to the public (a valid pass lets one visitor through)
+  if (blockIfClosed(req, res)) return;
+
   // Maintenance mode: pause all bookings
   if (process.env.MAINTENANCE_MODE === "true") {
     return res.status(503).json({
@@ -548,6 +552,8 @@ export const createBooking = async (req, res) => {
 
 //Check seat availablity
 export const checkSeatAvailability = async (req, res) => {
+  if (blockIfClosed(req, res)) return;
+
   try {
     const { seatIds, reservedPassword } = req.body;
     const now = new Date();

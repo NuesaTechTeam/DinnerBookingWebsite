@@ -68,7 +68,7 @@ const corsOptions = {
     }
   },
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-  allowedHeaders: ["Content-Type", "Authorization", "Accept", "x-api-token"],
+  allowedHeaders: ["Content-Type", "Authorization", "Accept", "x-api-token", "x-booking-pass"],
   credentials: true,
   optionsSuccessStatus: 200, // For legacy browser support
 };
