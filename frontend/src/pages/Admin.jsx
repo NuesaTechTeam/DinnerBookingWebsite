@@ -1542,6 +1542,11 @@ const Dashboard = ({ token, role, admin, onLogout }) => {  const [stats, setStat
                             approved by {b.compApprovedBy}
                           </span>
                         )}
+                        {b.promoCode && (
+                          <span className="block text-[10px] text-emerald-400">
+                            promo {b.promoCode} · {b.promoSeats} seat(s)
+                          </span>
+                        )}
                         {b.discountApplied && (
                           <span className="block text-[10px] text-emerald-400">
                             discount applied

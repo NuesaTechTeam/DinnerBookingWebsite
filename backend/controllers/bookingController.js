@@ -12,6 +12,8 @@ import { getMealOptions } from "../utils/meals.js";
 import { checkPendingBooking } from "./paymentController.js";
 import { priceSeats } from "../utils/pricing.js";
 import { isTierClosed, TIER_LABEL } from "../config/closedTiers.js";
+import { PromoCode } from "../models/promoCodeModel.js";
+import { getPromoStatus, promoProblem, promoDiscountFor, normalizePromo } from "../utils/promo.js";
 
 // Seats reserved for this group can never be booked online, not even with
 // the executive access code (organisers seat them with utils/createComp.js).
@@ -46,7 +48,7 @@ export const createBooking = async (req, res) => {
     });
   }
 
-  const { email, name, matricNo, phone, seatIds, totalAmount, isEngineering, invoiceNumber, invoiceNumbers, tableType, reservedPassword, meals } = req.body;
+  const { email, name, matricNo, phone, seatIds, totalAmount, isEngineering, invoiceNumber, invoiceNumbers, promoCode, tableType, reservedPassword, meals } = req.body;
 
   //Reject bad details BEFORE locking seats or creating anything -
   //an invalid email would otherwise only be caught by Paystack mid-payment
@@ -220,11 +222,34 @@ export const createBooking = async (req, res) => {
       engineeringStudentRef = students[0]._id
     }
 
+    // Promo code (e.g. 50% off Bronze): priced by the server from the seats,
+    // capped overall and per booking, and not combinable with engineering codes
+    let promoUse = null;
+    const promoInput = normalizePromo(promoCode);
+    if (promoInput) {
+      const promoFail = async (message) => {
+        await session.abortTransaction();
+        session.endSession();
+        return res.status(400).json({ success: false, message });
+      };
+      if (codes.length > 0) {
+        return promoFail("A promo code can't be combined with engineering discount codes.");
+      }
+      const status = await getPromoStatus(promoInput, session);
+      const problem = promoProblem(status, [...new Set(seatPrices.map((s) => s.table?.type))]);
+      if (problem) return promoFail(problem);
+      // Touch the code inside this transaction so two guests can't both take the last seat
+      await PromoCode.updateOne({ _id: status.promo._id }, { $inc: { touches: 1 } }, { session });
+      const { seatsDiscounted, discount } = promoDiscountFor(seatPrices, status.promo, status.remaining);
+      promoUse = { code: status.promo.code, seats: seatsDiscounted, discount };
+      discountApplied = true;
+    }
+
     const codeSeatIds = Array.isArray(invoiceNumbers)
       ? invoiceNumbers.map((c) => c?.seatId).filter(Boolean)
       : [];
-    const price = priceSeats(seatPrices, codes.length, codeSeatIds);
-    discountAmount = price.discount;
+    const price = priceSeats(seatPrices, codes.length, codeSeatIds, promoUse?.discount || 0);
+    discountAmount = price.discount + (promoUse?.discount || 0);
 
     // The browser shows the guest a total before we get here. If it does not
     // match the real price (stale page or a tampered request), stop now rather
@@ -279,6 +304,8 @@ export const createBooking = async (req, res) => {
       discountAmount,
       couponCode: codes[0],
       couponCodes: codes,
+      promoCode: promoUse?.code,
+      promoSeats: promoUse?.seats || 0,
       engineeringStudentRef,
       isEngineering,
       seats: seatIds,
@@ -317,7 +344,7 @@ export const createBooking = async (req, res) => {
     res.status(200).json({
       success: true,
       message: discountApplied
-        ? `Booking created successfully! ₦${discountAmount.toLocaleString()} engineering discount applied.`
+        ? `Booking created successfully! ₦${discountAmount.toLocaleString()} ${promoUse ? "promo" : "engineering"} discount applied.`
         : "Booking created successfully",
       booking,
       discountApplied,

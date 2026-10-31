@@ -16,7 +16,7 @@ import { useCreateBooking } from "../../hooks/bookingHooks";
 import { useVerifyPayment } from "../../hooks/paymentHooks";
 import { useToast } from "../../context/modal/useToast";
 import { useQueryClient } from "@tanstack/react-query";
-import { useVerifyEngineeringStudent } from "../../hooks/discountHooks";
+import { useVerifyEngineeringStudent, useVerifyPromo } from "../../hooks/discountHooks";
 import BookingAPI from "../../utils/endpoints/bookingApi.js";
 import { getMealOptions } from "../../lib/meals.js";
 
@@ -53,6 +53,7 @@ const CheckoutForm = ({
   const createBookingMutation = useCreateBooking();
   const verifyPaymentMutation = useVerifyPayment();
   const verifyEngineeringStudent = useVerifyEngineeringStudent();
+  const verifyPromoMutation = useVerifyPromo();
   const { showToast, TOAST_TYPES } = useToast();
   const queryClient = useQueryClient();
 
@@ -68,6 +69,9 @@ const CheckoutForm = ({
   // { [seatId]: { code, verified } }. Each code discounts exactly one seat.
   const [seatCodes, setSeatCodes] = useState({});
   const [verifyingSeat, setVerifyingSeat] = useState("");
+  // Promo code (e.g. 50% off Bronze). Applies to up to perBookingMax seats.
+  const [promoInput, setPromoInput] = useState("");
+  const [promo, setPromo] = useState(null);
   // Per-seat meal choice, keyed by seat id (defaults live below).
   const [mealSelections, setMealSelections] = useState({});
 
@@ -85,7 +89,17 @@ const CheckoutForm = ({
     .map((seatId) => ({ seatId, code: seatCodes[seatId].code }));
   const discountApplied = verifiedCodes.length > 0;
   const discountAmount = discountPerSeat * verifiedCodes.length;
-  const finalAmount = Math.max(0, baseAmount - discountAmount);
+  // Promo discount mirrors the server: percentOff on up to perBookingMax seats
+  // (and what is left under the code's cap); the other seats pay full price.
+  const unitPrice = selectedTable?.pricePerSeat || 0;
+  const promoSeatCount =
+    promo && promo.tiers.includes(selectedTable?.type)
+      ? Math.min(selectedSeats.length, promo.perBookingMax, promo.remaining)
+      : 0;
+  const promoDiscount = promo
+    ? promoSeatCount * Math.round((unitPrice * promo.percentOff) / 100)
+    : 0;
+  const finalAmount = Math.max(0, baseAmount - discountAmount - promoDiscount);
 
   // Meal options for this tier; each seat keeps its own (validated) choice.
   const mealOptions = getMealOptions(selectedTable?.type);
@@ -99,7 +113,51 @@ const CheckoutForm = ({
   const setSeatCode = (seatId, code) =>
     setSeatCodes((prev) => ({ ...prev, [seatId]: { code, verified: false } }));
 
+  const applyPromo = async () => {
+    const code = promoInput.trim().toUpperCase();
+    if (!code) {
+      showToast("Please enter a promo code", TOAST_TYPES.INFO);
+      return;
+    }
+    if (verifiedCodes.length > 0) {
+      showToast(
+        "A promo code can't be combined with engineering discount codes. Remove those first.",
+        TOAST_TYPES.ERROR
+      );
+      return;
+    }
+    try {
+      const result = await verifyPromoMutation.mutateAsync({
+        code,
+        tableType: selectedTable?.type,
+      });
+      if (result.success) {
+        setPromo(result.promo);
+        setPromoInput(result.promo.code);
+        showToast(result.message || "Promo code applied", TOAST_TYPES.SUCCESS);
+      }
+    } catch (error) {
+      setPromo(null);
+      showToast(
+        error.response?.data?.message || "Couldn't check that promo code",
+        TOAST_TYPES.ERROR
+      );
+    }
+  };
+
+  const removePromo = () => {
+    setPromo(null);
+    setPromoInput("");
+  };
+
   const applyDiscount = async (seatId) => {
+    if (promo) {
+      showToast(
+        "Remove the promo code first - it can't be combined with engineering discount codes.",
+        TOAST_TYPES.ERROR
+      );
+      return;
+    }
     const code = normalizeCode(seatCodes[seatId]?.code);
     if (!code) {
       showToast("Please enter an invoice number", TOAST_TYPES.INFO);
@@ -307,6 +365,8 @@ const CheckoutForm = ({
       invoiceNumbers: verifiedCodes,
       // Older backends only read a single code (the list wins when present)
       invoiceNumber: verifiedCodes[0]?.code,
+      // The server re-checks the code and works out the real price itself
+      promoCode: promoSeatCount > 0 ? promo.code : undefined,
       seatIds: selectedSeats,
       baseAmount: baseAmount,
       totalAmount: totalAmount,
@@ -457,6 +517,17 @@ const CheckoutForm = ({
                   >
                     <span>Engineering Discount:</span>{" "}
                     <span>-₦{discountAmount.toLocaleString()}</span>
+                  </Motion.p>
+                )}
+                {promoDiscount > 0 && (
+                  <Motion.p
+                    className="flex justify-between text-emerald-400"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.4 }}
+                  >
+                    <span>Promo ({promo.percentOff}% off):</span>{" "}
+                    <span>-₦{promoDiscount.toLocaleString()}</span>
                   </Motion.p>
                 )}
                 <p className="text-xs text-gray-400 pt-1">
@@ -733,6 +804,63 @@ const CheckoutForm = ({
                     </p>
                   )}
                 </Motion.div>
+              )}
+            </Motion.div>
+
+            {/* Promo code */}
+            <Motion.div
+              className="bg-black/40 border border-gray-800 rounded-lg p-3.5 space-y-2"
+              {...fadeInUp}
+              transition={{ duration: 0.5, delay: 0.85 }}
+            >
+              <label className="text-gray-300 text-xs font-medium flex items-center gap-2">
+                <Receipt size={14} className="text-[#d4af37]" />
+                Promo Code
+              </label>
+              {promo ? (
+                <div className="flex items-center justify-between text-emerald-400 text-xs bg-emerald-950/30 border border-emerald-800/40 p-2.5 rounded-lg">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <CheckCircle size={14} className="shrink-0" />
+                    <span>
+                      {promo.code}: {promo.percentOff}% off up to {promo.perBookingMax} seat
+                      {promo.perBookingMax === 1 ? "" : "s"}
+                      {promoSeatCount === 0
+                        ? " - doesn't apply to the seats you picked"
+                        : ` - ${promoSeatCount} discounted (-₦${promoDiscount.toLocaleString()})`}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={removePromo}
+                    disabled={isProcessing}
+                    className="text-gray-400 hover:text-white underline text-[11px] shrink-0 ml-2"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    disabled={verifyPromoMutation.isPending || isProcessing}
+                    placeholder="Enter promo code (optional)"
+                    className="flex-1 min-w-0 bg-black/60 border border-gray-800 rounded-lg px-3 py-2 text-white text-xs placeholder-gray-600 focus:border-[#d4af37] focus:outline-none"
+                  />
+                  <Motion.button
+                    type="button"
+                    onClick={applyPromo}
+                    disabled={
+                      verifyPromoMutation.isPending || isProcessing || !promoInput.trim()
+                    }
+                    className="bg-[#d4af37] hover:bg-[#b38728] disabled:bg-gray-800 text-black font-semibold px-3 py-2 rounded-lg transition-colors text-xs uppercase tracking-wider"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    {verifyPromoMutation.isPending ? "..." : "Apply"}
+                  </Motion.button>
+                </div>
               )}
             </Motion.div>
 

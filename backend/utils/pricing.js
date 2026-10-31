@@ -10,7 +10,7 @@ export const customerTotal = (base) =>
 // `codeSeatIds` lists the seats the guest attached a verified discount code
 // to; any codes without a (valid) seat go on the remaining seats with the
 // biggest discount first.
-export const priceSeats = (seats, codeCount = 0, codeSeatIds = []) => {
+export const priceSeats = (seats, codeCount = 0, codeSeatIds = [], promoDiscount = 0) => {
   const base = seats.reduce((sum, s) => sum + (s.table?.pricePerSeat || 0), 0);
   const discountFor = (s) =>
     Math.min(getEngineeringDiscountPerSeat(s.table?.type), s.table?.pricePerSeat || 0);
@@ -26,6 +26,6 @@ export const priceSeats = (seats, codeCount = 0, codeSeatIds = []) => {
   while (chosen.length < codeCount && rest.length) chosen.push(rest.shift());
 
   const discount = chosen.reduce((sum, s) => sum + discountFor(s), 0);
-  const subtotal = Math.max(0, base - discount);
-  return { base, discount, subtotal, total: customerTotal(subtotal) };
+  const subtotal = Math.max(0, base - discount - promoDiscount);
+  return { base, discount, promoDiscount, subtotal, total: customerTotal(subtotal) };
 };

@@ -93,3 +93,29 @@ export const markDiscountUsed = async (invoiceNumber, bookingId) => {
     throw error;
   }
 };
+
+// POST /discount/verify-promo  { code, tableType } - checks a promo code and says
+// how many discounted seats it can still give (the checkout shows the price)
+export const verifyPromo = async (req, res) => {
+  try {
+    const { getPromoStatus, promoProblem } = await import("../utils/promo.js");
+    const status = await getPromoStatus(req.body?.code);
+    const problem = promoProblem(status, req.body?.tableType ? [req.body.tableType] : []);
+    if (problem) return res.status(400).json({ success: false, message: problem });
+    const { promo, remaining } = status;
+    res.json({
+      success: true,
+      message: `${promo.percentOff}% off applied!`,
+      promo: {
+        code: promo.code,
+        percentOff: promo.percentOff,
+        perBookingMax: promo.perBookingMax,
+        remaining,
+        tiers: promo.tiers,
+      },
+    });
+  } catch (error) {
+    console.error("Verify promo error:", error);
+    res.status(500).json({ success: false, message: "Failed to check the promo code. Please try again." });
+  }
+};

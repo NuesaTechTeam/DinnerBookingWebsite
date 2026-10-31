@@ -40,6 +40,9 @@ const bookingSchema = new mongoose.Schema(
       trim: true,
       uppercase: true,
     },
+    // Promo code (e.g. 50% off Bronze) and how many of this booking's seats got it
+    promoCode: { type: String, trim: true, uppercase: true },
+    promoSeats: { type: Number, default: 0 },
     // Every engineering discount code used - one per discounted seat.
     // couponCode keeps the first one for older screens and scripts.
     couponCodes: [{ type: String, trim: true, uppercase: true }],

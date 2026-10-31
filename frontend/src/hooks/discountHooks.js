@@ -11,3 +11,9 @@ export const useVerifyEngineeringStudent = () => {
     },
   });
 };
+
+
+export const useVerifyPromo = () =>
+  useMutation({
+    mutationFn: DiscountAPI.verifyPromo,
+  });
