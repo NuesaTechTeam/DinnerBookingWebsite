@@ -11,6 +11,7 @@ import { logActivity } from "../utils/activity.js";
 import { getMealOptions } from "../utils/meals.js";
 import { checkPendingBooking } from "./paymentController.js";
 import { priceSeats } from "../utils/pricing.js";
+import { isTierClosed, TIER_LABEL } from "../config/closedTiers.js";
 
 // Seats reserved for this group can never be booked online, not even with
 // the executive access code (organisers seat them with utils/createComp.js).
@@ -149,6 +150,17 @@ export const createBooking = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Please choose your seats again - some could not be found",
+      });
+    }
+    // Closed tiers take no new reservations (the seat lock above rolls back)
+    const closedSeat = seatPrices.find((s) => isTierClosed(s.table?.type));
+    if (closedSeat) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({
+        success: false,
+        closed: true,
+        message: `${TIER_LABEL[closedSeat.table.type] || "This"} booking is now closed. Please choose a seat in another section.`,
       });
     }
     // Tier (meals, discount) also comes from the seats, not the request
@@ -514,7 +526,7 @@ export const checkSeatAvailability = async (req, res) => {
     const { seatIds, reservedPassword } = req.body;
     const now = new Date();
 
-    const seats = await Seat.find({ _id: { $in: seatIds } });
+    const seats = await Seat.find({ _id: { $in: seatIds } }).populate("table", "type");
 
     const reservedAccess =
       !!reservedPassword &&
@@ -523,6 +535,7 @@ export const checkSeatAvailability = async (req, res) => {
     const unavailableSeats = seats.filter(
       (seat) =>
         seat.isBooked ||
+        isTierClosed(seat.table?.type) ||
         (seat.lockedUntil && seat.lockedUntil > now) ||
         (seat.isReserved && (!reservedAccess || seat.reservedFor === LECTURER_ONLY))
     );

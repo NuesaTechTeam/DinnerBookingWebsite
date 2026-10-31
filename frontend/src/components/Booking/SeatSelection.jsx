@@ -9,8 +9,10 @@ import { useVerifyReservedPassword } from '../../hooks/bookingHooks.js';
 
 const naira = (value) => `₦${Number(value || 0).toLocaleString()}`;
 
-// Platinum (VVIP) booking is enabled
-const PLATINUM_DISABLED = false;
+// Tiers closed to new bookings. Keep in sync with backend/config/closedTiers.js.
+const CLOSED_TIERS = ['REGULAR'];
+const isTierClosed = (key) => CLOSED_TIERS.includes(key);
+const TIER_NAMES = { VVIP: 'Platinum', VIP: 'Gold', REGULAR: 'Bronze' };
 
 const getSeats = (table) => (Array.isArray(table?.seats) ? table.seats : []);
 
@@ -145,7 +147,7 @@ const SeatSelection = ({
   }, [selectedSeats, selectedTable, setSeatNames]);
 
   const handleTableClick = (table) => {
-    if (table?.type === 'VVIP' && PLATINUM_DISABLED) return;
+    if (isTierClosed(table?.type)) return;
     setSelectedTable(table);
     setSelectedSeats([]);
     if (setSeatNames) setSeatNames([]);
@@ -321,7 +323,7 @@ const SeatSelection = ({
                 const renderTable = (table) => {
                   const disabled =
                     isTableSoldOut(table, reservedUnlocked) ||
-                    (tier.key === 'VVIP' && PLATINUM_DISABLED);
+                    (isTierClosed(tier.key));
 
                   return isBanquet ? (
                     <button
@@ -329,8 +331,8 @@ const SeatSelection = ({
                       onClick={() => !disabled && handleTableClick(table)}
                       disabled={disabled}
                       title={
-                        tier.key === 'VVIP' && PLATINUM_DISABLED
-                          ? 'Platinum booking is currently unavailable'
+                        isTierClosed(tier.key)
+                          ? `${TIER_NAMES[tier.key] || 'This'} booking is closed`
                           : undefined
                       }
                       className={`w-full py-2 sm:py-3 rounded-xl font-bold text-[11px] sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 ${getTableStatusClass(
@@ -347,8 +349,8 @@ const SeatSelection = ({
                       onClick={() => !disabled && handleTableClick(table)}
                       disabled={disabled}
                       title={
-                        tier.key === 'VVIP' && PLATINUM_DISABLED
-                          ? 'Platinum booking is currently unavailable'
+                        isTierClosed(tier.key)
+                          ? `${TIER_NAMES[tier.key] || 'This'} booking is closed`
                           : `Table ${getTableLabel(table.tableNumber)} · ${table.capacity} seats`
                       }
                       className={`w-full max-w-[42px] sm:max-w-[48px] md:max-w-none mx-auto aspect-square rounded-full font-bold text-[10px] sm:text-xs flex items-center justify-center ${getTableStatusClass(
@@ -371,9 +373,9 @@ const SeatSelection = ({
                             <Icon size={11} className="text-black" strokeWidth={2.5} />
                           </span>
                           {tier.label} {tier.tagline}
-                          {tier.key === 'VVIP' && PLATINUM_DISABLED && (
+                          {isTierClosed(tier.key) && (
                             <span className="ml-2 text-[9px] font-extrabold tracking-widest text-gray-400 border border-gray-700 rounded-full px-2 py-0.5">
-                              UNAVAILABLE
+                              CLOSED
                             </span>
                           )}
                         </span>
@@ -450,7 +452,7 @@ const SeatSelection = ({
                       <div
                         key={tier.key}
                         className={`bg-[#050505] border border-gray-800 rounded-2xl p-5 flex items-center justify-between transition-colors ${
-                          tier.key === 'VVIP' && PLATINUM_DISABLED
+                          isTierClosed(tier.key)
                             ? 'opacity-50 grayscale'
                             : 'hover:border-[#d4af37]/40'
                         }`}
@@ -468,9 +470,9 @@ const SeatSelection = ({
                             </span>
                           </div>
                         </div>
-                        {tier.key === 'VVIP' && PLATINUM_DISABLED ? (
+                        {isTierClosed(tier.key) ? (
                           <span className="text-[10px] font-bold tracking-widest text-gray-500 uppercase border border-gray-700 rounded-full px-3 py-1">
-                            UNAVAILABLE
+                            CLOSED
                           </span>
                         ) : (
                           <span className="text-xl font-serif font-bold text-[#d4af37]">
