@@ -10,7 +10,7 @@ import { useVerifyReservedPassword } from '../../hooks/bookingHooks.js';
 const naira = (value) => `₦${Number(value || 0).toLocaleString()}`;
 
 // Tiers closed to new bookings. Keep in sync with backend/config/closedTiers.js.
-const CLOSED_TIERS = ['REGULAR'];
+const CLOSED_TIERS = [];
 const isTierClosed = (key) => CLOSED_TIERS.includes(key);
 const TIER_NAMES = { VVIP: 'Platinum', VIP: 'Gold', REGULAR: 'Bronze' };
 
